@@ -226,7 +226,7 @@ export function createApp({
   repository,
   accessKey,
   adminCode,
-  workspaceId = "tiniko",
+  workspaceId = "hlbbusisup",
   publicDir = defaultPublicDir
 }) {
   if (!repository) throw new Error("repository is required");
@@ -454,7 +454,7 @@ export function createApp({
         workspaceId,
         exportedAt: exportedAt.toISOString(),
         exportedAtKST: kstDateTime(exportedAt),
-        description: "TINIKO CRM 전체 데이터와 화면별 입력·수정·삭제 변경 로그",
+        description: "HLB-BUSISUP CRM 전체 데이터와 화면별 입력·수정·삭제 변경 로그",
         summary: {
           recordCount: snapshot.records.length,
           auditLogCount: downloadableAuditLogs.length,
