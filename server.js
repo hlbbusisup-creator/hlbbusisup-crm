@@ -5,7 +5,7 @@ const {
   DATABASE_URL,
   CRM_ACCESS_KEY,
   CRM_ADMIN_CODE,
-  CRM_WORKSPACE_ID = "tiniko",
+  CRM_WORKSPACE_ID = "hlbbusisup",
   PORT = "3000"
 } = process.env;
 
@@ -23,7 +23,7 @@ const app = createApp({
 });
 
 const server = app.listen(Number(PORT), "0.0.0.0", () => {
-  console.log("TINIKO CRM listening on port " + PORT);
+  console.log("HLB-BUSISUP CRM listening on port " + PORT);
 });
 
 /* 감사 로그 보존 기간(기본 90일, CRM_AUDIT_RETENTION_DAYS로 조정·0이면 비활성) 초과분을 기동 시 및 매일 정리 */

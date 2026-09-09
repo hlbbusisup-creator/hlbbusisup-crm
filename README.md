@@ -1,4 +1,4 @@
-# 티니코 CRM Cloud
+# HLB-현장지원팀 CRM Cloud
 
 기존 `tiniko_crm_simple_mode_v3_calendar.html`을 기반으로, CRM 데이터를 외부 PostgreSQL에 저장하도록 구성한 배포 프로젝트입니다.
 
@@ -15,7 +15,7 @@ flowchart LR
 
 | 파일 | 역할 |
 |---|---|
-| `public/index.html` | 기존 티니코 CRM UI와 외부 DB 저장 어댑터 |
+| `public/index.html` | 기존 HLB-현장지원팀 CRM UI와 외부 DB 저장 어댑터 |
 | `server.js` | Render에서 실행되는 서버 시작점 |
 | `src/app.js` | 연결키·관리자 인증, 백업·복원 API, 보안 헤더, 정적 파일 제공 |
 | `src/audit.js` | 화면별 데이터 비교와 입력·수정·삭제 변경 로그 생성 |
@@ -31,12 +31,12 @@ flowchart LR
 
 ## 1. GitHub 저장소 만들기
 
-권장값은 저장소 이름 `tiniko-crm-cloud`, 공개 범위 `Private`입니다. CRM 코드 자체에는 비밀번호가 없지만 사내 시스템은 비공개 저장소로 운영하는 편이 안전합니다.
+권장값은 저장소 이름 `hlbbusisup-crm`, 공개 범위 `Private`입니다. CRM 코드 자체에는 비밀번호가 없지만 사내 시스템은 비공개 저장소로 운영하는 편이 안전합니다.
 
 GitHub 웹에서 직접 만들 때:
 
 1. GitHub 오른쪽 위 `+` → `New repository`를 누릅니다.
-2. Repository name에 `tiniko-crm-cloud`를 입력합니다.
+2. Repository name에 `hlbbusisup-crm`를 입력합니다.
 3. `Private`를 선택합니다.
 4. README, `.gitignore`, License 자동 생성을 선택하지 않고 빈 저장소로 만듭니다.
 5. 이 프로젝트 폴더에서 아래 명령을 실행합니다.
@@ -45,15 +45,15 @@ GitHub 웹에서 직접 만들 때:
 git init
 git branch -M main
 git add .
-git commit -m "Deploy TINIKO CRM with Render and Neon"
-git remote add origin https://github.com/YOUR-ACCOUNT/tiniko-crm-cloud.git
+git commit -m "Deploy HLB-BUSISUP CRM with Render and Neon"
+git remote add origin https://github.com/YOUR-ACCOUNT/hlbbusisup-crm.git
 git push -u origin main
 ~~~
 
 GitHub CLI가 로그인된 컴퓨터라면 다음 한 줄로 저장소 생성과 업로드를 함께 할 수 있습니다.
 
 ~~~bash
-gh repo create tiniko-crm-cloud --private --source=. --remote=origin --push
+gh repo create hlbbusisup-crm --private --source=. --remote=origin --push
 ~~~
 
 비밀번호, `DATABASE_URL`, `CRM_ACCESS_KEY`는 절대로 GitHub에 커밋하지 않습니다. `.env` 파일은 `.gitignore`에 포함되어 있습니다.
@@ -63,7 +63,7 @@ gh repo create tiniko-crm-cloud --private --source=. --remote=origin --push
 ## 2. Neon PostgreSQL 만들기
 
 1. [Neon Console](https://console.neon.tech/)에 로그인합니다.
-2. `New project`를 누르고 프로젝트 이름을 `tiniko-crm`으로 지정합니다.
+2. `New project`를 누르고 프로젝트 이름을 `hlbbusisup-crm`으로 지정합니다.
 3. Render 서비스와 가까운 리전을 선택합니다. 이 프로젝트의 `render.yaml`은 Singapore 리전을 사용합니다.
 4. 프로젝트 Dashboard에서 `Connect`를 누릅니다.
 5. 연결 방식은 `Pooled connection`을 선택합니다. 호스트 이름에 `-pooler`가 포함되는지 확인합니다.
@@ -92,7 +92,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 
 1. [Render Dashboard](https://dashboard.render.com/)에 로그인합니다.
 2. `New` → `Blueprint`를 선택합니다.
-3. GitHub를 연결하고 `tiniko-crm-cloud` 저장소 접근을 허용합니다.
+3. GitHub를 연결하고 `hlbbusisup-crm` 저장소 접근을 허용합니다.
 4. 저장소를 선택합니다. 루트의 `render.yaml`이 자동으로 인식됩니다.
 5. 환경변수 입력 화면에서 아래 두 비밀값을 입력합니다.
 
@@ -104,7 +104,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 현재 관리자 코드는 서버에서 해시로 검증되며 브라우저 HTML에는 들어 있지 않습니다. 나중에 코드를 바꾸고 싶다면 Render의 `Environment`에 선택 환경변수 `CRM_ADMIN_CODE`를 추가하고 8자 이상의 새 코드를 입력한 뒤 재배포합니다. 환경변수 값은 GitHub에 커밋하지 않습니다.
 
 6. `Apply` 또는 `Create Web Service`를 눌러 배포합니다.
-7. Build 로그에서 `npm ci`, Start 로그에서 `TINIKO CRM listening on port ...`를 확인합니다.
+7. Build 로그에서 `npm ci`, Start 로그에서 `HLB-BUSISUP CRM listening on port ...`를 확인합니다.
 8. 발급된 주소 뒤에 `/api/health`를 붙여 엽니다. 아래 응답이면 서버와 Neon 연결이 모두 정상입니다.
 
 ~~~json
@@ -125,7 +125,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 1. Render에 배포된 CRM을 열고 연결키로 접속합니다.
 2. `설정` 화면 상단의 `관리자`를 누릅니다.
 3. 관리자 코드를 입력하고 `확인`을 누릅니다. 성공하면 `내려받기`, `복원하기` 버튼이 표시됩니다.
-4. `내려받기`를 누릅니다. 파일명은 `tiniko_crm_backup_년-월-일_시-분-초.json`입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용합니다.
+4. `내려받기`를 누릅니다. 파일명은 `hlb_busisup_crm_backup_년-월-일_시-분-초.json`입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용합니다.
 5. JSON의 `summary`에서 데이터·로그 건수와 화면별·동작별 합계를 확인합니다. `data.records`는 복원용 원본 데이터이고 `data.auditLogs`는 시각, 화면, 입력·수정·삭제, 항목, 변경 필드와 전·후 값입니다.
 6. 복원할 때는 먼저 현재 상태를 다시 내려받습니다. `복원하기`를 누르고 기존에 내려받은 JSON을 선택한 뒤 확인합니다.
 7. 복원이 완료되면 CRM이 새로고침됩니다. 연락처, 파이프라인, 지원 업무, 캘린더와 설정이 백업 시점과 같은지 확인합니다.
@@ -135,12 +135,12 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ~~~sql
 SELECT storage_key, revision, updated_at
 FROM crm_kv
-WHERE workspace_id = 'tiniko'
+WHERE workspace_id = 'hlbbusisup'
 ORDER BY updated_at DESC;
 
 SELECT event_at, screen, action, entity_type, entity_label, summary
 FROM crm_audit_log
-WHERE workspace_id = 'tiniko'
+WHERE workspace_id = 'hlbbusisup'
 ORDER BY event_at DESC
 LIMIT 100;
 ~~~
@@ -156,7 +156,7 @@ Render 주소는 기존 로컬 주소와 다른 원본이므로 Google OAuth 설
 1. [Google Cloud Console](https://console.cloud.google.com/)에서 CRM용 프로젝트를 엽니다.
 2. Google Calendar API가 활성화되어 있는지 확인합니다.
 3. `Google Auth Platform` 또는 `APIs & Services` → `Credentials`에서 사용 중인 OAuth 2.0 웹 클라이언트를 엽니다.
-4. `Authorized JavaScript origins`에 Render 주소를 추가합니다. 예: `https://tiniko-crm.onrender.com`
+4. `Authorized JavaScript origins`에 Render 주소를 추가합니다. 예: `https://hlbbusisup-crm.onrender.com`
 5. 저장 후 CRM의 캘린더에서 `ID 확인 방법`을 눌러 웹 클라이언트 ID를 입력하고 Google 계정을 연결합니다.
 6. 테스트 사용자 상태인 OAuth 앱이라면 사용할 Google 계정도 Test users에 포함합니다.
 
@@ -252,7 +252,7 @@ npm run dev
 | 저장 후 데이터가 안 보임 | 상단 외부 DB 배지, 브라우저 Network의 `/api/storage/...` 응답, 새로고침 |
 | `활동 추가` 팝업이 보이지 않음 | 최신 배포 여부와 강력 새로고침을 확인. 새 버전은 활동 팝업을 항목 상세보다 높은 화면 층에 표시하고 상세 화면을 유지 |
 | 관리자 코드가 거절됨 | 대소문자·숫자·특수문자, 선택 환경변수 `CRM_ADMIN_CODE` 변경 여부, Render 재배포 상태 |
-| 백업 복원이 거절됨 | 티니코 CRM JSON인지, 버전 2 또는 같은 작업공간의 버전 3 백업인지 확인 |
+| 백업 복원이 거절됨 | HLB-현장지원팀 CRM JSON인지, 버전 2 또는 같은 작업공간의 버전 3 백업인지 확인 |
 | Google 로그인이 거절됨 | Render HTTPS 원본 등록, OAuth 클라이언트 유형이 Web application인지, Test users |
 | CRM 수정·삭제가 Google에 반영되지 않음 | 정상 동작입니다. 무료 최소 동기화는 새 일정 1회 등록과 선택 월 조회만 수행하므로 Google 원본에서 직접 수정·삭제 |
 | 무료 서비스 첫 접속이 느림 | Render 무료 인스턴스 재기동 대기 후 `/api/health` 재확인 |

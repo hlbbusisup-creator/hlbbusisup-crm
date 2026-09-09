@@ -1,8 +1,8 @@
 {
-  "name": "tiniko-crm-cloud",
+  "name": "hlb-busisup-crm-cloud",
   "version": "1.0.0",
   "private": true,
-  "description": "TINIKO CRM with a Render API and Neon PostgreSQL storage",
+  "description": "HLB-BUSISUP CRM with a Render API and Neon PostgreSQL storage",
   "type": "module",
   "engines": {
     "node": ">=20"
