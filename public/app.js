@@ -1,4 +1,4 @@
-/* 티니코 CRM 로직 — index.html에서 분리 */
+/* HLB-현장지원팀 CRM 로직 — index.html에서 분리 */
 /* CRM 영업 단계 */
 let STAGE_OPTIONS = ["리드","상담","제안","협상","수주","보류","실주"];
 let STAGE_COLORS = {리드:"#9CA3AF", 상담:"#2563EB", 제안:"#D97706", 협상:"#7C3AED", 수주:"#059669", 보류:"#D97706", 실주:"#DC2626"};
@@ -52,7 +52,7 @@ const LEGACY_DEFAULT_AREAS = [
       {id:"defense_ring", title:"방산용 열수축링 기존 품목 점검", tag:"기존 매출 / 방산", stage:"제안",
        contactName:"", contactRole:"구매팀", contactPhone:"", contactEmail:"",
        amount:"", prob:"70", lastContact:"", nextAction:"2026-07-25",
-       desc:"현재 매출 기반이 되는 기존 품목. 거래처별 물량, 단가, 납기와 재주문 가능성을 확인한다.", goal:"3개월 내 현금화 가능한 품목과 고객을 우선 정리", action:"최근 발주 이력과 하반기 예상 물량을 티니코로부터 수령", internalNote:"단가 조정은 매출 증가뿐 아니라 공헌이익과 가격 정상화 가능성까지 함께 확인"},
+       desc:"현재 매출 기반이 되는 기존 품목. 거래처별 물량, 단가, 납기와 재주문 가능성을 확인한다.", goal:"3개월 내 현금화 가능한 품목과 고객을 우선 정리", action:"최근 발주 이력과 하반기 예상 물량을 HLB-현장지원팀로부터 수령", internalNote:"단가 조정은 매출 증가뿐 아니라 공헌이익과 가격 정상화 가능성까지 함께 확인"},
       {id:"existing_wire_spring", title:"기존 와이어·스프링 납품처 확대", tag:"기존 거래처 / 추가 발주", stage:"상담",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"50", lastContact:"", nextAction:"2026-07-29",
@@ -80,15 +80,15 @@ const LEGACY_DEFAULT_AREAS = [
       {id:"company_materials", title:"최신 회사소개서·제품사진 수령", tag:"자료 확보 / 공개등급", stage:"제안",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"60", lastContact:"", nextAction:"2026-07-24",
-       desc:"홈페이지, 블로그, 영상, 해외 채널에 사용할 회사·제품·공정 자료를 먼저 확보한다.", goal:"고객이 티니코 제조 역량을 쉽게 이해할 수 있는 홍보 기반 마련", action:"제품 사진, 원재료·중간재·완제품, 설비·공정 이미지, 시험자료, 공개 가능 등급 요청", internalNote:"검증되지 않은 최상급 표현과 공개 불가 고객사명은 사용하지 않도록 사전 확인"},
+       desc:"홈페이지, 블로그, 영상, 해외 채널에 사용할 회사·제품·공정 자료를 먼저 확보한다.", goal:"고객이 HLB-현장지원팀 제조 역량을 쉽게 이해할 수 있는 홍보 기반 마련", action:"제품 사진, 원재료·중간재·완제품, 설비·공정 이미지, 시험자료, 공개 가능 등급 요청", internalNote:"검증되지 않은 최상급 표현과 공개 불가 고객사명은 사용하지 않도록 사전 확인"},
       {id:"homepage_content", title:"홈페이지·블로그·LinkedIn 콘텐츠 정비", tag:"온라인 노출 / 문의 전환", stage:"리드",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"35", lastContact:"", nextAction:"2026-08-05",
-       desc:"티니코와 니티놀의 활용 가능성을 꾸준히 노출하여 신규 문의를 늘린다.", goal:"조회수보다 유효 문의, 샘플 요청, 기술 미팅, 견적 전환을 KPI로 관리", action:"회사 신뢰, 제품군, 응용 분야, 문의 절차 중심으로 1차 콘텐츠 6건 기획", internalNote:"홍보 콘텐츠는 고객 문제와 티니코의 해결 가능성을 짧고 명확하게 설명"},
+       desc:"HLB-현장지원팀와 니티놀의 활용 가능성을 꾸준히 노출하여 신규 문의를 늘린다.", goal:"조회수보다 유효 문의, 샘플 요청, 기술 미팅, 견적 전환을 KPI로 관리", action:"회사 신뢰, 제품군, 응용 분야, 문의 절차 중심으로 1차 콘텐츠 6건 기획", internalNote:"홍보 콘텐츠는 고객 문제와 HLB-현장지원팀의 해결 가능성을 짧고 명확하게 설명"},
       {id:"ai_video_intro", title:"AI 영상·제품 소개 콘텐츠 1편 제작", tag:"영상 / 제조역량", stage:"리드",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"30", lastContact:"", nextAction:"2026-08-09",
-       desc:"니티놀 원재료, 합금 조성, 와이어·판재·튜브·스프링, OEM 가공 흐름을 시각화한다.", goal:"영업 초기 단계에서 티니코의 제조 범위를 빠르게 설명할 자료 확보", action:"공개 가능한 사진·영상 소스를 받은 뒤 1분 내외 소개 영상 초안 제작", internalNote:"기술수치와 인증 표현은 근거 자료 확인 후 반영"}
+       desc:"니티놀 원재료, 합금 조성, 와이어·판재·튜브·스프링, OEM 가공 흐름을 시각화한다.", goal:"영업 초기 단계에서 HLB-현장지원팀의 제조 범위를 빠르게 설명할 자료 확보", action:"공개 가능한 사진·영상 소스를 받은 뒤 1분 내외 소개 영상 초안 제작", internalNote:"기술수치와 인증 표현은 근거 자료 확인 후 반영"}
     ],
   },
   {
@@ -98,11 +98,11 @@ const LEGACY_DEFAULT_AREAS = [
       {id:"capital_impairment", title:"자본잠식에 따른 국책과제 참여 제한 확인", tag:"자본잠식 / 국책과제", stage:"상담",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"80", lastContact:"", nextAction:"2026-07-25",
-       desc:"티니코는 자본잠식으로 은행 업무와 국책과제 신청·수행에 제한이 있다고 설명했다.", goal:"참여 제한 요건, 현재 과제 영향, 예외·보완 가능성, 재신청 조건을 확인", action:"관련 부서에 발생 원인, 해소 수단, 예상 일정, 사업 참여 영향 확인 요청", internalNote:"티니코 설명상 실적 부진보다 지분 양도 과정의 회계상 영향이라는 점을 함께 확인"},
+       desc:"HLB-현장지원팀는 자본잠식으로 은행 업무와 국책과제 신청·수행에 제한이 있다고 설명했다.", goal:"참여 제한 요건, 현재 과제 영향, 예외·보완 가능성, 재신청 조건을 확인", action:"관련 부서에 발생 원인, 해소 수단, 예상 일정, 사업 참여 영향 확인 요청", internalNote:"HLB-현장지원팀 설명상 실적 부진보다 지분 양도 과정의 회계상 영향이라는 점을 함께 확인"},
       {id:"finance_costs", title:"재무·회계 지원비 및 공통비 부담 기준 확인", tag:"비용 구조 / 내부 확인", stage:"리드",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"50", lastContact:"", nextAction:"2026-07-30",
-       desc:"재무·회계 지원비, 외부 기장비, 겸직 인력비, 그룹 공통비 부담 기준 확인 요청이 있었다.", goal:"비용 부담 근거와 조정 필요성을 항목별로 정리", action:"항목별 담당부서, 산정 근거, 중복 여부, 조정 가능성을 확인", internalNote:"티니코 측 공유용 답변은 사실 확인 후 별도 정리"}
+       desc:"재무·회계 지원비, 외부 기장비, 겸직 인력비, 그룹 공통비 부담 기준 확인 요청이 있었다.", goal:"비용 부담 근거와 조정 필요성을 항목별로 정리", action:"항목별 담당부서, 산정 근거, 중복 여부, 조정 가능성을 확인", internalNote:"HLB-현장지원팀 측 공유용 답변은 사실 확인 후 별도 정리"}
     ],
   },
   {
@@ -116,7 +116,7 @@ const LEGACY_DEFAULT_AREAS = [
       {id:"network_candidates", title:"의료기기·소재 네트워크 연결 후보 정리", tag:"그룹 네트워크 / 강소기업협회", stage:"리드",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"30", lastContact:"", nextAction:"2026-08-10",
-       desc:"그룹 네트워크와 강소기업협회 등을 활용해 의료기기·소재 관련 업체 연결 가능성을 검토한다.", goal:"티니코가 바로 접촉 가능한 협력 후보 목록 확보", action:"의료기기 도매·제조사, 소재 적용 가능 기업, 내부 수요처 후보를 정리", internalNote:"소개 전에는 티니코가 제공 가능한 제품·기술 범위와 공개자료를 먼저 확정"}
+       desc:"그룹 네트워크와 강소기업협회 등을 활용해 의료기기·소재 관련 업체 연결 가능성을 검토한다.", goal:"HLB-현장지원팀가 바로 접촉 가능한 협력 후보 목록 확보", action:"의료기기 도매·제조사, 소재 적용 가능 기업, 내부 수요처 후보를 정리", internalNote:"소개 전에는 HLB-현장지원팀가 제공 가능한 제품·기술 범위와 공개자료를 먼저 확정"}
     ],
   },
   {
@@ -130,7 +130,7 @@ const LEGACY_DEFAULT_AREAS = [
       {id:"english_inquiry_template", title:"영문 제품 문의 응대 템플릿 작성", tag:"영문 문의 / 응대 기준", stage:"리드",
        contactName:"", contactRole:"", contactPhone:"", contactEmail:"",
        amount:"", prob:"30", lastContact:"", nextAction:"2026-08-04",
-       desc:"해외 문의 발생 시 필요한 기술 조건을 빠짐없이 확인할 수 있도록 응대 양식을 준비한다.", goal:"문의 수신 후 초기 답변 시간을 줄이고 기술 검토 품질을 균일화", action:"제품군별 필수 확인 항목과 회신 템플릿을 작성", internalNote:"답변 가능 언어, 담당자, 목표 응답시간을 티니코와 사전에 확정"}
+       desc:"해외 문의 발생 시 필요한 기술 조건을 빠짐없이 확인할 수 있도록 응대 양식을 준비한다.", goal:"문의 수신 후 초기 답변 시간을 줄이고 기술 검토 품질을 균일화", action:"제품군별 필수 확인 항목과 회신 템플릿을 작성", internalNote:"답변 가능 언어, 담당자, 목표 응답시간을 HLB-현장지원팀와 사전에 확정"}
     ],
   },
 ];
@@ -146,11 +146,11 @@ const SUPPORT_TASK_STATUSES = ["미착수","진행중","검토대기","완료","
 const SUPPORT_TASK_PRIORITIES = ["높음","중간","낮음"];
 const ROADMAP_SEED = [
   {id:"internal_report", title:"회의 결과 내부 보고 및 확인 요청", type:"내부 확인", purpose:"회의에서 확인된 자본잠식·국책과제·비용 구조 이슈의 담당부서와 대응 방향을 명확히 합니다.", deliverable:"담당부서, 회신기한, 확인 결과가 정리된 내부 보고 자료", owner:"", collaborators:"재무·회계 및 관련 부서", status:"미착수", priority:"높음", startDate:"", dueDate:"", progress:0, nextAction:"담당부서와 회신 요청 항목을 확정", blocker:"", notes:""},
-  {id:"request_materials", title:"티니코 자료 요청·공개등급 확정", type:"자료 확보", purpose:"홈페이지·영업자료·해외 홍보에 사용할 신뢰도 높은 자료를 확보합니다.", deliverable:"회사소개서, 제품·공정 사진, 시험성적서 및 자료별 공개 가능 등급 목록", owner:"", collaborators:"티니코 대표 및 기술 담당", status:"미착수", priority:"높음", startDate:"", dueDate:"", progress:0, nextAction:"필요 자료 목록과 공개 범위 확인표 전달", blocker:"고객사명과 시험자료의 외부 공개 가능 범위 확인", notes:""},
-  {id:"pipeline_mapping", title:"거래처·제품군별 매출 및 영업 현황 입력", type:"시스템·데이터", purpose:"단기 매출 가능 고객과 장기 검증 건을 구분하여 다음 영업 행동이 누락되지 않게 합니다.", deliverable:"고객·제품별 단계, 예상매출, 확률, 내부 담당자, 다음 액션일이 입력된 CRM", owner:"", collaborators:"티니코 영업·기술 담당", status:"미착수", priority:"높음", startDate:"", dueDate:"", progress:0, nextAction:"기존 거래처와 진행 중 샘플 목록 수령", blocker:"최근 접촉일과 예상 물량 자료 부족", notes:""},
-  {id:"content_plan", title:"홍보 콘텐츠 1차 기획", type:"홍보·콘텐츠", purpose:"티니코의 제조 역량과 제품 적용 가능성을 고객이 짧은 시간 안에 이해하도록 합니다.", deliverable:"회사 신뢰, 제품군, 응용분야, 문의 전환을 주제로 한 콘텐츠 기획안과 우선 제작 목록", owner:"", collaborators:"티니코 및 콘텐츠 담당", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"공개 가능한 사진·영상 소스 확인", blocker:"기술 수치와 인증 표현의 근거자료 확인 필요", notes:""},
-  {id:"alibaba_plan", title:"알리바바 해외 문의 테스트 실행안 작성", type:"영업 기반", purpose:"최소 비용으로 해외 유효 문의와 샘플 요청 가능성을 검증합니다.", deliverable:"입점 비용, 운영조건, 상품 등록안, 문의 응대 담당, KPI가 포함된 실행안", owner:"", collaborators:"티니코 해외영업 담당", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"비용·수수료·계정 운영 조건 조사", blocker:"영문 문의 대응 담당과 목표 응답시간 미확정", notes:""},
-  {id:"network_list", title:"그룹 네트워크 연결 후보 정리", type:"영업 기반", purpose:"티니코 제품과 기술을 소개할 수 있는 의료기기·소재 관련 잠재 협력사를 확보합니다.", deliverable:"연결 사유, 예상 수요, 소개 가능 담당자가 포함된 후보 기업 목록", owner:"", collaborators:"그룹 전략조직 및 관련 네트워크", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"후보군 선정 기준과 소개 자료 확정", blocker:"티니코 제공 가능 제품·기술 범위 자료 필요", notes:""},
+  {id:"request_materials", title:"HLB-현장지원팀 자료 요청·공개등급 확정", type:"자료 확보", purpose:"홈페이지·영업자료·해외 홍보에 사용할 신뢰도 높은 자료를 확보합니다.", deliverable:"회사소개서, 제품·공정 사진, 시험성적서 및 자료별 공개 가능 등급 목록", owner:"", collaborators:"HLB-현장지원팀 대표 및 기술 담당", status:"미착수", priority:"높음", startDate:"", dueDate:"", progress:0, nextAction:"필요 자료 목록과 공개 범위 확인표 전달", blocker:"고객사명과 시험자료의 외부 공개 가능 범위 확인", notes:""},
+  {id:"pipeline_mapping", title:"거래처·제품군별 매출 및 영업 현황 입력", type:"시스템·데이터", purpose:"단기 매출 가능 고객과 장기 검증 건을 구분하여 다음 영업 행동이 누락되지 않게 합니다.", deliverable:"고객·제품별 단계, 예상매출, 확률, 내부 담당자, 다음 액션일이 입력된 CRM", owner:"", collaborators:"HLB-현장지원팀 영업·기술 담당", status:"미착수", priority:"높음", startDate:"", dueDate:"", progress:0, nextAction:"기존 거래처와 진행 중 샘플 목록 수령", blocker:"최근 접촉일과 예상 물량 자료 부족", notes:""},
+  {id:"content_plan", title:"홍보 콘텐츠 1차 기획", type:"홍보·콘텐츠", purpose:"HLB-현장지원팀의 제조 역량과 제품 적용 가능성을 고객이 짧은 시간 안에 이해하도록 합니다.", deliverable:"회사 신뢰, 제품군, 응용분야, 문의 전환을 주제로 한 콘텐츠 기획안과 우선 제작 목록", owner:"", collaborators:"HLB-현장지원팀 및 콘텐츠 담당", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"공개 가능한 사진·영상 소스 확인", blocker:"기술 수치와 인증 표현의 근거자료 확인 필요", notes:""},
+  {id:"alibaba_plan", title:"알리바바 해외 문의 테스트 실행안 작성", type:"영업 기반", purpose:"최소 비용으로 해외 유효 문의와 샘플 요청 가능성을 검증합니다.", deliverable:"입점 비용, 운영조건, 상품 등록안, 문의 응대 담당, KPI가 포함된 실행안", owner:"", collaborators:"HLB-현장지원팀 해외영업 담당", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"비용·수수료·계정 운영 조건 조사", blocker:"영문 문의 대응 담당과 목표 응답시간 미확정", notes:""},
+  {id:"network_list", title:"그룹 네트워크 연결 후보 정리", type:"영업 기반", purpose:"HLB-현장지원팀 제품과 기술을 소개할 수 있는 의료기기·소재 관련 잠재 협력사를 확보합니다.", deliverable:"연결 사유, 예상 수요, 소개 가능 담당자가 포함된 후보 기업 목록", owner:"", collaborators:"그룹 전략조직 및 관련 네트워크", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"후보군 선정 기준과 소개 자료 확정", blocker:"HLB-현장지원팀 제공 가능 제품·기술 범위 자료 필요", notes:""},
   {id:"next_meeting_questions", title:"다음 회의 확인 질문 준비", type:"내부 확인", purpose:"회의에서 필요한 사실과 의사결정을 한 번에 확보하여 후속 업무 지연을 줄입니다.", deliverable:"3개월 내 매출 전환 품목, 공개 가능 자료, 장애요인, 담당자와 기한을 묻는 질문지", owner:"", collaborators:"회의 참석자", status:"미착수", priority:"중간", startDate:"", dueDate:"", progress:0, nextAction:"미확인 사항과 결정 필요 항목 취합", blocker:"", notes:""},
 ];
 
@@ -216,12 +216,12 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "설정",
     "title": "설정·매뉴얼·백업 관리",
     "format": "list",
-    "content": "설정 화면 상단의 ‘설정/매뉴얼’ 버튼으로 두 화면을 전환합니다. 초보 모드는 자주 쓰는 항목을 간단히 보여주고, 상세 모드는 그룹 분류와 세부 운영 설정까지 보여줍니다.\n파이프라인 단계의 이름과 색상을 추가·수정·삭제할 수 있습니다. 단계 변경은 보드 구성과 기존 영업 항목 값에 영향을 주므로 관리자와 협의합니다.\n상세 모드에서는 그룹 분류의 설명·중요도 가중치와 그룹 이름·색상·기본 분류를 관리합니다.\n사용 환경에서는 시작 안내를 다시 열거나 이전 기본 예시 중 중복·미입력 항목을 정리할 수 있습니다. 실제 사용자가 입력한 항목은 삭제 후보를 먼저 확인합니다.\n매뉴얼 화면에서는 제목·내용 검색, 항목 추가·수정·삭제와 순서 변경을 합니다. 수정 내용은 AI 봇의 기능 사용법 답변에도 반영됩니다.\n‘기본 매뉴얼 복원’은 현재 매뉴얼을 이 버전의 기본 내용으로 교체합니다. 직접 작성한 매뉴얼이 필요하면 먼저 관리자 백업을 내려받습니다.\n관리자 기능: 설정 화면 상단의 ‘관리자’를 누르고 관리자 코드를 입력합니다. 인증되면 백업 영역에 ‘내려받기’와 ‘복원하기’가 나타납니다. 인증 정보는 브라우저 저장소에 남기지 않으며 새로고침하거나 인증 시간이 끝나면 다시 입력합니다.\n‘내려받기’는 연락처, 영업 건과 활동, 지원 업무, 직접 일정, 매뉴얼, 설정 등 전체 데이터와 화면별 변경 로그를 JSON 파일 하나로 저장합니다. 로그에는 시각, 화면, 입력·수정·삭제 동작, 항목명, 바뀐 필드와 변경 전·후 값이 포함됩니다. 공용 연결키 방식이므로 변경한 사람의 이름은 구분하지 않습니다.\n파일명은 tiniko_crm_backup_년-월-일_시-분-초.json 형식입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용하지만 여섯 시간 정보가 모두 들어갑니다.\n‘복원하기’는 내려받은 백업 파일의 데이터와 변경 로그로 외부 DB 전체를 해당 시점으로 되돌립니다. 복원 직전에 현재 상태를 먼저 내려받고, 작업 중인 다른 사용자에게 알린 뒤 실행합니다. 이전 버전 2 백업 파일도 복원할 수 있습니다.\n삭제한 영업 항목·연락처·그룹·지원 업무는 휴지통에서 복구할 수 있습니다. 휴지통 비우기와 영구 삭제 후에는 백업 복원 외에는 되돌릴 수 없습니다."
+    "content": "설정 화면 상단의 ‘설정/매뉴얼’ 버튼으로 두 화면을 전환합니다. 초보 모드는 자주 쓰는 항목을 간단히 보여주고, 상세 모드는 그룹 분류와 세부 운영 설정까지 보여줍니다.\n파이프라인 단계의 이름과 색상을 추가·수정·삭제할 수 있습니다. 단계 변경은 보드 구성과 기존 영업 항목 값에 영향을 주므로 관리자와 협의합니다.\n상세 모드에서는 그룹 분류의 설명·중요도 가중치와 그룹 이름·색상·기본 분류를 관리합니다.\n사용 환경에서는 시작 안내를 다시 열거나 이전 기본 예시 중 중복·미입력 항목을 정리할 수 있습니다. 실제 사용자가 입력한 항목은 삭제 후보를 먼저 확인합니다.\n매뉴얼 화면에서는 제목·내용 검색, 항목 추가·수정·삭제와 순서 변경을 합니다. 수정 내용은 AI 봇의 기능 사용법 답변에도 반영됩니다.\n‘기본 매뉴얼 복원’은 현재 매뉴얼을 이 버전의 기본 내용으로 교체합니다. 직접 작성한 매뉴얼이 필요하면 먼저 관리자 백업을 내려받습니다.\n관리자 기능: 설정 화면 상단의 ‘관리자’를 누르고 관리자 코드를 입력합니다. 인증되면 백업 영역에 ‘내려받기’와 ‘복원하기’가 나타납니다. 인증 정보는 브라우저 저장소에 남기지 않으며 새로고침하거나 인증 시간이 끝나면 다시 입력합니다.\n‘내려받기’는 연락처, 영업 건과 활동, 지원 업무, 직접 일정, 매뉴얼, 설정 등 전체 데이터와 화면별 변경 로그를 JSON 파일 하나로 저장합니다. 로그에는 시각, 화면, 입력·수정·삭제 동작, 항목명, 바뀐 필드와 변경 전·후 값이 포함됩니다. 공용 연결키 방식이므로 변경한 사람의 이름은 구분하지 않습니다.\n파일명은 hlb_busisup_crm_backup_년-월-일_시-분-초.json 형식입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용하지만 여섯 시간 정보가 모두 들어갑니다.\n‘복원하기’는 내려받은 백업 파일의 데이터와 변경 로그로 외부 DB 전체를 해당 시점으로 되돌립니다. 복원 직전에 현재 상태를 먼저 내려받고, 작업 중인 다른 사용자에게 알린 뒤 실행합니다. 이전 버전 2 백업 파일도 복원할 수 있습니다.\n삭제한 영업 항목·연락처·그룹·지원 업무는 휴지통에서 복구할 수 있습니다. 휴지통 비우기와 영구 삭제 후에는 백업 복원 외에는 되돌릴 수 없습니다."
   },
   {
     "id": "manual_operation",
     "category": "운영 기준",
-    "title": "티니코 CRM 운영 기준",
+    "title": "HLB-현장지원팀 CRM 운영 기준",
     "format": "list",
     "content": "파이프라인에는 고객사명 또는 구체적인 영업 건이 확인된 항목만 등록하고, 단순 아이디어나 내부 준비 업무는 지원 업무에 등록합니다.\n새 영업 건은 제목, 단계, 내부 담당자, 고객 담당자, 예상 매출, 다음 할 일과 다음 연락일을 우선 입력합니다.\n고객과 연락한 뒤에는 활동 기록에 내용과 결과를 남기고 다음 할 일과 다음 연락일을 즉시 갱신합니다.\n업무 시작 시 대시보드의 오늘 할 일과 빨간 긴급 배지를 확인하고, 지연된 일정부터 처리합니다.\n담당자가 바뀌어도 과거 활동 기록은 삭제하지 않고 유지하여 영업 이력을 이어갑니다. 지원 업무는 담당자, 마감일과 완료 기준 없이 방치하지 않습니다.\n여러 사용자가 같은 항목을 동시에 열어 수정하지 않습니다. 화면은 실시간 동기화가 아니므로 작업 전 새로고침하고 ‘저장됨’을 확인합니다.\n매일 또는 중요한 변경 전후에 관리자가 백업을 내려받고, 주 단위로 복원 가능한 파일인지 보관 상태를 확인합니다. 파일을 열어 summary와 data.auditLogs에서 화면별 입력·수정·삭제 건수를 확인할 수 있습니다.\nCRM_ACCESS_KEY와 관리자 코드는 담당자에게만 안전하게 전달하고 퇴사·분실·외부 노출이 의심되면 즉시 새 값으로 교체합니다."
   },
@@ -244,7 +244,7 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "문제 해결",
     "title": "오류가 보일 때 확인 순서",
     "format": "list",
-    "content": "외부 DB ‘확인 필요’: 상단 배지를 눌러 Render의 CRM_ACCESS_KEY를 다시 입력합니다. 계속 실패하면 Render 서비스가 실행 중인지와 /api/health 응답을 확인합니다.\n‘화면 초기화 오류’ 또는 UI-BIND/UI-DATA 코드: 카메라 권한 문제가 아니며 연결키를 반복 입력할 필요가 없습니다. ‘화면 새로고침’을 누르고, 계속되면 오류 코드·발생 시각·Render 로그를 관리자에게 전달합니다.\n카메라 스캔을 눌렀는데 외부 DB 연결창이 뜸: 이전 배포 파일이 브라우저에 남았거나 화면 버튼 연결이 중단된 경우입니다. 새 버전 배포가 완료됐는지 확인하고 강력 새로고침한 뒤 다시 실행합니다. 현재 버전은 삭제된 버튼 참조를 자동 검사하며 카메라 오류가 DB 창을 열지 않도록 분리되어 있습니다.\n자동 저장 ‘저장 실패’: 상세 창을 닫지 말고 인터넷 연결과 외부 DB 상태를 확인합니다. 입력값을 다시 수정하여 저장을 재시도하고 ‘저장됨’을 확인합니다.\n카메라 권한을 매번 물음: 새로고침하지 않은 같은 페이지에서는 최초 스트림을 재사용합니다. 그래도 반복되면 주소가 HTTPS인지 확인하고 브라우저의 사이트 설정에서 카메라 권한을 ‘허용’으로 고정합니다. 시크릿 모드, 브라우저 종료 또는 회사 보안 정책에서는 다시 물을 수 있습니다.\n카메라가 열리지 않음: 휴대폰 설정과 브라우저 사이트 권한에서 카메라가 차단되지 않았는지 확인합니다. 다른 앱이 카메라를 사용 중이면 닫고 다시 시도합니다. 지원되지 않거나 영상이 준비되지 않으면 최대 6초 뒤 휴대폰 기본 촬영·파일 선택으로 자동 전환됩니다.\n‘조명이 부족합니다’ 또는 ‘글자가 흐릿합니다’ 팝업: 밝은 곳으로 이동하거나 조명 버튼을 사용하고, 명함을 프레임에 크게 맞춘 뒤 화면의 명함을 눌러 초점을 다시 잡습니다. 반사가 강하면 명함이나 휴대폰 각도를 조금 바꿉니다.\n명함 인식 결과가 부족함: 가로형 명함을 평평한 바닥에 놓고 그림자 없이 프레임을 가득 채워 다시 촬영합니다. OCR이 끝난 뒤 이름·회사·전화·이메일을 원본과 비교하고 잘못된 값은 직접 수정합니다.\n관리자 코드 오류: 대소문자, 숫자와 특수문자를 정확히 입력합니다. 인증 시간이 끝났거나 새로고침한 경우 설정의 ‘관리자’를 눌러 다시 인증합니다.\n백업 내려받기 실패: 관리자 인증 상태와 외부 DB 연결을 확인하고 다시 시도합니다. 브라우저가 다운로드를 차단했다면 이 사이트의 다운로드를 허용합니다.\n백업 복원 실패: JSON 파일이 티니코 CRM 백업인지, 같은 작업공간에서 만든 파일인지 확인합니다. 실패한 경우 기존 데이터는 트랜잭션으로 유지되므로 오류를 해결한 뒤 다시 실행합니다.\n다른 사람의 변경이 안 보임: 이 CRM은 실시간 공동 편집 화면이 아니므로 새로고침합니다. 같은 항목 동시 수정은 피합니다.\n캘린더 저장 실패: 제목·날짜·시간 순서를 확인한 뒤 다시 저장합니다. 오류 창이 유지되면 DB 연결을 먼저 복구합니다.\nGoogle 연결 실패: OAuth 클라이언트 ID, 승인된 JavaScript 원본의 정확한 https://도메인, Calendar API 사용 설정과 권한 동의 상태를 확인합니다. 토큰 만료 시 다시 연결합니다.\nGoogle 일정이 수정되지 않음: 무료 최소 동기화 모드는 새 일정 1회 등록과 선택한 달 조회만 수행합니다. 이미 전송한 일정의 수정·삭제는 Google Calendar 원본에서 직접 처리합니다.\nGoogle 일정이 중복으로 보임: 같은 일정을 Google에서 직접 복사했거나 연결 ID가 없는 과거 일정일 수 있습니다. 제목·날짜를 확인하고 Google Calendar에서 불필요한 원본을 삭제한 뒤 ‘Google 일정 불러오기’를 누릅니다.\nRender 무료 서비스가 잠든 경우 첫 접속이 늦을 수 있습니다. 잠시 기다린 뒤 새로고침하고 Render 로그에서 서버 시작과 DB 오류를 확인합니다.\n데이터가 예상과 다름: 즉시 덮어쓰지 말고 최근 백업 파일과 휴지통을 확인합니다. 복원 전 현재 상태를 새 백업으로 보관합니다.\n오류가 반복되면 발생 시각, 사용 메뉴, 화면 메시지와 Render 로그를 함께 기록하여 관리자에게 전달합니다. CRM_ACCESS_KEY, 관리자 코드와 DATABASE_URL 전체 값은 캡처에 포함하지 않습니다."
+    "content": "외부 DB ‘확인 필요’: 상단 배지를 눌러 Render의 CRM_ACCESS_KEY를 다시 입력합니다. 계속 실패하면 Render 서비스가 실행 중인지와 /api/health 응답을 확인합니다.\n‘화면 초기화 오류’ 또는 UI-BIND/UI-DATA 코드: 카메라 권한 문제가 아니며 연결키를 반복 입력할 필요가 없습니다. ‘화면 새로고침’을 누르고, 계속되면 오류 코드·발생 시각·Render 로그를 관리자에게 전달합니다.\n카메라 스캔을 눌렀는데 외부 DB 연결창이 뜸: 이전 배포 파일이 브라우저에 남았거나 화면 버튼 연결이 중단된 경우입니다. 새 버전 배포가 완료됐는지 확인하고 강력 새로고침한 뒤 다시 실행합니다. 현재 버전은 삭제된 버튼 참조를 자동 검사하며 카메라 오류가 DB 창을 열지 않도록 분리되어 있습니다.\n자동 저장 ‘저장 실패’: 상세 창을 닫지 말고 인터넷 연결과 외부 DB 상태를 확인합니다. 입력값을 다시 수정하여 저장을 재시도하고 ‘저장됨’을 확인합니다.\n카메라 권한을 매번 물음: 새로고침하지 않은 같은 페이지에서는 최초 스트림을 재사용합니다. 그래도 반복되면 주소가 HTTPS인지 확인하고 브라우저의 사이트 설정에서 카메라 권한을 ‘허용’으로 고정합니다. 시크릿 모드, 브라우저 종료 또는 회사 보안 정책에서는 다시 물을 수 있습니다.\n카메라가 열리지 않음: 휴대폰 설정과 브라우저 사이트 권한에서 카메라가 차단되지 않았는지 확인합니다. 다른 앱이 카메라를 사용 중이면 닫고 다시 시도합니다. 지원되지 않거나 영상이 준비되지 않으면 최대 6초 뒤 휴대폰 기본 촬영·파일 선택으로 자동 전환됩니다.\n‘조명이 부족합니다’ 또는 ‘글자가 흐릿합니다’ 팝업: 밝은 곳으로 이동하거나 조명 버튼을 사용하고, 명함을 프레임에 크게 맞춘 뒤 화면의 명함을 눌러 초점을 다시 잡습니다. 반사가 강하면 명함이나 휴대폰 각도를 조금 바꿉니다.\n명함 인식 결과가 부족함: 가로형 명함을 평평한 바닥에 놓고 그림자 없이 프레임을 가득 채워 다시 촬영합니다. OCR이 끝난 뒤 이름·회사·전화·이메일을 원본과 비교하고 잘못된 값은 직접 수정합니다.\n관리자 코드 오류: 대소문자, 숫자와 특수문자를 정확히 입력합니다. 인증 시간이 끝났거나 새로고침한 경우 설정의 ‘관리자’를 눌러 다시 인증합니다.\n백업 내려받기 실패: 관리자 인증 상태와 외부 DB 연결을 확인하고 다시 시도합니다. 브라우저가 다운로드를 차단했다면 이 사이트의 다운로드를 허용합니다.\n백업 복원 실패: JSON 파일이 HLB-현장지원팀 CRM 백업인지, 같은 작업공간에서 만든 파일인지 확인합니다. 실패한 경우 기존 데이터는 트랜잭션으로 유지되므로 오류를 해결한 뒤 다시 실행합니다.\n다른 사람의 변경이 안 보임: 이 CRM은 실시간 공동 편집 화면이 아니므로 새로고침합니다. 같은 항목 동시 수정은 피합니다.\n캘린더 저장 실패: 제목·날짜·시간 순서를 확인한 뒤 다시 저장합니다. 오류 창이 유지되면 DB 연결을 먼저 복구합니다.\nGoogle 연결 실패: OAuth 클라이언트 ID, 승인된 JavaScript 원본의 정확한 https://도메인, Calendar API 사용 설정과 권한 동의 상태를 확인합니다. 토큰 만료 시 다시 연결합니다.\nGoogle 일정이 수정되지 않음: 무료 최소 동기화 모드는 새 일정 1회 등록과 선택한 달 조회만 수행합니다. 이미 전송한 일정의 수정·삭제는 Google Calendar 원본에서 직접 처리합니다.\nGoogle 일정이 중복으로 보임: 같은 일정을 Google에서 직접 복사했거나 연결 ID가 없는 과거 일정일 수 있습니다. 제목·날짜를 확인하고 Google Calendar에서 불필요한 원본을 삭제한 뒤 ‘Google 일정 불러오기’를 누릅니다.\nRender 무료 서비스가 잠든 경우 첫 접속이 늦을 수 있습니다. 잠시 기다린 뒤 새로고침하고 Render 로그에서 서버 시작과 DB 오류를 확인합니다.\n데이터가 예상과 다름: 즉시 덮어쓰지 말고 최근 백업 파일과 휴지통을 확인합니다. 복원 전 현재 상태를 새 백업으로 보관합니다.\n오류가 반복되면 발생 시각, 사용 메뉴, 화면 메시지와 Render 로그를 함께 기록하여 관리자에게 전달합니다. CRM_ACCESS_KEY, 관리자 코드와 DATABASE_URL 전체 값은 캡처에 포함하지 않습니다."
   }
 ];
 
@@ -290,7 +290,7 @@ function resetCloudGateUi(){
   const recovery=document.getElementById("cloud-recovery-actions");
   if(gate)delete gate.dataset.mode;
   if(icon)icon.textContent="DB";
-  if(title)title.textContent="티니코 CRM 외부 DB 연결";
+  if(title)title.textContent="HLB-현장지원팀 CRM 외부 DB 연결";
   if(copy)copy.innerHTML="Render 서버에 설정한 CRM 연결키를 입력하세요. Neon 데이터베이스 비밀번호가 아니라 <b>CRM_ACCESS_KEY</b> 값입니다.";
   if(form)form.hidden=false;
   if(recovery)recovery.hidden=true;
@@ -322,7 +322,7 @@ function showInitializationFailure(error){
   const type=error&&error.name==="TypeError"?"UI-BIND":"UI-DATA";
   if(gate){gate.dataset.mode="initialization-error";gate.hidden=false;}
   if(icon)icon.textContent="!";
-  if(title)title.textContent="티니코 CRM 화면 초기화 오류";
+  if(title)title.textContent="HLB-현장지원팀 CRM 화면 초기화 오류";
   if(copy)copy.textContent="카메라 권한 문제가 아니며, 화면 구성 또는 데이터 로딩 중 오류가 발생했습니다. 연결키를 반복 입력하지 말고 화면을 새로고침해 주세요. 계속되면 아래 오류 코드와 Render 로그를 관리자에게 전달하세요.";
   if(form)form.hidden=true;
   if(recovery)recovery.hidden=false;
@@ -938,7 +938,7 @@ async function exportFullBackup(){
     const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download=`tiniko_crm_backup_${formatBackupFileStamp(new Date(backup.exportedAt))}.json`;
+    a.download=`hlb_busisup_crm_backup_${formatBackupFileStamp(new Date(backup.exportedAt))}.json`;
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     adminLastBackupAt=backup.exportedAt||nowIso();
@@ -4414,7 +4414,7 @@ function contactToOutlookRow(c){
   row["Mobile Phone"]=c.mobilePhone||""; row["Primary Phone"]=contactPrimaryPhone(c); row["Categories"]=c.group||"";
   row["E-mail Address"]=c.email||""; row["E-mail Type"]=c.email?"SMTP":""; row["E-mail Display Name"]=c.name||c.email||"";
   row["Birthday"]=c.birthday||""; row["Notes"]=c.memo||""; row["Keywords"]=c.tags||""; row["User 1"]=c.registrar||""; row["User 2"]=c.createdAt||"";
-  row["User 3"]=c.fav?"Y":""; row["User 4"]="TINIKO CRM"; row["Web Page"]=c.website||"";
+  row["User 3"]=c.fav?"Y":""; row["User 4"]="HLB-BUSISUP CRM"; row["Web Page"]=c.website||"";
   return OUTLOOK_CSV_HEADERS.map(h=>row[h]);
 }
 function exportContactsCsv(){
@@ -4835,7 +4835,7 @@ function aiBriefingText(){
   const urgent = alerts.filter(a=>a.sev === "urgent");
   const warn = alerts.filter(a=>a.sev === "warn");
   const tops = s.active.slice().sort(compareImportanceDeals).slice(0,3);
-  const L = ["티니코 영업지원 브리핑:"];
+  const L = ["HLB-현장지원팀 영업지원 브리핑:"];
   L.push("· 운영 기준: 기존 거래처·진행 영업 건은 단기 매출 전환 중심, 장기 완제품 검토는 별도 트랙");
   L.push(`· 활성 항목 ${s.active.length}건 · 파이프라인 ${fmtAmount(Math.round(s.pipeline))} · 가중 예상 ${fmtAmount(Math.round(s.weighted))}`);
   L.push(`· 수주 ${s.wonCnt}건 (${fmtAmount(Math.round(s.won))}) · 연락처 ${contactsData.length}명`);
@@ -4930,10 +4930,10 @@ function aiTaskAdvice(t){
 }
 function aiDraftFollowupEmail(d){
   const i=d.item;const contact=i.contactName?`${i.contactName} ${i.contactRole||""}`.trim()+"님":"담당자님";const next=i.action||"진행 상황과 향후 일정을 확인";
-  return `[후속 이메일 초안]\n제목: [티니코] ${i.title} 관련 진행 상황 확인\n\n안녕하세요, ${contact}.\n티니코입니다.\n\n${i.title} 관련하여 ${next}드리고자 연락드립니다.\n현재 검토 상황과 추가로 필요한 자료 또는 확인사항이 있으시면 회신 부탁드립니다.\n가능하시다면 향후 일정도 함께 공유해 주시면 후속 대응에 반영하겠습니다.\n\n감사합니다.\n티니코 드림\n\n※ 발송 전 고객명, 제품명, 요청 내용과 기한을 실제 상황에 맞게 확인하세요.`;
+  return `[후속 이메일 초안]\n제목: [HLB-현장지원팀] ${i.title} 관련 진행 상황 확인\n\n안녕하세요, ${contact}.\nHLB-현장지원팀입니다.\n\n${i.title} 관련하여 ${next}드리고자 연락드립니다.\n현재 검토 상황과 추가로 필요한 자료 또는 확인사항이 있으시면 회신 부탁드립니다.\n가능하시다면 향후 일정도 함께 공유해 주시면 후속 대응에 반영하겠습니다.\n\n감사합니다.\nHLB-현장지원팀 드림\n\n※ 발송 전 고객명, 제품명, 요청 내용과 기한을 실제 상황에 맞게 확인하세요.`;
 }
 function aiDraftShortMessage(d){
-  const i=d.item;const name=i.contactName?`${i.contactName}님, `:"";return `[짧은 연락 문구]\n${name}안녕하세요. 티니코입니다. ${i.title} 관련 진행 상황과 추가 확인이 필요한 사항이 있는지 문의드립니다. 가능하실 때 현재 검토 일정과 회신 가능 시점을 알려주시면 감사하겠습니다.`;
+  const i=d.item;const name=i.contactName?`${i.contactName}님, `:"";return `[짧은 연락 문구]\n${name}안녕하세요. HLB-현장지원팀입니다. ${i.title} 관련 진행 상황과 추가 확인이 필요한 사항이 있는지 문의드립니다. 가능하실 때 현재 검토 일정과 회신 가능 시점을 알려주시면 감사하겠습니다.`;
 }
 function aiOwnerOverview(q){
   const owners=new Map();
@@ -4948,7 +4948,7 @@ function aiAlertText(filterSev=""){
   if(!list.length)return filterSev==="urgent"?"긴급 확인 항목이 없습니다.":"확인할 일정 알림이 없습니다.";
   return `${filterSev==="urgent"?"긴급 확인":"일정·업무 알림"} ${list.length}건:\n`+list.slice(0,10).map(a=>`· [${AI_SEV_LABEL[a.sev]}] ${a.title}\n  ${a.reasons.map(x=>x.replace(/^\[실행과제\]\s*/,"")).join(" / ")}`).join("\n")+(list.length>10?`\n외 ${list.length-10}건`:"");
 }
-const AI_MANUAL_STOPWORDS = new Set(["무엇","뭐야","뭐지","어떻게","방법","사용","사용법","기능","설명","알려줘","보여줘","현재","관련","대한","있는","하는","하면","해주세요","해줘","CRM","티니코","질문","없는","완전히","내용","답변"]);
+const AI_MANUAL_STOPWORDS = new Set(["무엇","뭐야","뭐지","어떻게","방법","사용","사용법","기능","설명","알려줘","보여줘","현재","관련","대한","있는","하는","하면","해주세요","해줘","CRM","HLB-현장지원팀","질문","없는","완전히","내용","답변"]);
 const AI_MANUAL_ALIASES = [
   [/메뉴얼/g,"매뉴얼"],[/로드맵/g,"실행과제"],[/후속일/g,"다음 액션일"],[/후속 업무/g,"고객 후속 업무"],
   [/다음 행동/g,"다음 액션"],[/명함 인식/g,"OCR"],[/뱃지|배지/g,"아이콘 숫자 긴급 항목"],
@@ -5503,7 +5503,7 @@ async function loadGoogleCalendarEvents(showMessage=true,force=false){
 }
 function googlePayloadHash(payload){return JSON.stringify([payload.summary,payload.description||"",payload.location||"",payload.start.date||payload.start.dateTime||"",payload.end.date||payload.end.dateTime||""]);}
 function calendarEntryGooglePayload(item){
-  const description=[item.description,"TINIKO CRM 직접 등록 일정",`원본 키: manual:${item.id}`].filter(Boolean).join("\n\n");
+  const description=[item.description,"HLB-BUSISUP CRM 직접 등록 일정",`원본 키: manual:${item.id}`].filter(Boolean).join("\n\n");
   const payload={summary:item.title,description,location:item.location||"",extendedProperties:{private:{tinikoCrmKey:`manual:${item.id}`,tinikoCrmType:"manual"}}};
   if(item.allDay){
     payload.start={date:item.date};payload.end={date:calendarNextDate(item.date)};
@@ -6104,7 +6104,7 @@ async function init(){
 }
 
 init().catch(error=>{
-  console.error("TINIKO CRM initialization failed",error);
+  console.error("HLB-BUSISUP CRM initialization failed",error);
   setCloudConnectionState("error","화면 오류");
   showInitializationFailure(error);
 });
