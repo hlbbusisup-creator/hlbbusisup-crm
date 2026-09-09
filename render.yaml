@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: tiniko-crm
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: CRM_ACCESS_KEY
+        sync: false
+      - key: CRM_WORKSPACE_ID
+        value: tiniko

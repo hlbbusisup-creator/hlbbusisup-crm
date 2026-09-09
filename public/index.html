@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>티니코 CRM 간편 모드</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
+<link rel="stylesheet" href="styles.css?v=20260805a">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body style="margin:0;background:#F3F4F6;padding:22px 14px 40px;">
+<div id="tn-root">
+
+  <div class="tn-cloud-gate" id="cloud-gate" hidden>
+    <section class="tn-cloud-card" role="dialog" aria-modal="true" aria-labelledby="cloud-gate-title">
+      <div class="tn-cloud-icon" id="cloud-gate-icon" aria-hidden="true">DB</div>
+      <div class="tn-cloud-title" id="cloud-gate-title">티니코 CRM 외부 DB 연결</div>
+      <div class="tn-cloud-copy" id="cloud-gate-copy">Render 서버에 설정한 CRM 연결키를 입력하세요. Neon 데이터베이스 비밀번호가 아니라 <b>CRM_ACCESS_KEY</b> 값입니다.</div>
+      <form class="tn-cloud-form" id="cloud-login-form">
+        <label class="tn-cloud-label" for="cloud-access-key">CRM 연결키</label>
+        <input class="tn-cloud-input" id="cloud-access-key" type="password" autocomplete="current-password" minlength="16" required placeholder="16자 이상의 CRM_ACCESS_KEY">
+        <div class="tn-cloud-status" id="cloud-login-status" aria-live="polite"></div>
+        <div class="tn-cloud-actions">
+          <button class="tn-btn" id="cloud-login-cancel" type="button" hidden>취소</button>
+          <button class="tn-btn primary" id="cloud-login-submit" type="submit">외부 DB 연결</button>
+        </div>
+      </form>
+      <div class="tn-cloud-recovery" id="cloud-recovery-actions" hidden>
+        <div class="tn-cloud-recovery-code" id="cloud-recovery-code" role="status"></div>
+        <div class="tn-cloud-actions"><button class="tn-btn primary" id="cloud-reload-button" type="button">화면 새로고침</button></div>
+      </div>
+      <div class="tn-cloud-note"><b>보안 안내</b><br>연결키는 이 브라우저에만 저장되며 GitHub 코드에는 포함되지 않습니다. Neon의 DATABASE_URL은 Render 환경변수에만 보관합니다.</div>
+    </section>
+  </div>
+
+  <!-- ============ 상단 네비게이션 ============ -->
+  <div class="tn-topbar">
+    <button class="tn-home-logo" id="tn-home-logo" type="button" aria-label="대시보드로 이동" title="대시보드로 이동">
+      <img src="data:image/png;base64,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" alt="TINIKO">
+      <span class="tn-home-logo-crm">CRM</span>
+    </button>
+    <nav class="tn-tabs" id="tn-tabs"></nav>
+    <div class="tn-topbar-right tn-top-tools">
+      <button class="tn-cloud-db-button" id="cloud-db-button" type="button" data-state="checking" title="외부 DB 연결 확인 또는 연결키 변경">
+        <span class="tn-cloud-db-dot" aria-hidden="true"></span>
+        <span class="tn-cloud-db-label">외부 DB</span>
+        <span class="tn-cloud-db-state" id="cloud-db-state">확인 중</span>
+      </button>
+      <span class="tn-today-chip" id="tn-today-chip"></span>
+      <span class="tn-simple-mode-badge">간편 모드</span>
+      <button class="tn-top-tool on" id="top-beginner-toggle" type="button" title="초보 모드 전환" hidden>초보 <span>모드</span></button>
+      <button class="tn-top-tool" id="top-help-btn" type="button" title="사용 안내 열기">사용 안내</button>
+    </div>
+  </div>
+
+  <div class="tn-body">
+
+    <!-- ============ 대시보드 ============ -->
+    <div class="tn-view active" id="view-home">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">티니코 영업 현황</div>
+          <div class="tn-module-sub">오늘 해야 할 일과 진행 중인 영업을 확인합니다.</div>
+        </div>
+      </div>
+
+      <div class="tn-dashboard-order-hint">오른쪽의 ↕ 버튼을 끌면 화면 순서를 바꿀 수 있습니다.</div>
+
+      <div class="tn-dashboard-layout" id="tn-dashboard-layout">
+        <section class="tn-analytics tn-dashboard-item" id="tn-analytics-panel" data-dashboard-item="analytics">
+          <div class="tn-dashboard-item-head">
+            <div class="tn-dashboard-item-head-main">
+              <div class="tn-analytics-title">파이프라인 분석</div>
+              <div class="tn-analytics-sub">고객 영업기회의 단계별 전환 현황</div>
+            </div>
+            <div class="tn-dashboard-item-head-actions">
+              <button class="tn-dashboard-drag-handle" type="button" aria-label="파이프라인 분석 위치 이동" title="드래그하여 위치 이동">↕</button>
+            </div>
+          </div>
+          <div class="tn-kpis" id="tn-kpis"></div>
+          <div class="tn-funnel" id="tn-funnel"></div>
+        </section>
+
+        <section class="tn-summary-panel tn-dashboard-item" id="tn-summary-panel" data-dashboard-item="summary">
+          <div class="tn-dashboard-item-head">
+            <div class="tn-dashboard-item-head-main">
+              <div class="tn-summary-panel-title">핵심 현황</div>
+              <div class="tn-summary-panel-sub">관리 항목·예상 매출·연락처 현황</div>
+            </div>
+            <div class="tn-dashboard-item-head-actions">
+              <button class="tn-dashboard-drag-handle" type="button" aria-label="핵심 현황 위치 이동" title="드래그하여 위치 이동">↕</button>
+            </div>
+          </div>
+          <div class="tn-summary" id="tn-summary"></div>
+        </section>
+
+        <section class="tn-today-panel tn-collapsible tn-dashboard-item" id="tn-today-panel" data-collapse-section="today" data-dashboard-item="today">
+          <div class="tn-section-head">
+            <div><div class="tn-section-title">오늘 할 일</div><div class="tn-section-sub" id="tn-today-summary">지연 일정과 다음 액션을 확인합니다.</div></div>
+            <div class="tn-section-actions">
+              <button class="tn-btn small" id="tn-today-refresh" type="button">새로고침</button>
+              <button class="tn-collapse-btn" id="tn-today-collapse" type="button" aria-expanded="true"><span>접기</span><b aria-hidden="true">⌃</b></button>
+              <button class="tn-dashboard-drag-handle" type="button" aria-label="오늘 할 일 위치 이동" title="드래그하여 위치 이동">↕</button>
+            </div>
+          </div>
+          <div class="tn-collapsible-body">
+            <div class="tn-today-list" id="tn-today-list"></div>
+          </div>
+        </section>
+
+        <div class="tn-ai-brief tn-dashboard-item" id="tn-ai-brief" data-dashboard-item="ai" hidden>
+          <div class="tn-ai-brief-head">
+            <span class="tn-ai-brief-title">영업지원 브리핑</span>
+            <span class="tn-count" id="ai-brief-count"></span>
+            <button class="tn-btn small" id="ai-brief-open">AI 봇에게 질문</button>
+            <button class="tn-dashboard-drag-handle" type="button" aria-label="영업지원 브리핑 위치 이동" title="드래그하여 위치 이동">↕</button>
+          </div>
+          <ul class="tn-ai-brief-list" id="ai-brief-list"></ul>
+          <div class="tn-ai-brief-more" id="ai-brief-more"></div>
+        </div>
+
+        <section class="tn-dashboard-panel tn-collapsible tn-dashboard-item" id="tn-groups-panel" data-collapse-section="groups" data-dashboard-item="groups">
+          <div class="tn-section-head">
+            <div><div class="tn-section-title">관리 그룹</div><div class="tn-section-sub" id="tn-groups-summary">고객과 영업기회를 목적별로 나누어 확인합니다.</div></div>
+            <div class="tn-section-actions">
+              <button class="tn-btn small" id="area-add-btn">새 그룹</button>
+              <button class="tn-collapse-btn" id="tn-groups-collapse" type="button" aria-expanded="true"><span>접기</span><b aria-hidden="true">⌃</b></button>
+              <button class="tn-dashboard-drag-handle" type="button" aria-label="관리 그룹 위치 이동" title="드래그하여 위치 이동">↕</button>
+            </div>
+          </div>
+          <div class="tn-collapsible-body">
+            <div class="tn-navgrid" id="tn-navgrid"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ============ 파이프라인 (보드/목록) ============ -->
+    <div class="tn-view" id="view-pipeline">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">파이프라인</div>
+          <div class="tn-module-sub">고객사별 진행 단계, 예상 매출과 다음 연락 일정을 관리합니다.</div>
+        </div>
+        <div class="tn-module-actions">
+          <span class="tn-count" id="pipeline-total"></span>
+          <div class="tn-seg">
+          <button type="button" id="pipe-view-board" class="active">보드</button>
+            <button type="button" id="pipe-view-table">목록</button>
+          </div>
+          <button class="tn-btn tn-simple-hidden-control" id="importance-config-btn" aria-hidden="true">중요도 기준</button>
+          <button class="tn-btn primary" id="pipe-new-deal">새 항목</button>
+        </div>
+      </div>
+
+      <div class="tn-contacts-toolbar">
+        <input type="text" class="tn-contact-search" id="pipe-search" placeholder="고객사·제품·이슈·담당자 검색">
+        <select class="tn-contact-sort tn-simple-hidden-control" id="pipe-bucket-filter" aria-hidden="true"><option value="">모든 분류</option></select>
+        <select class="tn-contact-sort tn-simple-hidden-control" id="pipe-area-filter" aria-hidden="true"><option value="">모든 그룹</option></select>
+        <select class="tn-contact-sort" id="pipe-owner-filter"><option value="">모든 내부 담당자</option></select>
+        <select class="tn-contact-sort" id="pipe-stage-filter">
+          <option value="">모든 단계</option>
+          <option value="리드">리드</option>
+          <option value="상담">상담</option>
+          <option value="제안">제안</option>
+          <option value="협상">협상</option>
+          <option value="수주">수주</option>
+          <option value="보류">보류</option>
+        </select>
+        <select class="tn-contact-sort tn-simple-hidden-control" id="pipe-sort" aria-hidden="true">
+          <option value="group">그룹순</option>
+          <option value="importance">중요도순</option>
+          <option value="amount">금액순</option>
+          <option value="next">액션 임박순</option>
+          <option value="name">이름순</option>
+        </select>
+      </div>
+
+      <div class="tn-kanban" id="tn-kanban"></div>
+
+      <div class="tn-table-wrap" id="pipe-table-wrap" hidden>
+        <table class="tn-table tn-simple-pipeline-table" style="min-width:820px;">
+          <thead>
+            <tr>
+              <th>고객사 / 영업 건</th>
+              <th style="width:126px;">단계</th>
+              <th style="width:138px;">예상 매출(백만)</th>
+              <th style="width:160px;">다음 연락일</th>
+              <th style="width:220px;">다음에 할 일</th>
+              <th style="width:52px;"></th>
+            </tr>
+          </thead>
+          <tbody id="pipe-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="tn-kanban-hint" id="pipe-hint"></div>
+    </div>
+
+    <!-- ============ STAGE VIEWS (동적 생성) ============ -->
+    <div id="tn-stage-views"></div>
+
+    <!-- ============ 연락처 ============ -->
+    <div class="tn-view" id="view-contacts">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">연락처</div>
+          <div class="tn-module-sub">고객·협력기관·내부 확인 담당자 관리</div>
+        </div>
+        <div class="tn-module-actions">
+          <button class="tn-btn primary" id="contact-scan-btn">카메라 스캔</button>
+          <button class="tn-btn" id="contact-upload-btn">명함 업로드</button>
+          <button class="tn-btn" id="contact-manual-btn">직접 추가</button>
+        </div>
+      </div>
+
+      <div class="tn-contacts-stats" id="tn-contacts-stats"></div>
+
+      <div class="tn-contacts-toolbar">
+        <input type="text" class="tn-contact-search" id="contact-search" placeholder="이름·회사·직책·직무·연락처·메일·그룹 검색">
+        <select class="tn-contact-sort" id="contact-sort">
+          <option value="recent">최근 등록순</option>
+          <option value="name">이름순</option>
+          <option value="company">회사순</option>
+        </select>
+        <button class="tn-btn" id="contact-csv-upload-btn">CSV 업로드</button>
+        <button class="tn-btn" id="contact-export-btn">CSV 내보내기</button>
+        <button class="tn-btn danger" id="contact-bulk-delete-btn" disabled>선택 삭제</button>
+      </div>
+
+      <div class="tn-ocr-status" id="ocr-status" hidden></div>
+
+      <div class="tn-table-wrap" id="contact-table-wrap">
+        <table class="tn-table">
+          <thead>
+            <tr>
+              <th style="width:38px;"><input type="checkbox" class="tn-contact-check" id="contact-select-all" aria-label="전체 선택"></th>
+              <th style="width:118px;">명함</th>
+              <th style="width:190px;">이름 / 회사명</th>
+              <th style="width:170px;">직책 / 직무</th>
+              <th style="width:160px;">연락처</th>
+              <th>메일</th>
+              <th style="width:62px;"></th>
+            </tr>
+          </thead>
+          <tbody id="contact-tbody"></tbody>
+        </table>
+      </div>
+
+      <input type="file" id="contact-file-input" accept="image/*" hidden>
+      <input type="file" id="contact-camera-input" accept="image/*" capture="environment" hidden>
+      <input type="file" id="contact-csv-input" accept=".csv,text/csv" hidden>
+    </div>
+
+    <!-- ============ 영업지원 실행과제 ============ -->
+    <div class="tn-view" id="view-roadmap">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">영업지원 업무</div>
+          <div class="tn-module-sub">영업을 위해 내부에서 처리해야 할 업무와 마감일을 관리합니다.</div>
+        </div>
+        <div class="tn-module-actions">
+          <span class="tn-count" id="roadmap-progress-label"></span>
+          <button class="tn-btn primary" id="roadmap-add-btn">새 업무</button>
+        </div>
+      </div>
+
+      <div class="tn-data-boundary-guide tn-simple-hidden-section">
+        <div class="tn-boundary-card pipeline">
+          <div class="tn-boundary-kicker">파이프라인</div>
+          <div class="tn-boundary-title">고객과 진행하는 영업기회</div>
+          <div class="tn-boundary-desc">고객사, 견적, 샘플 검증, 매출·확률, 고객 후속 업무를 기록합니다.</div>
+          <button class="tn-btn small" id="roadmap-open-pipeline" type="button">파이프라인 보기</button>
+        </div>
+        <div class="tn-boundary-arrow" aria-hidden="true">＋</div>
+        <div class="tn-boundary-card support">
+          <div class="tn-boundary-kicker">영업지원 실행과제</div>
+          <div class="tn-boundary-title">내부에서 준비·확인하는 업무</div>
+          <div class="tn-boundary-desc">자료 제작, 제도 확인, 시스템 정비처럼 고객 영업을 지원하는 산출물 중심 업무를 기록합니다.</div>
+        </div>
+      </div>
+
+      <div class="tn-task-summary">
+        <div class="tn-task-summary-card"><div class="tn-task-summary-label">전체 과제</div><div class="tn-task-summary-value" id="task-summary-total">0</div></div>
+        <div class="tn-task-summary-card"><div class="tn-task-summary-label">진행·검토 중</div><div class="tn-task-summary-value" id="task-summary-active">0</div></div>
+        <div class="tn-task-summary-card"><div class="tn-task-summary-label">기한 초과</div><div class="tn-task-summary-value" id="task-summary-overdue">0</div></div>
+        <div class="tn-task-summary-card"><div class="tn-task-summary-label">완료율</div><div class="tn-task-summary-value" id="task-summary-rate">0%</div></div>
+      </div>
+
+      <div class="tn-task-toolbar">
+        <input type="text" class="tn-contact-search" id="roadmap-search" placeholder="과제명·목적·담당자·산출물 검색">
+        <select class="tn-contact-sort tn-simple-hidden-control" id="roadmap-type-filter" aria-hidden="true"><option value="">모든 유형</option></select>
+        <select class="tn-contact-sort" id="roadmap-status-filter"><option value="">모든 상태</option></select>
+        <select class="tn-contact-sort" id="roadmap-owner-filter"><option value="">모든 담당자</option></select>
+        <select class="tn-contact-sort tn-simple-hidden-control" id="roadmap-priority-filter" aria-hidden="true"><option value="">모든 우선순위</option></select>
+        <select class="tn-contact-sort tn-simple-hidden-control" id="roadmap-sort" aria-hidden="true">
+          <option value="due">마감일 임박순</option>
+          <option value="priority">우선순위순</option>
+          <option value="updated">최근 수정순</option>
+          <option value="title">과제명순</option>
+        </select>
+      </div>
+      <div class="tn-task-grid" id="roadmap-list"></div>
+    </div>
+
+
+    <!-- ============ 캘린더 ============ -->
+    <div class="tn-view" id="view-calendar">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">캘린더</div>
+          <div class="tn-module-sub">CRM 일정과 Google Calendar 일정을 필요한 때만 동기화하여 한눈에 확인합니다.</div>
+        </div>
+      </div>
+
+      <section class="tn-calendar-connect" id="google-calendar-panel">
+        <div>
+          <div class="tn-calendar-connect-title">Google Calendar 간편 동기화</div>
+          <div class="tn-calendar-connect-desc">새 직접 일정을 Google에 한 번 등록하고, 선택한 달의 Google 일정을 필요할 때만 불러옵니다. 자동 반복 조회는 하지 않습니다.</div>
+          <div class="tn-calendar-connect-details" id="google-calendar-connect-details">
+            <div class="tn-calendar-client-row">
+              <div class="tn-calendar-client-field">
+                <input id="google-calendar-client-id" type="text" autocomplete="off" placeholder="Google OAuth 웹 클라이언트 ID 입력">
+                <button class="tn-btn small tn-calendar-help-btn" id="google-calendar-client-help" type="button">ID 확인 방법</button>
+              </div>
+              <button class="tn-btn" id="google-calendar-save-client" type="button">클라이언트 ID 저장</button>
+            </div>
+            <div class="tn-calendar-note" id="google-calendar-origin-note">Google Calendar API의 표준 사용은 현재 추가 비용이 없습니다. 무료 사용량을 아끼기 위해 새 일정 등록과 선택한 달 불러오기만 수행하며, CRM에서 수정·삭제한 내용은 이미 등록된 Google 일정에 자동 반영하지 않습니다.</div>
+            <div class="tn-calendar-sync-result" id="google-calendar-sync-result" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="tn-calendar-connect-actions">
+          <span class="tn-calendar-status" id="google-calendar-status">연결 안 됨</span>
+          <button class="tn-btn small tn-calendar-collapse-btn" id="google-calendar-toggle" type="button" aria-expanded="true" aria-controls="google-calendar-connect-details">접기</button>
+          <button class="tn-btn primary tn-calendar-connect-control" id="google-calendar-connect" type="button">Google 계정 연결</button>
+          <button class="tn-btn tn-calendar-connect-control" id="google-calendar-disconnect" type="button" hidden>연결 해제</button>
+        </div>
+      </section>
+
+      <div class="tn-calendar-toolbar">
+        <button class="tn-btn small" id="calendar-prev" type="button">← 이전</button>
+        <button class="tn-btn small" id="calendar-today" type="button">오늘</button>
+        <button class="tn-btn small" id="calendar-next" type="button">다음 →</button>
+        <div class="tn-calendar-month" id="calendar-month-label"></div>
+        <div class="tn-calendar-toolbar-spacer"></div>
+        <button class="tn-btn primary" id="calendar-add" type="button">+ 일정 추가</button>
+        <button class="tn-btn" id="google-calendar-refresh" type="button">Google 일정 불러오기</button>
+      </div>
+
+      <div class="tn-calendar-layout">
+        <section class="tn-calendar-card">
+          <div class="tn-calendar-grid" id="calendar-grid"></div>
+          <div class="tn-calendar-legend">
+            <span><i style="background:#EDE9FE"></i>직접 등록 일정</span>
+            <span><i style="background:#DBEAFE"></i>CRM 다음 연락일</span>
+            <span><i style="background:#FEF3C7"></i>지원 업무 마감일</span>
+            <span><i style="background:#DCFCE7"></i>Google에서 불러온 일정</span>
+          </div>
+        </section>
+        <aside class="tn-calendar-upcoming">
+          <div class="tn-calendar-upcoming-title">다가오는 일정</div>
+          <div class="tn-calendar-list" id="calendar-upcoming-list"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============ 설정 ============ -->
+    <div class="tn-view" id="view-settings">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">설정</div>
+          <div class="tn-module-sub">영업 단계, 매뉴얼, 백업과 휴지통을 관리합니다.</div>
+        </div>
+        <div class="tn-module-actions">
+          <div class="tn-seg tn-settings-switch">
+            <button type="button" id="settings-mode-config" class="active">설정</button>
+            <button type="button" id="settings-mode-manual">매뉴얼</button>
+          </div>
+          <button class="tn-btn tn-admin-button" id="settings-admin-open" type="button" data-unlocked="false">관리자</button>
+        </div>
+      </div>
+
+      <div class="tn-settings-grid" id="settings-config-panel">
+        <section class="tn-settings-panel">
+          <div class="tn-settings-head">
+            <div>
+              <div class="tn-settings-title">단계</div>
+              <div class="tn-settings-sub">파이프라인 칸반과 단계 선택값 · 행을 끌어 표시 순서를 바꿀 수 있습니다</div>
+            </div>
+            <button class="tn-btn small" id="settings-stage-add">추가</button>
+          </div>
+          <div class="tn-settings-list" id="settings-stage-list"></div>
+        </section>
+
+        <section class="tn-settings-panel tn-simple-advanced-settings">
+          <div class="tn-settings-head">
+            <div>
+              <div class="tn-settings-title">그룹 분류</div>
+              <div class="tn-settings-sub">항목별로 따로 선택되는 매출 가능성 분류</div>
+            </div>
+            <button class="tn-btn small" id="settings-bucket-add">추가</button>
+          </div>
+          <div class="tn-settings-list" id="settings-bucket-list"></div>
+        </section>
+
+        <section class="tn-settings-panel tn-simple-advanced-settings">
+          <div class="tn-settings-head">
+            <div>
+              <div class="tn-settings-title">그룹</div>
+              <div class="tn-settings-sub">고객·업무 묶음과 신규 항목 기본 분류</div>
+            </div>
+            <button class="tn-btn small" id="settings-group-add">추가</button>
+          </div>
+          <div class="tn-settings-list" id="settings-group-list"></div>
+        </section>
+
+        <section class="tn-settings-panel tn-simple-advanced-settings">
+          <div class="tn-settings-head"><div><div class="tn-settings-title">사용 환경</div><div class="tn-settings-sub">처음 사용하는 사용자를 위한 화면 단순화와 안내</div></div></div>
+          <div class="tn-switch-row">
+            <div class="tn-switch-copy"><b>초보 모드</b><span>영업 항목에서 필수 입력을 먼저 보여주고 상세 항목은 접어둡니다.</span></div>
+            <button class="tn-toggle on" id="settings-beginner-toggle" type="button" aria-label="초보 모드 전환"></button>
+          </div>
+          <div class="tn-data-actions">
+            <button class="tn-btn small" id="settings-onboarding-open" type="button">시작 안내 다시 보기</button>
+            <button class="tn-btn small" id="settings-clear-seed" type="button">기본 예시 항목 정리</button>
+          </div>
+        </section>
+
+        <section class="tn-settings-panel">
+          <div class="tn-settings-head"><div><div class="tn-settings-title">관리자 백업·복원</div><div class="tn-settings-sub" id="settings-backup-status">관리자 인증 후 전체 데이터와 변경 로그를 내려받을 수 있습니다.</div></div></div>
+          <div class="tn-admin-lock-note" id="settings-admin-lock-note"><span aria-hidden="true">🔒</span><span>설정 상단의 <b>관리자</b>를 누르고 관리자 코드를 확인해 주세요.</span></div>
+          <div class="tn-data-actions tn-admin-actions" id="settings-admin-actions" hidden>
+            <button class="tn-btn primary small" id="settings-backup-export" type="button">내려받기</button>
+            <button class="tn-btn small" id="settings-backup-import" type="button">복원하기</button>
+          </div>
+          <input type="file" id="settings-backup-input" accept=".json,application/json" hidden>
+        </section>
+
+        <section class="tn-settings-panel">
+          <div class="tn-settings-head">
+            <div><div class="tn-settings-title">휴지통</div><div class="tn-settings-sub">삭제한 영업 항목·연락처·그룹·영업지원 실행과제를 복구합니다.</div></div>
+            <button class="tn-btn small danger" id="settings-trash-empty" type="button">휴지통 비우기</button>
+          </div>
+          <div class="tn-trash-list" id="settings-trash-list"></div>
+        </section>
+      </div>
+
+      <div class="tn-manual-grid" id="settings-manual-panel" hidden>
+        <div class="tn-manual-toolbar">
+          <input type="text" class="tn-contact-search" id="manual-search" placeholder="매뉴얼 제목·내용 검색">
+          <button class="tn-btn" id="manual-reset-btn" type="button">기본 매뉴얼 복원</button>
+          <button class="tn-btn primary" id="manual-add-btn" type="button">매뉴얼 추가</button>
+        </div>
+        <div class="tn-manual-grid" id="settings-manual-list" style="grid-column:1/-1;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ 관리자 인증 모달 ============ -->
+  <div class="tn-modal-overlay" id="settings-admin-overlay" hidden>
+    <form class="tn-modal" id="settings-admin-form" role="dialog" aria-modal="true" aria-labelledby="settings-admin-title">
+      <div class="tn-modal-title" id="settings-admin-title">관리자 확인</div>
+      <div class="tn-modal-hint">관리자 전용 백업·복원 기능을 열려면 코드를 입력하세요. 인증 상태는 새로고침하면 해제됩니다.</div>
+      <label for="settings-admin-code">관리자 코드</label>
+      <input class="tn-admin-code-input" id="settings-admin-code" type="password" autocomplete="off" maxlength="128" required placeholder="관리자 코드를 입력하세요">
+      <div class="tn-admin-status" id="settings-admin-status" role="status" aria-live="polite"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="settings-admin-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="settings-admin-submit" type="submit">확인</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ 리멤버형 연락처 상세 드로어 ============ -->
+  <div class="tn-contact-drawer-backdrop" id="contact-drawer-backdrop" hidden></div>
+  <aside class="tn-contact-drawer" id="contact-drawer" aria-label="명함 상세" hidden>
+    <div class="tn-drawer-bar">
+      <span class="tn-drawer-bar-title">대표 명함</span>
+      <span class="tn-drawer-spacer"></span>
+      <button class="tn-drawer-icon" id="contact-drawer-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="tn-drawer-scroll" id="contact-drawer-body"></div>
+  </aside>
+
+  <!-- ============ 딜 상세 드로어 ============ -->
+  <div class="tn-contact-drawer-backdrop" id="deal-drawer-backdrop" hidden></div>
+  <aside class="tn-contact-drawer" id="deal-drawer" aria-label="항목 상세" hidden>
+    <div class="tn-drawer-bar">
+      <span class="tn-drawer-bar-title">항목 상세</span>
+      <span class="tn-drawer-spacer"></span>
+      <button class="tn-drawer-icon" id="deal-drawer-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="tn-drawer-scroll" id="deal-drawer-body"></div>
+  </aside>
+
+  <!-- ============ 모바일 하단 탭바 ============ -->
+  <nav class="tn-bottombar" id="tn-bottombar"></nav>
+
+  <footer class="tn-footer">TINIKO SALES SUPPORT CRM</footer>
+
+  <!-- ============ 직접 일정 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="calendar-event-overlay" hidden>
+    <div class="tn-modal wide tn-calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-event-modal-title">
+      <div class="tn-modal-title" id="calendar-event-modal-title">새 일정</div>
+      <div class="tn-modal-hint">CRM에 직접 일정을 등록합니다. Google이 연결되어 있으면 아직 전송되지 않은 일정만 Google Calendar에 한 번 추가합니다.</div>
+      <label>일정 제목 <b class="tn-required-mark">필수</b></label>
+      <input type="text" id="calendar-event-title" placeholder="예: 티니코 영업 주간회의">
+      <div class="tn-calendar-form-grid">
+        <div>
+          <label>날짜 <b class="tn-required-mark">필수</b></label>
+          <input type="date" id="calendar-event-date">
+        </div>
+        <div>
+          <label>표시 방식</label>
+          <label class="tn-check-label"><input type="checkbox" id="calendar-event-all-day" checked> 종일 일정</label>
+        </div>
+      </div>
+      <div class="tn-calendar-form-grid tn-calendar-time-row" id="calendar-event-time-row" hidden>
+        <div><label>시작 시간</label><input type="time" id="calendar-event-start-time" value="09:00"></div>
+        <div><label>종료 시간</label><input type="time" id="calendar-event-end-time" value="10:00"></div>
+      </div>
+      <label>장소</label>
+      <input type="text" id="calendar-event-location" placeholder="예: 티니코 회의실 또는 온라인">
+      <label>상세 내용</label>
+      <textarea id="calendar-event-description" placeholder="준비사항, 참석자, 안건 등을 입력하세요."></textarea>
+      <div class="tn-calendar-sync-state" id="calendar-event-sync-state"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="calendar-event-delete" type="button" hidden>일정 삭제</button>
+        <button class="tn-modal-btn" id="calendar-event-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="calendar-event-save" type="button">일정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Google OAuth 클라이언트 ID 안내 ============ -->
+  <div class="tn-modal-overlay" id="google-calendar-help-overlay" hidden>
+    <div class="tn-modal wide" role="dialog" aria-modal="true" aria-labelledby="google-calendar-help-title" style="max-width:680px;">
+      <div class="tn-modal-title" id="google-calendar-help-title">Google OAuth 웹 클라이언트 ID 확인 방법</div>
+      <div class="tn-modal-hint">Google Cloud에서 아래 순서대로 한 번만 설정한 뒤 발급된 클라이언트 ID를 캘린더 화면에 붙여 넣습니다. 별도의 Google Workspace 유료 요금제는 필요하지 않습니다.</div>
+      <div class="tn-onboard-steps">
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">1</div><div><b>프로젝트를 선택하고 Calendar API를 사용 설정합니다.</b><span>Google Cloud Console에서 기존 프로젝트를 선택하거나 새 프로젝트를 만든 뒤, API 및 서비스의 라이브러리에서 Google Calendar API를 찾아 사용 설정합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">2</div><div><b>Google Auth Platform을 설정합니다.</b><span>Branding에서 앱 이름과 지원 이메일을 입력하고 Audience를 설정합니다. 외부 사용자를 선택해 테스트 중이라면 실제 연결할 Google 계정을 테스트 사용자에 추가합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">3</div><div><b>웹 애플리케이션 클라이언트를 만듭니다.</b><span>Google Auth Platform의 Clients에서 Create Client를 누르고 Application type을 Web application으로 선택합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">4</div><div><b>승인된 JavaScript 원본을 등록합니다.</b><span>아래 CRM 원본 주소를 Authorized JavaScript origins에 추가합니다. 경로나 파일명 없이 https://도메인과 필요한 포트까지만 등록합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">5</div><div><b>클라이언트 ID를 복사합니다.</b><span>생성된 값 중 .apps.googleusercontent.com으로 끝나는 Client ID를 복사해 이 CRM의 입력란에 붙여 넣고 ‘클라이언트 ID 저장’과 ‘Google 계정 연결’을 차례로 누릅니다.</span></div></div>
+      </div>
+      <div class="tn-oauth-origin">
+        <code id="google-calendar-current-origin">HTTPS 배포 주소를 확인해 주세요.</code>
+        <button class="tn-btn small" id="google-calendar-copy-origin" type="button">현재 주소 복사</button>
+      </div>
+      <div class="tn-calendar-note"><b>무료 사용 원칙:</b> 표준 Calendar API 사용은 현재 추가 비용이 없습니다. 이 CRM은 자동 반복 조회와 전체 일괄 동기화를 하지 않고, 새 일정 등록과 사용자가 요청한 달의 일정 조회만 수행합니다. Google 정책과 할당량은 변경될 수 있으므로 운영자는 Google Cloud의 할당량 화면을 정기적으로 확인하세요.</div>
+      <div class="tn-oauth-links">
+        <button class="tn-btn" id="google-calendar-open-console" type="button">Google Cloud Console 열기</button>
+        <button class="tn-btn" id="google-calendar-open-docs" type="button">Google 공식 안내 열기</button>
+        <button class="tn-btn" id="google-calendar-open-quota" type="button">무료 사용·할당량 확인</button>
+      </div>
+      <div class="tn-modal-actions"><button class="tn-modal-btn save" id="google-calendar-help-close" type="button">확인</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 그룹 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="area-modal-overlay" hidden>
+    <div class="tn-modal">
+      <div class="tn-modal-title" id="area-modal-title">새 그룹</div>
+      <div class="tn-modal-hint">이름과 색상을 설정하세요.</div>
+      <label>그룹 이름</label>
+      <input type="text" id="area-modal-title-input" placeholder="예: 기존 거래처·단기매출">
+      <label>부제목 / 설명</label>
+      <input type="text" id="area-modal-subtitle" placeholder="예: 네트워크 연계">
+      <label>신규 항목 기본 분류</label>
+      <select id="area-modal-bucket"></select>
+      <label>색상</label>
+      <div class="tn-swatches" id="area-modal-swatches"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="area-modal-delete" hidden>그룹 삭제</button>
+        <button class="tn-modal-btn" id="area-modal-cancel">취소</button>
+        <button class="tn-modal-btn save" id="area-modal-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 단계 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="stage-modal-overlay" hidden>
+    <div class="tn-modal">
+      <div class="tn-modal-title" id="stage-modal-title">새 단계</div>
+      <div class="tn-modal-hint">파이프라인 보드와 단계 선택값에 사용됩니다.</div>
+      <label>단계 이름</label>
+      <input type="text" id="stage-modal-name" placeholder="예: 견적">
+      <label>색상</label>
+      <div class="tn-swatches" id="stage-modal-swatches"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="stage-modal-delete" hidden>단계 삭제</button>
+        <button class="tn-modal-btn" id="stage-modal-cancel">취소</button>
+        <button class="tn-modal-btn save" id="stage-modal-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 그룹 분류 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="bucket-modal-overlay" hidden>
+    <div class="tn-modal">
+      <div class="tn-modal-title" id="bucket-modal-title">새 그룹 분류</div>
+      <div class="tn-modal-hint">항목 상세에서 그룹과 별도로 선택하는 분류입니다.</div>
+      <label>분류 이름</label>
+      <input type="text" id="bucket-modal-label" placeholder="예: 전략 검토">
+      <label>설명</label>
+      <input type="text" id="bucket-modal-desc" placeholder="예: 직접 매출보다 중장기 검토 성격">
+      <label>중요도 가중치</label>
+      <input type="number" id="bucket-modal-weight" min="0" step="0.05" placeholder="예: 0.8">
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="bucket-modal-delete" hidden>분류 삭제</button>
+        <button class="tn-modal-btn" id="bucket-modal-cancel">취소</button>
+        <button class="tn-modal-btn save" id="bucket-modal-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 중요도 산정 기준 모달 ============ -->
+  <div class="tn-modal-overlay" id="importance-modal-overlay" hidden>
+    <div class="tn-modal wide">
+      <div class="tn-modal-title">중요도 산정 기준</div>
+      <div class="tn-modal-hint">자동 중요도는 예상매출, 성사확률, 영업단계, 그룹 분류를 함께 반영합니다. 항목 상세에서 수동 중요도를 지정하면 자동 산정보다 우선 적용됩니다.</div>
+
+      <div class="tn-criteria-help">
+        자동 점수 = 예상매출(백만원) × 성사확률 × 단계 가중치 × 그룹 분류 가중치<br>
+        금액이 비어 있으면 실제 매출 판단이 어려우므로 낮게 계산됩니다. 연구·검토성 그룹은 기본적으로 보수적으로 계산됩니다.
+      </div>
+
+      <div class="tn-criteria-grid">
+        <div>
+          <label>높음 기준 점수</label>
+          <input type="number" id="imp-high-score" min="0" step="1">
+        </div>
+        <div>
+          <label>높음 기준 예상매출(백만원)</label>
+          <input type="number" id="imp-high-amount" min="0" step="1">
+        </div>
+        <div>
+          <label>높음 기준 성사확률(%)</label>
+          <input type="number" id="imp-high-prob" min="0" max="100" step="1">
+        </div>
+        <div>
+          <label>중간 기준 점수</label>
+          <input type="number" id="imp-mid-score" min="0" step="1">
+        </div>
+        <div>
+          <label>중간 기준 성사확률(%)</label>
+          <input type="number" id="imp-mid-prob" min="0" max="100" step="1">
+        </div>
+      </div>
+
+      <div class="tn-criteria-divider"></div>
+      <div class="tn-modal-title" style="font-size:13px;margin-bottom:2px;">그룹 분류 가중치</div>
+      <div class="tn-modal-hint">매출과 가까운 그룹일수록 같은 금액·확률이라도 중요도가 높게 잡히도록 조정합니다.</div>
+      <div class="tn-criteria-grid">
+        <div>
+          <label>매출 직결</label>
+          <input type="number" id="imp-weight-direct" min="0" step="0.05">
+        </div>
+        <div>
+          <label>추후 매출 가능</label>
+          <input type="number" id="imp-weight-future" min="0" step="0.05">
+        </div>
+        <div>
+          <label>연구·검토·지원</label>
+          <input type="number" id="imp-weight-support" min="0" step="0.05">
+        </div>
+      </div>
+
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="importance-reset">기본값</button>
+        <button class="tn-modal-btn" id="importance-cancel">취소</button>
+        <button class="tn-modal-btn save" id="importance-save">저장</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ API 없는 회사명 이미지 검색 ============ -->
+  <div class="tn-modal-overlay" id="company-search-overlay" hidden>
+    <div class="tn-modal wide">
+      <div class="tn-modal-title">회사명 이미지 검색</div>
+      <div class="tn-modal-hint">API 키 없이 일반 이미지 검색을 열어 명함의 로고와 회사명을 확인한 뒤, 확인한 사명을 저장합니다.</div>
+      <img class="tn-company-preview" id="company-search-image" alt="회사명 검색 대상 명함">
+      <div class="tn-company-clues" id="company-search-clues"></div>
+      <label>이미지 검색어</label>
+      <input type="text" id="company-search-query" placeholder="예: 회사 로고, 이메일 도메인, 명함 문구">
+      <div class="tn-company-search-tools">
+        <button class="tn-btn small" id="company-search-google" type="button">Google 이미지</button>
+        <button class="tn-btn small" id="company-search-naver" type="button">네이버 이미지</button>
+        <button class="tn-btn small" id="company-search-lens" type="button">Google Lens</button>
+        <button class="tn-btn small" id="company-search-download" type="button">명함 이미지 저장</button>
+      </div>
+      <div class="tn-company-search-note"><strong>사용 방법:</strong> 일반 이미지 검색은 검색어로 로고를 확인합니다. Google Lens를 사용할 때는 먼저 명함 이미지를 저장한 뒤 Lens 화면에 업로드하세요. 검색 결과는 이 CRM에서 자동으로 읽지 않으므로, 확인한 회사명을 아래에 입력해 저장합니다.</div>
+      <label>확인한 회사명</label>
+      <input type="text" id="company-search-name" placeholder="확인한 정확한 회사명 입력">
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="company-search-cancel">취소</button>
+        <button class="tn-modal-btn save" id="company-search-save">회사명 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 명함 스캐너 모달 ============ -->
+  <div class="tn-modal-overlay" id="scan-modal-overlay" hidden>
+    <div class="tn-scan-modal" role="dialog" aria-modal="true" aria-labelledby="scan-title">
+      <div class="tn-modal-title" id="scan-title">명함 스캔</div>
+      <div class="tn-modal-hint">가로형 명함의 네 모서리를 프레임에 맞추세요. 카메라를 명함과 평행하게 유지하고 글자가 선명해졌을 때 촬영하면 정확도가 높아집니다.</div>
+      <div class="tn-scan-status" id="scan-status" aria-live="polite">
+        <span class="tn-scan-status-dot"></span><span id="scan-status-text">카메라를 준비하는 중...</span>
+      </div>
+      <div class="tn-scan-videowrap" id="scan-videowrap">
+        <video id="scan-video" autoplay playsinline muted></video>
+        <div class="tn-scan-quality-popup" id="scan-quality-popup" role="alert" aria-live="assertive" hidden>
+          <b id="scan-quality-popup-title">촬영 환경을 확인해 주세요</b>
+          <span id="scan-quality-popup-message"></span>
+        </div>
+        <div class="tn-scan-frame" id="scan-frame" aria-hidden="true"></div>
+        <div class="tn-scan-quality-note" id="scan-quality-note">명함을 프레임 안에 가득 채워 주세요</div>
+      </div>
+      <div class="tn-scan-actions">
+        <button class="tn-modal-btn" id="scan-cancel">취소</button>
+        <button class="tn-modal-btn" id="scan-torch" type="button" hidden>조명 켜기</button>
+        <button class="tn-modal-btn save" id="scan-capture" type="button" disabled>명함 촬영</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 명함 이미지 확대 보기 ============ -->
+  <div class="tn-modal-overlay" id="img-viewer-overlay" hidden>
+    <img id="img-viewer" alt="명함 이미지" style="max-width:92vw; max-height:86vh; border-radius:8px;">
+  </div>
+
+  <!-- ============ 영업지원 실행과제 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="roadmap-modal-overlay" hidden>
+    <div class="tn-modal wide tn-task-modal tn-simple-task-modal">
+      <div class="tn-modal-title" id="roadmap-modal-title">새 지원 업무</div>
+      <div class="tn-modal-hint">내부에서 누가, 언제까지, 무엇을 완료할지 입력합니다.</div>
+
+      <section class="tn-form-section">
+        <label>과제명 <b class="tn-required-mark">필수</b></label>
+        <input type="text" id="roadmap-modal-name" placeholder="예: 제품소개서 최종본 작성">
+
+        <div class="tn-simple-form-grid">
+          <div><label>상태</label><select id="roadmap-modal-status"></select></div>
+          <div><label>담당자</label><input type="text" id="roadmap-modal-owner" placeholder="예: 강지훈"></div>
+          <div><label>마감일</label><input type="date" id="roadmap-modal-due"></div>
+        </div>
+      </section>
+
+      <section class="tn-form-section">
+        <label>관련 영업 건 <span class="tn-optional">선택</span></label>
+        <select id="roadmap-modal-deal"><option value="">연결하지 않음</option></select>
+        <div class="tn-related-preview" id="roadmap-modal-related-preview">특정 고객 영업과 관련된 업무라면 선택합니다.</div>
+        <label class="tn-check-label"><input type="checkbox" id="roadmap-modal-inherit-owner"> 영업 담당자를 이 과제의 담당자로 사용</label>
+      </section>
+
+      <section class="tn-form-section">
+        <label>해야 할 일 <b class="tn-required-mark">필수</b></label>
+        <textarea id="roadmap-modal-purpose" placeholder="예: 기존 자료를 검토하고 최신 제품 정보로 수정"></textarea>
+        <label>완료 기준 <b class="tn-required-mark">필수</b></label>
+        <textarea id="roadmap-modal-deliverable" placeholder="예: 대표 검토가 끝난 PDF 최종본을 공유 폴더에 저장"></textarea>
+      </section>
+
+      <div class="tn-simple-hidden-fields" hidden>
+        <select id="roadmap-modal-type"></select>
+        <select id="roadmap-modal-priority"></select>
+        <input type="number" id="roadmap-modal-progress">
+        <input type="text" id="roadmap-modal-collaborators">
+        <input type="date" id="roadmap-modal-start">
+        <input type="text" id="roadmap-modal-next">
+        <textarea id="roadmap-modal-blocker"></textarea>
+        <textarea id="roadmap-modal-notes"></textarea>
+      </div>
+
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="roadmap-modal-delete" type="button" hidden>휴지통으로 이동</button>
+        <button class="tn-modal-btn" id="roadmap-modal-ai" type="button" hidden>AI 점검</button>
+        <button class="tn-modal-btn" id="roadmap-modal-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="roadmap-modal-save" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 매뉴얼 추가/편집 모달 ============ -->
+  <div class="tn-modal-overlay" id="manual-modal-overlay" hidden>
+    <div class="tn-modal wide">
+      <div class="tn-modal-title" id="manual-modal-title">매뉴얼 추가</div>
+      <div class="tn-modal-hint">사용자가 실제 업무 중 확인할 수 있도록 제목과 내용을 구체적으로 작성합니다. 목록 형식은 한 줄이 하나의 항목으로 표시됩니다.</div>
+      <div class="tn-criteria-grid">
+        <div><label>분류</label><input type="text" id="manual-modal-category" placeholder="예: 영업지원 실행과제"></div>
+        <div><label>표시 형식</label><select id="manual-modal-format"><option value="list">목록</option><option value="paragraph">문단</option></select></div>
+      </div>
+      <label>제목</label>
+      <input type="text" id="manual-modal-name" placeholder="예: 영업지원 실행과제 등록 기준">
+      <label>내용</label>
+      <textarea id="manual-modal-content" placeholder="목록 형식은 한 줄에 한 항목씩 입력합니다.
+문단 형식은 줄바꿈 단위로 문단이 나뉩니다."></textarea>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn delete" id="manual-modal-delete" type="button" hidden>매뉴얼 삭제</button>
+        <button class="tn-modal-btn" id="manual-modal-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="manual-modal-save" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 시작 안내 모달 ============ -->
+  <div class="tn-modal-overlay" id="onboarding-overlay" hidden>
+    <div class="tn-modal wide">
+      <div class="tn-modal-title">처음 사용하는 CRM 시작 안내</div>
+      <div class="tn-modal-hint">복잡한 설정부터 바꾸지 않아도 됩니다. 아래 순서대로 한 건만 등록해 보면 전체 흐름을 이해할 수 있습니다.</div>
+      <div class="tn-onboard-steps">
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">1</div><div><b>연락처를 등록합니다.</b><span>명함 스캔·업로드 또는 직접 추가로 고객 담당자를 저장합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">2</div><div><b>영업 항목을 만듭니다.</b><span>고객사명, 현재 단계, 내부 담당자와 다음에 할 일을 입력합니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">3</div><div><b>다음 액션일을 지정합니다.</b><span>대시보드의 오늘 할 일과 지연 알림은 이 날짜를 기준으로 생성됩니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">4</div><div><b>고객 접촉을 활동으로 기록합니다.</b><span>전화·메일·미팅 결과와 다음 후속 업무를 타임라인으로 남깁니다.</span></div></div>
+        <div class="tn-onboard-step"><div class="tn-onboard-step-num">5</div><div><b>오늘 할 일을 처리합니다.</b><span>매일 대시보드에서 지연 업무와 연락이 필요한 고객부터 확인합니다.</span></div></div>
+      </div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="onboarding-contact" type="button">연락처 등록</button>
+        <button class="tn-modal-btn" id="onboarding-deal" type="button">영업 항목 등록</button>
+        <button class="tn-modal-btn save" id="onboarding-close" type="button">안내 확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 활동 추가 모달 ============ -->
+  <div class="tn-modal-overlay" id="activity-overlay" hidden>
+    <div class="tn-modal wide" role="dialog" aria-modal="true" aria-labelledby="activity-modal-title">
+      <div class="tn-modal-title" id="activity-modal-title">활동 추가</div>
+      <div class="tn-modal-hint" id="activity-deal-label">전화·메일·미팅 결과와 다음 업무를 기록합니다.</div>
+      <div class="tn-criteria-grid">
+        <div><label>활동 유형</label><select id="activity-type"><option>전화</option><option>이메일</option><option>미팅</option><option>견적</option><option>샘플</option><option>내부 업무</option><option>기타</option></select></div>
+        <div><label>활동 일자</label><input type="date" id="activity-date"></div>
+      </div>
+      <label>활동 내용</label>
+      <input type="text" id="activity-content" placeholder="예: 샘플 시험 결과 확인을 위해 고객과 통화">
+      <label>고객 반응 / 결과</label>
+      <input type="text" id="activity-result" placeholder="예: 내부 검토 후 다음 주 회신 예정">
+      <div class="tn-criteria-grid">
+        <div><label>다음에 할 일</label><input type="text" id="activity-next-action" placeholder="예: 시험 결과 재확인"></div>
+        <div><label>다음 액션일</label><input type="date" id="activity-next-date"></div>
+      </div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="activity-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="activity-save" type="button">활동 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tn-toast" id="tn-undo-toast" hidden><span id="tn-undo-message"></span><button id="tn-undo-btn" type="button">실행 취소</button></div>
+
+  <!-- ============ AI 봇 ============ -->
+  <button class="tn-ai-fab" id="ai-fab" type="button" aria-label="AI 봇 열기" title="AI 봇 열기">
+    <span class="tn-ai-fab-label">AI<br>봇</span>
+    <span class="tn-ai-fab-badge" id="ai-fab-badge" hidden></span>
+    <span class="tn-ai-fab-caption" id="ai-fab-caption">숫자는 기한 초과·장기 미접촉 등 즉시 확인할 긴급 항목 수입니다.</span>
+  </button>
+
+  <div class="tn-ai-chat" id="ai-chat" hidden>
+    <div class="tn-ai-chat-head">
+      <div class="tn-ai-chat-title"><b>CRM AI 지식 도우미</b><span>매뉴얼 검색·저장 데이터 분석</span></div>
+      <select id="ai-persona-select" title="대화할 AI 선택"></select>
+      <button class="tn-ai-head-btn" id="ai-persona-manage" type="button">AI 관리</button>
+      <button class="tn-ai-head-btn" id="ai-chat-clear" type="button" title="현재 AI의 대화 지우기">대화 지우기</button>
+      <button class="tn-ai-head-btn" id="ai-help-open" type="button" title="AI 봇과 숫자 배지 안내">?</button>
+      <button class="tn-ai-chat-close" id="ai-chat-close" type="button" aria-label="AI 봇 닫기">×</button>
+    </div>
+    <div class="tn-ai-statusbar" id="ai-statusbar">
+      <button class="tn-ai-status-btn urgent" id="ai-status-urgent" type="button">긴급 0</button>
+      <button class="tn-ai-status-btn warn" id="ai-status-warn" type="button">주의 0</button>
+      <button class="tn-ai-status-btn" id="ai-status-active" type="button">진행 0</button>
+      <span class="tn-ai-status-note">아이콘 숫자 = 즉시 확인할 긴급 항목 수</span>
+    </div>
+    <div class="tn-ai-knowledgebar" aria-label="AI 답변 근거">
+      <span>답변 근거</span><b class="tn-ai-knowledge-pill manual">매뉴얼</b><b class="tn-ai-knowledge-pill data">저장 데이터</b><b class="tn-ai-knowledge-pill action">추천 행동·화면 이동</b>
+    </div>
+    <div class="tn-ai-context" id="ai-context" hidden><span>분석 대상</span><b id="ai-context-title"></b><button id="ai-context-clear" type="button" title="분석 대상 해제">×</button></div>
+    <div class="tn-ai-msgs" id="ai-msgs"></div>
+    <div class="tn-ai-inputrow">
+      <input type="text" id="ai-input" placeholder="예: 그룹 분류가 뭐야? 현재 협상 단계도 보여줘" autocomplete="off">
+      <button class="tn-btn primary" id="ai-send" type="button">전송</button>
+    </div>
+  </div>
+
+  <!-- ============ AI 사용 안내 모달 ============ -->
+  <div class="tn-modal-overlay" id="ai-help-overlay" hidden>
+    <div class="tn-modal wide" style="max-width:560px;">
+      <div class="tn-modal-title">AI 봇 사용 안내</div>
+      <div class="tn-modal-hint">설정의 매뉴얼과 현재 CRM에 저장된 데이터를 함께 검색하여 사용법, 현황과 다음 행동을 답하는 내부 지식 도우미입니다.</div>
+      <div class="tn-ai-help-box"><b>AI 봇 아이콘의 숫자</b><br>기한이 지난 고객 후속 업무, 높은 중요도의 장기 미접촉 영업 건, 마감일이 지난 실행과제처럼 <b>즉시 확인해야 하는 긴급 항목의 수</b>입니다. 같은 항목에 긴급 사유가 여러 개 있어도 숫자는 한 건으로 계산합니다.</div>
+      <ul class="tn-ai-help-list">
+        <li><b>매뉴얼 검색:</b> 화면 목적, 기능 사용법, 입력 기준과 용어 차이를 설정에 저장된 최신 매뉴얼에서 찾아 답합니다.</li>
+        <li><b>저장 데이터 분석:</b> 파이프라인, 연락처, 실행과제, 일정, 매출과 입력 누락 현황을 현재 데이터로 집계합니다.</li>
+        <li><b>통합 답변:</b> “협상 단계가 무엇이고 현재 몇 건인가?”처럼 사용 기준과 실제 현황을 한 번에 설명합니다.</li>
+        <li><b>추천 행동:</b> 단계·일정·누락 정보를 바탕으로 다음에 확인할 업무와 관련 화면을 제안합니다.</li>
+        <li><b>실행 지원:</b> 답변 아래 버튼으로 매뉴얼, 영업 항목, 연락처, 실행과제와 활동 기록 화면을 바로 엽니다.</li>
+        <li><b>문구 작성:</b> 특정 영업 항목을 기준으로 후속 이메일과 짧은 연락 문구 초안을 작성합니다.</li>
+      </ul>
+      <div class="tn-ai-help-box"><b>답변의 한계</b><br>외부 시장정보를 검색하지 않으며, 설정 매뉴얼과 CRM에 저장되지 않은 사실은 임의로 만들지 않습니다. 답변 하단의 근거와 원본 화면을 함께 확인하세요.</div>
+      <div class="tn-modal-actions"><button class="tn-modal-btn save" id="ai-help-close" type="button">확인</button></div>
+    </div>
+  </div>
+
+  <!-- ============ AI 관리 모달 ============ -->
+  <div class="tn-modal-overlay" id="ai-persona-overlay" hidden>
+    <div class="tn-modal">
+      <div class="tn-modal-title">AI 관리</div>
+      <div class="tn-modal-hint">여러 컨셉의 AI를 추가하고 골라서 대화할 수 있습니다.</div>
+      <ul class="tn-ai-plist" id="ai-persona-list"></ul>
+      <label>이름</label>
+      <input type="text" id="ai-p-name" placeholder="예: 재무 검토관">
+      <label>컨셉 / 말투 설명</label>
+      <input type="text" id="ai-p-desc" placeholder="예: 리스크와 수익성을 보수적으로 검토">
+      <label>응답 성향</label>
+      <select class="tn-ai-focus" id="ai-p-focus">
+        <option value="general">균형</option>
+        <option value="analysis">분석 중심</option>
+        <option value="schedule">일정 중심</option>
+        <option value="coaching">실행 제안 중심</option>
+      </select>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="ai-persona-close">닫기</button>
+        <button class="tn-modal-btn save" id="ai-persona-add">AI 추가</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js?v=20260805a"></script>
+</body>
+</html>
