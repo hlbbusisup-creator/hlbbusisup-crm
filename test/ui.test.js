@@ -293,7 +293,7 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   assert.equal(document.getElementById("settings-admin-open").textContent, "관리자 인증됨");
   document.getElementById("settings-backup-export").click();
   await waitFor(() => downloads.length === 1, "administrator backup download");
-  assert.match(downloads[0].filename, /^tiniko_crm_backup_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/);
+  assert.match(downloads[0].filename, /^hlb_busisup_crm_backup_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/);
   assert.ok(api.adminRequests.some((request) => request.path === "/api/admin/backup"));
 
   document.getElementById("contact-manual-btn").click();
