@@ -1,7 +1,7 @@
 /* HLB-현장지원팀 CRM 로직 — index.html에서 분리 */
 /* CRM 영업 단계 */
 let STAGE_OPTIONS = ["리드","상담","제안","협상","수주","보류","실주"];
-let STAGE_COLORS = {리드:"#9CA3AF", 상담:"#2563EB", 제안:"#D97706", 협상:"#7C3AED", 수주:"#059669", 보류:"#D97706", 실주:"#DC2626"};
+let STAGE_COLORS = {리드:"#A79E9D", 상담:"#3B6FA8", 제안:"#C2762A", 협상:"#7A5B9B", 수주:"#059669", 보류:"#D97706", 실주:"#DC2626"};
 /* 수주율·확률·마감 판정 로직이 이름으로 직접 참조하는 기본 단계 — 이름 변경·삭제 불가 */
 const RESERVED_STAGES = ["수주","보류","실주"];
 const RESERVED_STAGE_COLORS = {수주:"#059669", 보류:"#D97706", 실주:"#DC2626"};
@@ -22,12 +22,12 @@ const MODULES = [
 ];
 
 const PALETTE = [
-  {color:"#2563EB", colorSoft:"#EFF6FF"},
-  {color:"#0891B2", colorSoft:"#ECFEFF"},
-  {color:"#D97706", colorSoft:"#FEF3C7"},
-  {color:"#7C3AED", colorSoft:"#F5F3FF"},
-  {color:"#DB2777", colorSoft:"#FDF2F8"},
-  {color:"#059669", colorSoft:"#ECFDF5"},
+  {color:"#C7382D", colorSoft:"#FFF2F0"},
+  {color:"#3B6FA8", colorSoft:"#EFF4F9"},
+  {color:"#2F7F79", colorSoft:"#ECF6F5"},
+  {color:"#C2762A", colorSoft:"#FBF2E6"},
+  {color:"#7A5B9B", colorSoft:"#F4F0F8"},
+  {color:"#3F7F5B", colorSoft:"#EDF5F0"},
 ];
 
 let REVENUE_BUCKETS = {
@@ -60,7 +60,7 @@ const LEGACY_DEFAULT_AREAS = [
     ]
   },
   {
-    key:"sample_validation", bucket:"future", icon:"", color:"#2563EB", colorSoft:"#EFF6FF",
+    key:"sample_validation", bucket:"future", icon:"", color:"#3B6FA8", colorSoft:"#EFF4F9",
     title:"샘플·검증 진행건", subtitle:"시험 장기화 건의 다음 액션 관리",
     seed:[
       {id:"medical_electronics_tests", title:"의료·전자 고객 샘플 시험 현황 정리", tag:"샘플 / 고객 검증", stage:"상담",
@@ -74,7 +74,7 @@ const LEGACY_DEFAULT_AREAS = [
     ],
   },
   {
-    key:"marketing_assets", bucket:"support", icon:"", color:"#0891B2", colorSoft:"#ECFEFF",
+    key:"marketing_assets", bucket:"support", icon:"", color:"#2F7F79", colorSoft:"#ECF6F5",
     title:"홍보자료·온라인 문의", subtitle:"회사·제품 자료 정비 및 문의 확보",
     seed:[
       {id:"company_materials", title:"최신 회사소개서·제품사진 수령", tag:"자료 확보 / 공개등급", stage:"제안",
@@ -106,7 +106,7 @@ const LEGACY_DEFAULT_AREAS = [
     ],
   },
   {
-    key:"medical_strategy", bucket:"future", icon:"", color:"#7C3AED", colorSoft:"#F5F3FF",
+    key:"medical_strategy", bucket:"future", icon:"", color:"#7A5B9B", colorSoft:"#F4F0F8",
     title:"의료기기·완제품 검토", subtitle:"허가·시장성 별도 검토 트랙",
     seed:[
       {id:"medical_finished_device", title:"의료기기 완제품 사업성 검토 미팅", tag:"완제품 / 전략 검토", stage:"리드",
@@ -120,7 +120,7 @@ const LEGACY_DEFAULT_AREAS = [
     ],
   },
   {
-    key:"global_channel", bucket:"future", icon:"", color:"#DB2777", colorSoft:"#FDF2F8",
+    key:"global_channel", bucket:"future", icon:"", color:"#B4517A", colorSoft:"#F9EFF4",
     title:"해외채널·알리바바", subtitle:"최소비용 해외 문의 테스트",
     seed:[
       {id:"alibaba_check", title:"알리바바 입점 비용·운영조건 확인", tag:"해외 문의 / 비용 검토", stage:"상담",
