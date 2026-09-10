@@ -160,28 +160,28 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "시작하기",
     "title": "처음 사용하는 순서",
     "format": "list",
-    "content": "1. Render로 배포된 CRM 주소를 열고 외부 DB 연결 창에 CRM_ACCESS_KEY를 입력합니다. Neon 비밀번호나 DATABASE_URL을 입력하는 곳이 아닙니다.\n2. 화면 위쪽 외부 DB 표시가 초록색 ‘연결됨’인지 확인합니다.\n3. 연락처에서 고객 담당자를 추가하고, 파이프라인의 ‘+ 새 항목’에서 실제 영업 건을 등록합니다.\n4. 영업 상세에서 단계, 내부 담당자, 고객 담당자의 이름·연락처, 예상 매출, 다음 할 일과 다음 연락일을 입력합니다. 입력할 때마다 자동 저장되며 ‘저장됨’ 표시를 확인합니다.\n5. 전화·이메일·미팅 후에는 ‘활동 추가’를 누릅니다. 팝업이 상세 화면 위에 열리며 입력하는 동안 원래 상세 화면은 그대로 유지됩니다.\n6. 회사소개서 제작이나 내부 확인처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다.\n7. 직접 일정은 캘린더에서 추가·수정·삭제합니다. Google Calendar 간편 동기화 영역은 ‘접기/펼치기’로 열고 닫을 수 있으며, 연결하면 아직 전송하지 않은 직접 일정을 처음 저장할 때 한 번 등록하고 선택한 달의 Google 일정을 필요할 때만 불러옵니다.\n8. 매일 업무 시작 시 대시보드의 오늘 할 일과 영업지원 브리핑을 확인합니다. 빨간 ‘긴급’ 배지가 깜빡이면 우선 처리합니다.\n9. 업무 종료 전 ‘저장 실패’ 표시가 없는지 확인합니다. 중요한 변경 전후에는 설정의 ‘관리자’를 눌러 인증한 뒤 데이터와 변경 로그가 포함된 백업을 내려받습니다."
+    "content": "1. Render로 배포된 CRM 주소를 열고 외부 DB 연결 창에 CRM_ACCESS_KEY를 입력합니다. Neon 비밀번호나 DATABASE_URL을 입력하는 곳이 아닙니다.\n2. 화면 위쪽 외부 DB 표시가 초록색 ‘연결됨’인지 확인합니다.\n3. 연락처에서 고객 담당자를 추가하고, 파이프라인의 ‘+ 새 항목’에서 실제 영업 건을 등록합니다.\n4. 영업 상세에서 단계, 내부 담당자, 고객 담당자의 이름·연락처, 예상 매출, 다음 할 일과 다음 연락일을 입력합니다. 입력 후 상단 ‘저장’을 누르고 ‘저장됨’ 표시를 확인합니다.\n5. 전화·이메일·미팅 후에는 ‘활동 추가’를 누릅니다. 팝업이 상세 화면 위에 열리며 입력하는 동안 원래 상세 화면은 그대로 유지됩니다.\n6. 회사소개서 제작이나 내부 확인처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다.\n7. 직접 일정은 캘린더에서 추가·수정·삭제합니다. Google Calendar 간편 동기화 영역은 ‘접기/펼치기’로 열고 닫을 수 있으며, 연결하면 아직 전송하지 않은 직접 일정을 처음 저장할 때 한 번 등록하고 선택한 달의 Google 일정을 필요할 때만 불러옵니다.\n8. 매일 업무 시작 시 대시보드의 오늘 할 일과 영업지원 브리핑을 확인합니다. 빨간 ‘긴급’ 배지가 깜빡이면 우선 처리합니다.\n9. 업무 종료 전 ‘저장 실패’ 표시가 없는지 확인합니다. 중요한 변경 전후에는 설정의 ‘관리자’를 눌러 인증한 뒤 데이터와 변경 로그가 포함된 백업을 내려받습니다."
   },
   {
     "id": "manual_terms",
     "category": "기본 개념",
     "title": "CRM 핵심 용어",
     "format": "list",
-    "content": "외부 DB 연결키: 같은 CRM 작업공간에 들어가기 위한 공용 접속키입니다. Render의 CRM_ACCESS_KEY 값이며 Neon 비밀번호와 다릅니다.\n파이프라인: 실제 고객사별 영업 진행 상태, 예상 매출과 다음 연락 일정을 관리하는 화면입니다.\n그룹: 영업 건의 업무 영역입니다. 목록의 왼쪽 색상선과 보드 카드 상단 색상으로 구분합니다.\n매출 분류: 매출 직결, 추후 매출 가능, 연구·검토·지원처럼 매출과의 거리를 나타내는 배지입니다.\n중요도: 예상 매출, 단계와 성사 확률 등을 반영한 높음·중간·낮음 표시입니다.\n단계: 리드, 상담, 제안, 협상, 수주, 보류, 실주로 현재 진행 상태를 나타냅니다.\n예상 매출: 영업이 성사될 경우의 예상 금액이며 백만원 단위로 입력합니다.\n다음 연락일: 다시 연락하거나 자료를 전달할 날짜이며 오늘 할 일, 긴급 알림과 캘린더의 기준입니다.\n활동 기록: 전화, 이메일, 미팅의 내용과 결과를 시간순으로 남긴 이력입니다.\n지원 업무: 자료 제작, 제도 확인 등 고객 영업을 위해 내부에서 처리하는 업무입니다.\n자동 저장: 입력값을 외부 DB에 보내는 기능입니다. ‘저장 중’ 다음 ‘저장됨’이 표시되어야 완료된 것입니다."
+    "content": "외부 DB 연결키: 같은 CRM 작업공간에 들어가기 위한 공용 접속키입니다. Render의 CRM_ACCESS_KEY 값이며 Neon 비밀번호와 다릅니다.\n파이프라인: 실제 고객사별 영업 진행 상태, 예상 매출과 다음 연락 일정을 관리하는 화면입니다.\n그룹: 영업 건의 업무 영역입니다. 목록의 왼쪽 색상선과 보드 카드 상단 색상으로 구분합니다.\n매출 분류: 매출 직결, 추후 매출 가능, 연구·검토·지원처럼 매출과의 거리를 나타내는 배지입니다.\n중요도: 예상 매출, 단계와 성사 확률 등을 반영한 높음·중간·낮음 표시입니다.\n단계: 리드, 상담, 제안, 협상, 수주, 보류, 실주로 현재 진행 상태를 나타냅니다.\n예상 매출: 영업이 성사될 경우의 예상 금액이며 백만원 단위로 입력합니다.\n다음 연락일: 다시 연락하거나 자료를 전달할 날짜이며 오늘 할 일, 긴급 알림과 캘린더의 기준입니다.\n활동 기록: 전화, 이메일, 미팅의 내용과 결과를 시간순으로 남긴 이력입니다.\n지원 업무: 자료 제작, 제도 확인 등 고객 영업을 위해 내부에서 처리하는 업무입니다.\n저장: 파이프라인·연락처는 저장 버튼으로 입력값을 외부 DB에 반영합니다. ‘저장 중’ 다음 ‘저장됨’이 표시되어야 완료된 것입니다."
   },
   {
     "id": "manual_dashboard",
     "category": "대시보드",
     "title": "대시보드 확인 방법",
     "format": "list",
-    "content": "상단 메뉴는 대시보드·파이프라인·연락처·지원 업무·캘린더·설정으로 이동하는 버튼입니다. 외부 DB 배지가 초록색 ‘연결됨’이면 저장 서버가 정상입니다.\n요약 카드에서 전체 영업 건수, 진행 상태와 예상 매출을 확인합니다. 카드를 누르면 관련 목록으로 이동합니다.\n오늘 할 일에는 다음 연락일이 지났거나 임박한 영업 건과 마감이 가까운 지원 업무가 표시됩니다. 항목을 누르면 원본 상세 화면이 열립니다.\n영업지원 브리핑은 긴급·주의·제안 항목을 모아 보여줍니다. 긴급 항목이 있을 때는 브리핑 전체가 아니라 빨간색 ‘긴급’ 배지만 깜빡입니다.\n화면 오른쪽 아래 AI 봇 아이콘의 숫자는 즉시 확인할 긴급 항목 수입니다.\n오늘 할 일과 관리 그룹은 접거나 펼칠 수 있고, 각 영역의 이동 손잡이로 대시보드 순서를 바꿀 수 있습니다.\n숫자가 예상과 다르면 외부 DB 연결 상태를 확인한 뒤 새로고침하여 다른 사용자의 최신 변경을 불러옵니다."
+    "content": "상단 메뉴는 대시보드·파이프라인·지원 업무·연락처·캘린더·설정으로 이동하는 버튼입니다. 외부 DB 배지가 초록색 ‘연결됨’이면 저장 서버가 정상입니다.\n요약 카드에서 전체 영업 건수, 진행 상태와 예상 매출을 확인합니다. 파이프라인 분석 지표를 누르면 계산 대상 목록이 팝업으로 열립니다.\n오늘 할 일에는 다음 연락일이 지났거나 임박한 영업 건과 마감이 가까운 지원 업무가 표시됩니다. 항목을 누르면 원본 상세 화면이 열립니다.\n영업지원 브리핑은 긴급·주의·제안 항목을 모아 보여줍니다. 긴급 항목이 있을 때는 브리핑 전체가 아니라 빨간색 ‘긴급’ 배지만 깜빡입니다.\n화면 오른쪽 아래 AI 봇 아이콘의 숫자는 즉시 확인할 긴급 항목 수입니다.\n오늘 할 일은 접거나 펼칠 수 있고, 각 영역의 이동 손잡이로 대시보드 순서를 바꿀 수 있습니다.\n숫자가 예상과 다르면 외부 DB 연결 상태를 확인한 뒤 새로고침하여 다른 사용자의 최신 변경을 불러옵니다.\n[현재 화면 안내] 화면 배치와 메뉴 구성은 유지하고 HLB 로고의 붉은색(#EF4036)과 차콜·흰색을 적용했습니다. 제목·메뉴는 굵은 Pretendard로 표시합니다. 우측 상단 ‘간편 모드’ 표시는 없습니다. 붉은 저장 버튼·선택 표시는 일반 조작 상태이며, 지연·오류는 문구와 상태 배지를 함께 확인합니다. 파이프라인 분석의 수주율·활성 항목 비중·후속조치 지연·실행과제 완료를 누르면 목록이 열리고, 항목을 누르면 파이프라인 또는 지원 업무 상세로 이동합니다. 수주율 목록은 수주·보류·실주, 실행과제 완료 목록은 전체 과제를 표시합니다."
   },
   {
     "id": "manual_pipeline",
     "category": "파이프라인",
     "title": "파이프라인 화면과 영업 항목 관리",
     "format": "list",
-    "content": "파이프라인은 실제 고객사 또는 구체적인 영업 기회만 등록합니다. 같은 고객·제품·목적의 중복 항목과 제목·담당자·다음 할 일이 없는 빈 항목은 만들지 않습니다.\n목록 보기의 각 행은 하나의 영업 건입니다. 왼쪽 색상선은 그룹, 둥근 배지는 그룹·매출 분류·중요도·담당자를 뜻합니다. 단계, 예상 매출, 다음 연락일과 다음 할 일은 목록에서 바로 수정할 수 있습니다.\n보드 보기는 영업 단계를 열로 나눕니다. 카드를 다른 열로 끌어 놓으면 단계와 자동 성사 확률이 함께 변경됩니다.\n상단 검색창은 고객사·제품·이슈·담당자를 검색하며 내부 담당자와 단계 필터로 범위를 좁힙니다. ‘목록/보드’ 버튼으로 보기를 바꿉니다.\n‘+ 새 항목’을 누른 뒤 제목, 그룹과 기본 단계부터 입력합니다. 상세 화면의 필수 입력 막대가 채워지도록 내부 담당자, 고객 담당자, 예상 매출, 다음 연락일과 다음 할 일을 입력합니다. ‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 ‘선택한 담당자’에 이름과 연락처가 쌓입니다. 여러 명을 고를 수 있고 맨 위 대표 담당자의 직함·연락처·이메일이 입력칸에 반영됩니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.\n입력 중에는 ‘자동 저장 중…’, 완료되면 ‘저장됨’이 표시됩니다. ‘저장 실패’가 보이면 상세 화면을 닫지 말고 네트워크와 외부 DB 상태를 확인한 뒤 해당 값을 다시 수정하여 저장을 재시도합니다.\n상세 화면의 X 버튼이나 바깥 영역으로 닫을 수 있습니다. 진행 중인 저장은 완료된 뒤 닫히므로 ‘저장됨’을 확인하면 안전합니다.\n전화·이메일·미팅 후에는 ‘활동 추가’를 눌러 결과를 남깁니다. 활동 팝업은 상세 화면보다 위에서 활성화되며 입력·취소·저장 중에도 상세 화면은 닫히지 않습니다. 저장하면 활동 목록과 다음 할 일·다음 연락일이 갱신됩니다.\n자료 제작·제도 확인·내부 검토처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다."
+    "content": "파이프라인은 실제 고객사 또는 구체적인 영업 기회만 등록합니다. 같은 고객·제품·목적의 중복 항목과 제목·담당자·다음 할 일이 없는 빈 항목은 만들지 않습니다.\n목록 보기의 각 행은 하나의 영업 건입니다. 왼쪽 색상선은 그룹, 둥근 배지는 그룹·매출 분류·중요도·담당자를 뜻합니다. 단계, 예상 매출, 다음 연락일과 다음 할 일은 목록에서 바로 수정할 수 있습니다.\n보드 보기는 영업 단계를 열로 나눕니다. 카드를 다른 열로 끌어 놓으면 상세 화면이 열립니다. 변경할 단계와 성사 확률을 확인하고 저장해야 반영됩니다.\n상단 검색창은 고객사·제품·이슈·담당자를 검색하며 내부 담당자와 단계 필터로 범위를 좁힙니다. ‘목록/보드’ 버튼으로 보기를 바꿉니다.\n‘+ 새 항목’을 누른 뒤 제목, 그룹과 기본 단계부터 입력합니다. 상세 화면의 필수 입력 막대가 채워지도록 내부 담당자, 고객 담당자, 예상 매출, 다음 연락일과 다음 할 일을 입력합니다. ‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 ‘선택한 담당자’에 이름과 연락처가 쌓입니다. 여러 명을 고를 수 있고 맨 위 대표 담당자의 직함·연락처·이메일이 입력칸에 반영됩니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.\n입력 중에는 ‘미저장 변경’, 저장 버튼을 누르면 ‘저장 중…’, 성공하면 ‘저장됨’이 표시됩니다. ‘저장 실패’가 보이면 상세 화면을 닫지 말고 네트워크와 외부 DB 상태를 확인한 뒤 입력을 유지한 채 저장 버튼으로 재시도합니다.\n상세 화면의 X 버튼이나 바깥 영역으로 닫을 수 있습니다. 미저장 변경이 있으면 버릴지 확인하고, 저장 중에는 완료될 때까지 닫을 수 없습니다.\n전화·이메일·미팅 후에는 ‘활동 추가’를 눌러 결과를 남깁니다. 활동 팝업은 상세 화면보다 위에서 활성화되며 입력·취소·저장 중에도 상세 화면은 닫히지 않습니다. 저장하면 활동 목록과 다음 할 일·다음 연락일이 갱신됩니다.\n자료 제작·제도 확인·내부 검토처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다.\n[입력·저장 기준] 내부 담당자 입력 예시는 ‘홍길동’입니다. 새 항목과 상세 변경은 상단 저장, 표 수정은 해당 행의 저장 버튼으로 반영합니다. 고객 담당자는 여러 명 선택할 수 있으며 ‘대표로 지정’ 변경도 저장해야 유지됩니다. 선택한 담당자의 이름과 연락처는 고객 담당자 연락처 아래에 표시됩니다. 저장 전 값은 대시보드 집계에 반영되지 않습니다. 활동 추가·지원 업무 연결·전환은 영업 항목을 먼저 저장한 뒤 사용합니다."
   },
   {
     "id": "manual_stages",
@@ -195,14 +195,14 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "연락처",
     "title": "연락처와 명함 관리",
     "format": "list",
-    "content": "‘+ 연락처 추가’에서 직접 입력하거나 카메라 스캔·명함 이미지 업로드로 등록합니다. 이름과 회사명을 우선 입력하면 영업 건 연결과 검색이 쉬워집니다.\n카메라 스캔을 처음 열 때 카메라 사용을 허용합니다. 같은 페이지를 열어 둔 동안에는 승인받은 카메라를 재사용하므로 다시 스캔해도 권한을 반복 요청하지 않습니다. 새로고침하거나 브라우저를 완전히 닫은 뒤에도 계속 허용하려면 브라우저의 이 사이트 권한에서 카메라를 ‘허용’으로 설정합니다.\n가로형 명함의 네 모서리를 프레임에 맞추고 카메라를 명함과 평행하게 유지합니다. 조명 부족·강한 반사·흐림이 약 1초간 계속되면 화면 위쪽에 원인과 조치 방법이 표시됩니다. 흐릴 때는 명함 화면을 한 번 눌러 다시 초점을 맞춥니다.\n‘명함 촬영’을 누르면 그 순간의 화면이 즉시 촬영되고 스캐너가 닫힙니다. 저장과 문자 인식은 이어서 진행되므로 연락처 화면의 인식 상태를 확인합니다.\nOCR은 조명·그림자·고대비 보정 후 이름·회사 영역과 전화·이메일 영역을 필요할 때 추가 인식합니다. 결과의 이름, 회사명, 전화번호와 이메일은 원본 명함과 비교하여 반드시 확인합니다. 검색 결과는 참고용이며 자동 입력되지 않습니다.\n목록의 검색창은 이름·회사·직함·연락처를 찾습니다. 행을 누르면 상세 화면에서 명함 이미지, 기본 정보, 연결 영업 건과 활동 이력을 확인할 수 있습니다.\n상세 입력은 자동 저장됩니다. ‘저장됨’을 확인한 뒤 닫고, ‘저장 실패’가 보이면 연결을 확인한 뒤 값을 다시 입력합니다.\n영업 항목 상세에서 등록된 고객 담당자를 여러 명 연결하거나 연락처에 없는 담당자 이름을 직접 입력할 수 있습니다.\n체크박스로 여러 연락처를 선택한 뒤 선택 삭제를 누르면 휴지통으로 이동합니다. 삭제 전 연결된 영업 건을 확인합니다.\nCSV 업로드·내보내기는 연락처 이관과 별도 보관에 사용하며, 업로드 후 한글과 필드 대응 상태를 확인합니다."
+    "content": "‘+ 연락처 추가’에서 직접 입력하거나 카메라 스캔·명함 이미지 업로드로 등록합니다. 이름과 회사명을 우선 입력하면 영업 건 연결과 검색이 쉬워집니다.\n카메라 스캔을 처음 열 때 카메라 사용을 허용합니다. 같은 페이지를 열어 둔 동안에는 승인받은 카메라를 재사용하므로 다시 스캔해도 권한을 반복 요청하지 않습니다. 새로고침하거나 브라우저를 완전히 닫은 뒤에도 계속 허용하려면 브라우저의 이 사이트 권한에서 카메라를 ‘허용’으로 설정합니다.\n가로형 명함의 네 모서리를 프레임에 맞추고 카메라를 명함과 평행하게 유지합니다. 조명 부족·강한 반사·흐림이 약 1초간 계속되면 화면 위쪽에 원인과 조치 방법이 표시됩니다. 흐릴 때는 명함 화면을 한 번 눌러 다시 초점을 맞춥니다.\n‘명함 촬영’을 누르면 그 순간의 화면이 즉시 촬영되고 스캐너가 닫힙니다. 문자 인식 결과를 확인하고 연락처 상세의 ‘저장’을 눌러 등록합니다.\nOCR은 조명·그림자·고대비 보정 후 이름·회사 영역과 전화·이메일 영역을 필요할 때 추가 인식합니다. 결과의 이름, 회사명, 전화번호와 이메일은 원본 명함과 비교하여 반드시 확인합니다. 검색 결과는 참고용이며 자동 입력되지 않습니다.\n목록의 검색창은 이름·회사·직함·연락처를 찾습니다. 행을 누르면 상세 화면에서 명함 이미지, 기본 정보, 연결 영업 건과 활동 이력을 확인할 수 있습니다.\n상세 입력은 상단 ‘저장’을 눌러 반영합니다. ‘취소’나 닫기를 누르면 미저장 변경을 버릴지 확인합니다. 저장 실패 시 입력을 유지한 채 다시 저장합니다.\n영업 항목 상세에서 등록된 고객 담당자를 여러 명 연결하거나 연락처에 없는 담당자 이름을 직접 입력할 수 있습니다.\n체크박스로 여러 연락처를 선택한 뒤 선택 삭제를 누르면 휴지통으로 이동합니다. 삭제 전 연결된 영업 건을 확인합니다.\nCSV 업로드·내보내기는 연락처 이관과 별도 보관에 사용하며, 업로드 후 한글과 필드 대응 상태를 확인합니다.\n[연락처 입력과 목록] 직접 추가·명함 인식·회사명 ‘입력에 적용’·즐겨찾기 변경은 연락처 상세에서 저장해야 반영됩니다. 저장 후 연결 영업 정보 갱신에 실패하면 안내에 따라 저장을 다시 누릅니다. 목록은 기본 20줄이며 20·30·40·50줄 중 선택하고 하단 페이지 번호로 이동합니다. 전체 선택은 현재 페이지에 적용됩니다. CSV 업로드·내보내기는 리멤버 Outlook의 92개 열 구성과 호환되며 CSV 업로드는 별도의 실행 작업입니다."
   },
   {
     "id": "manual_tasks",
     "category": "지원 업무",
     "title": "영업지원 업무 등록 기준",
     "format": "list",
-    "content": "고객과 직접 진행하는 상담, 견적, 샘플 검증과 수주 건은 파이프라인에 등록합니다. 회사소개서 작성, 자료 확보, 홈페이지 정비, 제도·재무 확인처럼 내부에서 처리하는 일은 지원 업무에 등록합니다.\n‘+ 새 업무’에서 과제명, 분류, 상태, 담당자, 우선순위, 시작일·마감일, 다음 행동과 완료 기준을 입력합니다.\n특정 고객 영업을 지원하면 관련 영업 건을 연결하고 필요할 때 ‘영업 담당자를 이 과제의 담당자로 사용’을 선택합니다.\n화면 상단의 요약 숫자로 전체 과제, 진행·검토 중, 기한 초과와 완료율을 확인합니다. 마감일이 지난 미완료 업무는 우선 처리합니다.\n검색창과 분류·상태·담당자·우선순위 필터로 필요한 업무를 찾고 카드의 상태 선택창에서 진행 상태를 바로 변경합니다.\n완료는 결과물이나 확인 결과가 확정된 경우에만 선택합니다. 완료로 변경하면 진행률은 100%가 됩니다.\n수정 후 ‘저장됨’을 확인합니다. 다른 사용자의 최신 변경을 보려면 새로고침합니다."
+    "content": "고객과 직접 진행하는 상담, 견적, 샘플 검증과 수주 건은 파이프라인에 등록합니다. 회사소개서 작성, 자료 확보, 홈페이지 정비, 제도·재무 확인처럼 내부에서 처리하는 일은 지원 업무에 등록합니다.\n‘+ 새 업무’에서 과제명, 분류, 상태, 담당자, 우선순위, 시작일·마감일, 다음 행동과 완료 기준을 입력합니다.\n특정 고객 영업을 지원하면 관련 영업 건을 연결하고 필요할 때 ‘영업 담당자를 이 과제의 담당자로 사용’을 선택합니다.\n화면 상단의 요약 숫자로 전체 과제, 진행·검토 중, 기한 초과와 완료율을 확인합니다. 마감일이 지난 미완료 업무는 우선 처리합니다.\n검색창과 분류·상태·담당자·우선순위 필터로 필요한 업무를 찾고 카드의 상태 선택창에서 진행 상태를 바로 변경합니다.\n완료는 결과물이나 확인 결과가 확정된 경우에만 선택합니다. 완료로 변경하면 진행률은 100%가 됩니다.\n수정 후 ‘저장됨’을 확인합니다. 다른 사용자의 최신 변경을 보려면 새로고침합니다.\n[담당자 입력 예시] 지원 업무 담당자 예시는 ‘홍길동’입니다. 담당자를 직접 입력하거나 연결한 영업 항목의 내부 담당자를 따르도록 지정하고, 지원 업무의 저장 버튼으로 반영합니다."
   },
   {
     "id": "manual_cloud_db",
@@ -216,14 +216,14 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "설정",
     "title": "설정·매뉴얼·백업 관리",
     "format": "list",
-    "content": "설정 화면 상단의 ‘설정/매뉴얼’ 버튼으로 두 화면을 전환합니다. 초보 모드는 자주 쓰는 항목을 간단히 보여주고, 상세 모드는 그룹 분류와 세부 운영 설정까지 보여줍니다.\n파이프라인 단계의 이름과 색상을 추가·수정·삭제할 수 있습니다. 단계 변경은 보드 구성과 기존 영업 항목 값에 영향을 주므로 관리자와 협의합니다.\n상세 모드에서는 그룹 분류의 설명·중요도 가중치와 그룹 이름·색상·기본 분류를 관리합니다.\n사용 환경에서는 시작 안내를 다시 열거나 이전 기본 예시 중 중복·미입력 항목을 정리할 수 있습니다. 실제 사용자가 입력한 항목은 삭제 후보를 먼저 확인합니다.\n매뉴얼 화면에서는 제목·내용 검색, 항목 추가·수정·삭제와 순서 변경을 합니다. 수정 내용은 AI 봇의 기능 사용법 답변에도 반영됩니다.\n‘기본 매뉴얼 복원’은 현재 매뉴얼을 이 버전의 기본 내용으로 교체합니다. 직접 작성한 매뉴얼이 필요하면 먼저 관리자 백업을 내려받습니다.\n관리자 기능: 설정 화면 상단의 ‘관리자’를 누르고 관리자 코드를 입력합니다. 인증되면 백업 영역에 ‘내려받기’와 ‘복원하기’가 나타납니다. 인증 정보는 브라우저 저장소에 남기지 않으며 새로고침하거나 인증 시간이 끝나면 다시 입력합니다.\n‘내려받기’는 연락처, 영업 건과 활동, 지원 업무, 직접 일정, 매뉴얼, 설정 등 전체 데이터와 화면별 변경 로그를 JSON 파일 하나로 저장합니다. 로그에는 시각, 화면, 입력·수정·삭제 동작, 항목명, 바뀐 필드와 변경 전·후 값이 포함됩니다. 공용 연결키 방식이므로 변경한 사람의 이름은 구분하지 않습니다.\n파일명은 hlb_busisup_crm_backup_년-월-일_시-분-초.json 형식입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용하지만 여섯 시간 정보가 모두 들어갑니다.\n‘복원하기’는 내려받은 백업 파일의 데이터와 변경 로그로 외부 DB 전체를 해당 시점으로 되돌립니다. 복원 직전에 현재 상태를 먼저 내려받고, 작업 중인 다른 사용자에게 알린 뒤 실행합니다. 이전 버전 2 백업 파일도 복원할 수 있습니다.\n삭제한 영업 항목·연락처·그룹·지원 업무는 휴지통에서 복구할 수 있습니다. 휴지통 비우기와 영구 삭제 후에는 백업 복원 외에는 되돌릴 수 없습니다."
+    "content": "설정 화면 상단의 ‘설정/매뉴얼’ 버튼으로 두 화면을 전환합니다. 현재 화면에 표시된 설정을 사용합니다. 우측 상단의 ‘간편 모드’ 표시는 제거되었습니다.\n파이프라인 단계의 이름과 색상을 추가·수정·삭제할 수 있습니다. 단계 변경은 보드 구성과 기존 영업 항목 값에 영향을 주므로 관리자와 협의합니다.\n단계나 분류 설정을 변경할 때는 기존 영업 항목에 미치는 영향을 먼저 확인합니다.\n사용 환경에서는 시작 안내를 다시 열거나 이전 기본 예시 중 중복·미입력 항목을 정리할 수 있습니다. 실제 사용자가 입력한 항목은 삭제 후보를 먼저 확인합니다.\n매뉴얼 화면에서는 제목·내용 검색, 항목 추가·수정·삭제와 순서 변경을 합니다. 수정 내용은 AI 봇의 기능 사용법 답변에도 반영됩니다.\n‘기본 매뉴얼 복원’은 현재 매뉴얼을 이 버전의 기본 내용으로 교체합니다. 직접 작성한 매뉴얼이 필요하면 먼저 관리자 백업을 내려받습니다.\n관리자 기능: 설정 화면 상단의 ‘관리자’를 누르고 관리자 코드를 입력합니다. 인증되면 백업 영역에 ‘내려받기’와 ‘복원하기’가 나타납니다. 인증 정보는 브라우저 저장소에 남기지 않으며 새로고침하거나 인증 시간이 끝나면 다시 입력합니다.\n‘내려받기’는 연락처, 영업 건과 활동, 지원 업무, 직접 일정, 매뉴얼, 설정 등 전체 데이터와 화면별 변경 로그를 Excel 파일(.xlsx)로 저장합니다. 로그에는 시각, 화면, 입력·수정·삭제 동작, 항목명, 바뀐 필드와 변경 전·후 값이 포함됩니다. 공용 연결키 방식이므로 변경한 사람의 이름은 구분하지 않습니다.\n파일명은 hlb_busisup_crm_backup_년-월-일_시-분-초.xlsx 형식입니다. Windows 파일명에서 콜론을 사용할 수 없어 시·분·초 사이에는 하이픈을 사용하지만 여섯 시간 정보가 모두 들어갑니다.\n‘복원하기’는 내려받은 백업 파일의 데이터와 변경 로그로 외부 DB 전체를 해당 시점으로 되돌립니다. 복원 직전에 현재 상태를 먼저 내려받고, 작업 중인 다른 사용자에게 알린 뒤 실행합니다. 이전 버전 2 백업 파일도 복원할 수 있습니다.\n삭제한 영업 항목·연락처·그룹·지원 업무는 휴지통에서 복구할 수 있습니다. 휴지통 비우기와 영구 삭제 후에는 백업 복원 외에는 되돌릴 수 없습니다.\n[현재 백업·복원] 관리자 ‘내려받기’는 .xlsx 백업을 만듭니다. 백업정보·저장데이터·변경로그의 세 시트로 구성되며, 긴 값은 조각으로 나뉘므로 직접 편집하지 않습니다. 복원하기는 .xlsx와 이전 .json 백업을 받습니다. 휴지통은 접기·펼치기가 가능하고 접은 상태가 저장됩니다."
   },
   {
     "id": "manual_operation",
     "category": "운영 기준",
     "title": "HLB-현장지원팀 CRM 운영 기준",
     "format": "list",
-    "content": "파이프라인에는 고객사명 또는 구체적인 영업 건이 확인된 항목만 등록하고, 단순 아이디어나 내부 준비 업무는 지원 업무에 등록합니다.\n새 영업 건은 제목, 단계, 내부 담당자, 고객 담당자, 예상 매출, 다음 할 일과 다음 연락일을 우선 입력합니다.\n고객과 연락한 뒤에는 활동 기록에 내용과 결과를 남기고 다음 할 일과 다음 연락일을 즉시 갱신합니다.\n업무 시작 시 대시보드의 오늘 할 일과 빨간 긴급 배지를 확인하고, 지연된 일정부터 처리합니다.\n담당자가 바뀌어도 과거 활동 기록은 삭제하지 않고 유지하여 영업 이력을 이어갑니다. 지원 업무는 담당자, 마감일과 완료 기준 없이 방치하지 않습니다.\n여러 사용자가 같은 항목을 동시에 열어 수정하지 않습니다. 화면은 실시간 동기화가 아니므로 작업 전 새로고침하고 ‘저장됨’을 확인합니다.\n매일 또는 중요한 변경 전후에 관리자가 백업을 내려받고, 주 단위로 복원 가능한 파일인지 보관 상태를 확인합니다. 파일을 열어 summary와 data.auditLogs에서 화면별 입력·수정·삭제 건수를 확인할 수 있습니다.\nCRM_ACCESS_KEY와 관리자 코드는 담당자에게만 안전하게 전달하고 퇴사·분실·외부 노출이 의심되면 즉시 새 값으로 교체합니다."
+    "content": "파이프라인에는 고객사명 또는 구체적인 영업 건이 확인된 항목만 등록하고, 단순 아이디어나 내부 준비 업무는 지원 업무에 등록합니다.\n새 영업 건은 제목, 단계, 내부 담당자, 고객 담당자, 예상 매출, 다음 할 일과 다음 연락일을 우선 입력합니다.\n고객과 연락한 뒤에는 활동 기록에 내용과 결과를 남기고 다음 할 일과 다음 연락일을 즉시 갱신합니다.\n업무 시작 시 대시보드의 오늘 할 일과 빨간 긴급 배지를 확인하고, 지연된 일정부터 처리합니다.\n담당자가 바뀌어도 과거 활동 기록은 삭제하지 않고 유지하여 영업 이력을 이어갑니다. 지원 업무는 담당자, 마감일과 완료 기준 없이 방치하지 않습니다.\n여러 사용자가 같은 항목을 동시에 열어 수정하지 않습니다. 화면은 실시간 동기화가 아니므로 작업 전 새로고침하고 ‘저장됨’을 확인합니다.\n매일 또는 중요한 변경 전후에 관리자가 백업을 내려받고, 주 단위로 복원 가능한 파일인지 보관 상태를 확인합니다. Excel의 ‘백업정보’와 ‘변경로그’ 시트에서 화면별 입력·수정·삭제 내역을 확인합니다.\nCRM_ACCESS_KEY와 관리자 코드는 담당자에게만 안전하게 전달하고 퇴사·분실·외부 노출이 의심되면 즉시 새 값으로 교체합니다."
   },
   {
     "id": "manual_ai_knowledge",
@@ -237,16 +237,66 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "캘린더",
     "title": "CRM 일정과 Google Calendar 연동",
     "format": "list",
-    "content": "캘린더에서는 직접 등록 일정, 파이프라인의 다음 연락일, 지원 업무 마감일과 Google Calendar에서 불러온 일정을 한 화면에서 확인합니다.\n보라색은 직접 등록 일정, 파란색은 CRM 다음 연락일, 노란색은 지원 업무 마감일, 초록색은 Google에서 불러온 일정입니다.\n새 일정: ‘+ 일정 추가’ 또는 날짜 오른쪽 + 버튼을 누르고 제목·날짜를 입력합니다. 종일 또는 시작·종료 시간을 선택하고 장소·내용을 넣은 뒤 저장합니다.\n수정·삭제: 보라색 직접 일정을 누른 뒤 값을 바꾸어 저장하거나 삭제합니다. 파란색·노란색 일정은 연결된 영업 건 또는 지원 업무 상세에서 원본 날짜를 수정합니다.\n일정 저장 중에는 버튼이 비활성화되고 상태가 표시됩니다. 외부 DB 저장에 실패하면 창이 닫히지 않고 오류가 표시되므로 값을 확인하고 다시 저장합니다.\nGoogle 연결 상태에서 Google에 아직 보내지 않은 직접 일정을 저장하면 Google 기본 캘린더에 한 번 생성됩니다. 이미 Google에 등록된 일정은 다시 저장해도 중복 생성하거나 자동 수정하지 않습니다.\n무료 최소 동기화 모드에서는 CRM에서 이미 전송된 일정을 수정·삭제해도 Google 원본은 자동으로 수정·삭제되지 않습니다. 필요한 변경은 Google Calendar에서 직접 처리합니다. CRM에서 삭제한 뒤 Google 일정 불러오기를 누르면 남아 있는 Google 원본이 초록색으로 다시 보일 수 있습니다.\n‘Google 일정 불러오기’는 현재 선택한 달만 조회합니다. 같은 달은 결과를 재사용하며 자동 반복 조회하지 않습니다. 이전·다음 달로 이동할 때는 이동한 달을 한 번 불러옵니다.\n초록색 Google 일정을 누르면 Google Calendar 원본 화면이 열립니다. 오른쪽 다가오는 일정에서는 앞으로 45일의 가까운 일정을 확인합니다.\nGoogle OAuth 웹 클라이언트 ID가 없으면 입력란 옆 ‘ID 확인 방법’을 눌러 Calendar API 사용 설정, Google Auth Platform 설정, 웹 클라이언트 생성과 승인된 JavaScript 원본 등록 순서를 확인합니다.\n현재 CRM 주소의 https://도메인을 승인된 JavaScript 원본에 정확히 등록합니다. 경로(/calendar 등)는 넣지 않습니다. HTTPS 주소 또는 localhost에서만 Google 로그인이 가능합니다.\n표준 Google Calendar API 사용은 현재 추가 비용이 없습니다. 이 CRM은 비용과 할당량을 아끼기 위해 새 일정 1회 등록과 선택한 달 조회만 사용합니다. Google 정책과 할당량은 변경될 수 있으므로 운영자는 Google Cloud의 할당량 안내를 확인합니다.\nGoogle 액세스 토큰은 CRM에 영구 저장하지 않으며 만료되면 Google 계정 연결을 다시 실행합니다."
+    "content": "캘린더에서는 직접 등록 일정, 파이프라인의 다음 연락일, 지원 업무 마감일과 Google Calendar에서 불러온 일정을 한 화면에서 확인합니다.\n보라색은 직접 등록 일정, 연한 붉은색은 CRM 다음 연락일, 노란색은 지원 업무 마감일, 초록색은 Google에서 불러온 일정입니다.\n새 일정: ‘+ 일정 추가’ 또는 날짜 오른쪽 + 버튼을 누르고 제목·날짜를 입력합니다. 종일 또는 시작·종료 시간을 선택하고 장소·내용을 넣은 뒤 저장합니다.\n수정·삭제: 보라색 직접 일정을 누른 뒤 값을 바꾸어 저장하거나 삭제합니다. 연한 붉은색·노란색 일정은 연결된 영업 건 또는 지원 업무 상세에서 원본 날짜를 수정합니다.\n일정 저장 중에는 버튼이 비활성화되고 상태가 표시됩니다. 외부 DB 저장에 실패하면 창이 닫히지 않고 오류가 표시되므로 값을 확인하고 다시 저장합니다.\nGoogle 연결 상태에서 Google에 아직 보내지 않은 직접 일정을 저장하면 Google 기본 캘린더에 한 번 생성됩니다. 이미 Google에 등록된 일정은 다시 저장해도 중복 생성하거나 자동 수정하지 않습니다.\n무료 최소 동기화 모드에서는 CRM에서 이미 전송된 일정을 수정·삭제해도 Google 원본은 자동으로 수정·삭제되지 않습니다. 필요한 변경은 Google Calendar에서 직접 처리합니다. CRM에서 삭제한 뒤 Google 일정 불러오기를 누르면 남아 있는 Google 원본이 초록색으로 다시 보일 수 있습니다.\n‘Google 일정 불러오기’는 현재 선택한 달만 조회합니다. 같은 달은 결과를 재사용하며 자동 반복 조회하지 않습니다. 이전·다음 달로 이동할 때는 이동한 달을 한 번 불러옵니다.\n초록색 Google 일정을 누르면 Google Calendar 원본 화면이 열립니다. 오른쪽 다가오는 일정에서는 앞으로 45일의 가까운 일정을 확인합니다.\nGoogle OAuth 웹 클라이언트 ID가 없으면 입력란 옆 ‘ID 확인 방법’을 눌러 Calendar API 사용 설정, Google Auth Platform 설정, 웹 클라이언트 생성과 승인된 JavaScript 원본 등록 순서를 확인합니다.\n현재 CRM 주소의 https://도메인을 승인된 JavaScript 원본에 정확히 등록합니다. 경로(/calendar 등)는 넣지 않습니다. HTTPS 주소 또는 localhost에서만 Google 로그인이 가능합니다.\n표준 Google Calendar API 사용은 현재 추가 비용이 없습니다. 이 CRM은 비용과 할당량을 아끼기 위해 새 일정 1회 등록과 선택한 달 조회만 사용합니다. Google 정책과 할당량은 변경될 수 있으므로 운영자는 Google Cloud의 할당량 안내를 확인합니다.\nGoogle 액세스 토큰은 CRM에 영구 저장하지 않으며 만료되면 Google 계정 연결을 다시 실행합니다.\n[담당자와 연관 업무] 새 일정과 일정 수정에서 담당자를 입력하고 파이프라인·지원 업무를 각각 선택해 관련 내용을 참고할 수 있습니다. 두 종류를 함께 연결하거나 연결 안 함을 선택할 수 있으며 일정 저장 버튼으로 반영합니다."
   },
   {
     "id": "manual_troubleshooting",
     "category": "문제 해결",
     "title": "오류가 보일 때 확인 순서",
     "format": "list",
-    "content": "외부 DB ‘확인 필요’: 상단 배지를 눌러 Render의 CRM_ACCESS_KEY를 다시 입력합니다. 계속 실패하면 Render 서비스가 실행 중인지와 /api/health 응답을 확인합니다.\n‘화면 초기화 오류’ 또는 UI-BIND/UI-DATA 코드: 카메라 권한 문제가 아니며 연결키를 반복 입력할 필요가 없습니다. ‘화면 새로고침’을 누르고, 계속되면 오류 코드·발생 시각·Render 로그를 관리자에게 전달합니다.\n카메라 스캔을 눌렀는데 외부 DB 연결창이 뜸: 이전 배포 파일이 브라우저에 남았거나 화면 버튼 연결이 중단된 경우입니다. 새 버전 배포가 완료됐는지 확인하고 강력 새로고침한 뒤 다시 실행합니다. 현재 버전은 삭제된 버튼 참조를 자동 검사하며 카메라 오류가 DB 창을 열지 않도록 분리되어 있습니다.\n자동 저장 ‘저장 실패’: 상세 창을 닫지 말고 인터넷 연결과 외부 DB 상태를 확인합니다. 입력값을 다시 수정하여 저장을 재시도하고 ‘저장됨’을 확인합니다.\n카메라 권한을 매번 물음: 새로고침하지 않은 같은 페이지에서는 최초 스트림을 재사용합니다. 그래도 반복되면 주소가 HTTPS인지 확인하고 브라우저의 사이트 설정에서 카메라 권한을 ‘허용’으로 고정합니다. 시크릿 모드, 브라우저 종료 또는 회사 보안 정책에서는 다시 물을 수 있습니다.\n카메라가 열리지 않음: 휴대폰 설정과 브라우저 사이트 권한에서 카메라가 차단되지 않았는지 확인합니다. 다른 앱이 카메라를 사용 중이면 닫고 다시 시도합니다. 지원되지 않거나 영상이 준비되지 않으면 최대 6초 뒤 휴대폰 기본 촬영·파일 선택으로 자동 전환됩니다.\n‘조명이 부족합니다’ 또는 ‘글자가 흐릿합니다’ 팝업: 밝은 곳으로 이동하거나 조명 버튼을 사용하고, 명함을 프레임에 크게 맞춘 뒤 화면의 명함을 눌러 초점을 다시 잡습니다. 반사가 강하면 명함이나 휴대폰 각도를 조금 바꿉니다.\n명함 인식 결과가 부족함: 가로형 명함을 평평한 바닥에 놓고 그림자 없이 프레임을 가득 채워 다시 촬영합니다. OCR이 끝난 뒤 이름·회사·전화·이메일을 원본과 비교하고 잘못된 값은 직접 수정합니다.\n관리자 코드 오류: 대소문자, 숫자와 특수문자를 정확히 입력합니다. 인증 시간이 끝났거나 새로고침한 경우 설정의 ‘관리자’를 눌러 다시 인증합니다.\n백업 내려받기 실패: 관리자 인증 상태와 외부 DB 연결을 확인하고 다시 시도합니다. 브라우저가 다운로드를 차단했다면 이 사이트의 다운로드를 허용합니다.\n백업 복원 실패: JSON 파일이 HLB-현장지원팀 CRM 백업인지, 같은 작업공간에서 만든 파일인지 확인합니다. 실패한 경우 기존 데이터는 트랜잭션으로 유지되므로 오류를 해결한 뒤 다시 실행합니다.\n다른 사람의 변경이 안 보임: 이 CRM은 실시간 공동 편집 화면이 아니므로 새로고침합니다. 같은 항목 동시 수정은 피합니다.\n캘린더 저장 실패: 제목·날짜·시간 순서를 확인한 뒤 다시 저장합니다. 오류 창이 유지되면 DB 연결을 먼저 복구합니다.\nGoogle 연결 실패: OAuth 클라이언트 ID, 승인된 JavaScript 원본의 정확한 https://도메인, Calendar API 사용 설정과 권한 동의 상태를 확인합니다. 토큰 만료 시 다시 연결합니다.\nGoogle 일정이 수정되지 않음: 무료 최소 동기화 모드는 새 일정 1회 등록과 선택한 달 조회만 수행합니다. 이미 전송한 일정의 수정·삭제는 Google Calendar 원본에서 직접 처리합니다.\nGoogle 일정이 중복으로 보임: 같은 일정을 Google에서 직접 복사했거나 연결 ID가 없는 과거 일정일 수 있습니다. 제목·날짜를 확인하고 Google Calendar에서 불필요한 원본을 삭제한 뒤 ‘Google 일정 불러오기’를 누릅니다.\nRender 무료 서비스가 잠든 경우 첫 접속이 늦을 수 있습니다. 잠시 기다린 뒤 새로고침하고 Render 로그에서 서버 시작과 DB 오류를 확인합니다.\n데이터가 예상과 다름: 즉시 덮어쓰지 말고 최근 백업 파일과 휴지통을 확인합니다. 복원 전 현재 상태를 새 백업으로 보관합니다.\n오류가 반복되면 발생 시각, 사용 메뉴, 화면 메시지와 Render 로그를 함께 기록하여 관리자에게 전달합니다. CRM_ACCESS_KEY, 관리자 코드와 DATABASE_URL 전체 값은 캡처에 포함하지 않습니다."
+    "content": "외부 DB ‘확인 필요’: 상단 배지를 눌러 Render의 CRM_ACCESS_KEY를 다시 입력합니다. 계속 실패하면 Render 서비스가 실행 중인지와 /api/health 응답을 확인합니다.\n‘화면 초기화 오류’ 또는 UI-BIND/UI-DATA 코드: 카메라 권한 문제가 아니며 연결키를 반복 입력할 필요가 없습니다. ‘화면 새로고침’을 누르고, 계속되면 오류 코드·발생 시각·Render 로그를 관리자에게 전달합니다.\n카메라 스캔을 눌렀는데 외부 DB 연결창이 뜸: 이전 배포 파일이 브라우저에 남았거나 화면 버튼 연결이 중단된 경우입니다. 새 버전 배포가 완료됐는지 확인하고 강력 새로고침한 뒤 다시 실행합니다. 현재 버전은 삭제된 버튼 참조를 자동 검사하며 카메라 오류가 DB 창을 열지 않도록 분리되어 있습니다.\n‘저장 실패’: 상세 창을 닫지 말고 인터넷 연결과 외부 DB 상태를 확인합니다. 입력을 유지한 채 저장 버튼으로 재시도하고 ‘저장됨’을 확인합니다.\n카메라 권한을 매번 물음: 새로고침하지 않은 같은 페이지에서는 최초 스트림을 재사용합니다. 그래도 반복되면 주소가 HTTPS인지 확인하고 브라우저의 사이트 설정에서 카메라 권한을 ‘허용’으로 고정합니다. 시크릿 모드, 브라우저 종료 또는 회사 보안 정책에서는 다시 물을 수 있습니다.\n카메라가 열리지 않음: 휴대폰 설정과 브라우저 사이트 권한에서 카메라가 차단되지 않았는지 확인합니다. 다른 앱이 카메라를 사용 중이면 닫고 다시 시도합니다. 지원되지 않거나 영상이 준비되지 않으면 최대 6초 뒤 휴대폰 기본 촬영·파일 선택으로 자동 전환됩니다.\n‘조명이 부족합니다’ 또는 ‘글자가 흐릿합니다’ 팝업: 밝은 곳으로 이동하거나 조명 버튼을 사용하고, 명함을 프레임에 크게 맞춘 뒤 화면의 명함을 눌러 초점을 다시 잡습니다. 반사가 강하면 명함이나 휴대폰 각도를 조금 바꿉니다.\n명함 인식 결과가 부족함: 가로형 명함을 평평한 바닥에 놓고 그림자 없이 프레임을 가득 채워 다시 촬영합니다. OCR이 끝난 뒤 이름·회사·전화·이메일을 원본과 비교하고 잘못된 값은 직접 수정합니다.\n관리자 코드 오류: 대소문자, 숫자와 특수문자를 정확히 입력합니다. 인증 시간이 끝났거나 새로고침한 경우 설정의 ‘관리자’를 눌러 다시 인증합니다.\n백업 내려받기 실패: 관리자 인증 상태와 외부 DB 연결을 확인하고 다시 시도합니다. 브라우저가 다운로드를 차단했다면 이 사이트의 다운로드를 허용합니다.\n백업 복원 실패: 선택한 .xlsx 또는 이전 .json 파일이 HLB-현장지원팀 CRM 백업인지, 같은 작업공간에서 만든 파일인지 확인합니다. 실패한 경우 기존 데이터는 트랜잭션으로 유지되므로 오류를 해결한 뒤 다시 실행합니다.\n다른 사람의 변경이 안 보임: 이 CRM은 실시간 공동 편집 화면이 아니므로 새로고침합니다. 같은 항목 동시 수정은 피합니다.\n캘린더 저장 실패: 제목·날짜·시간 순서를 확인한 뒤 다시 저장합니다. 오류 창이 유지되면 DB 연결을 먼저 복구합니다.\nGoogle 연결 실패: OAuth 클라이언트 ID, 승인된 JavaScript 원본의 정확한 https://도메인, Calendar API 사용 설정과 권한 동의 상태를 확인합니다. 토큰 만료 시 다시 연결합니다.\nGoogle 일정이 수정되지 않음: 무료 최소 동기화 모드는 새 일정 1회 등록과 선택한 달 조회만 수행합니다. 이미 전송한 일정의 수정·삭제는 Google Calendar 원본에서 직접 처리합니다.\nGoogle 일정이 중복으로 보임: 같은 일정을 Google에서 직접 복사했거나 연결 ID가 없는 과거 일정일 수 있습니다. 제목·날짜를 확인하고 Google Calendar에서 불필요한 원본을 삭제한 뒤 ‘Google 일정 불러오기’를 누릅니다.\nRender 무료 서비스가 잠든 경우 첫 접속이 늦을 수 있습니다. 잠시 기다린 뒤 새로고침하고 Render 로그에서 서버 시작과 DB 오류를 확인합니다.\n데이터가 예상과 다름: 즉시 덮어쓰지 말고 최근 백업 파일과 휴지통을 확인합니다. 복원 전 현재 상태를 새 백업으로 보관합니다.\n오류가 반복되면 발생 시각, 사용 메뉴, 화면 메시지와 Render 로그를 함께 기록하여 관리자에게 전달합니다. CRM_ACCESS_KEY, 관리자 코드와 DATABASE_URL 전체 값은 캡처에 포함하지 않습니다."
   }
 ];
+
+/* 기본 매뉴얼 복원과 기존 저장 매뉴얼에 같은 최신 안내를 적용한다.
+   알려진 과거 안내만 교체하고 사용자가 추가한 문장·섹션은 유지한다. */
+function refreshCurrentManualContent(sections){
+  const replacements=[
+    ["같은 항목 동시 수정은 피합니다.","같은 항목을 먼저 저장한 사용자가 있으면 충돌 비교창이 열립니다. 입력 내용은 유지되며, 내 입력 또는 서버 최신 값을 선택해 저장합니다. 삭제 충돌은 입력을 복사하고 최신 데이터를 다시 불러온 뒤 처리합니다."],
+    ["저장 후 연결 영업 정보 갱신에 실패하면 안내에 따라 저장을 다시 누릅니다.","연락처·명함 이미지·연결 영업 정보는 함께 저장되며 하나라도 실패하면 전체가 취소됩니다. 입력을 유지한 채 다시 저장합니다."],
+    ["설정 화면 상단의 ‘관리자’를 누르고","‘관리자 백업·복원’ 제목 옆 ‘활성화’를 누르고"],
+    ["설정의 ‘관리자’를 눌러","‘관리자 백업·복원’ 제목 옆 ‘활성화’를 눌러"],
+    ["대시보드·파이프라인·연락처·지원 업무·캘린더·설정","대시보드·파이프라인·지원 업무·연락처·캘린더·설정"],
+    ["입력할 때마다 자동 저장되며 ‘저장됨’ 표시를 확인합니다.","입력 후 상단 ‘저장’을 누르고 ‘저장됨’ 표시를 확인합니다."],
+    ["자동 저장: 입력값을 외부 DB에 보내는 기능입니다.","저장: 파이프라인·연락처는 저장 버튼으로 입력값을 외부 DB에 반영합니다."],
+    ["입력 중에는 ‘자동 저장 중…’, 완료되면 ‘저장됨’이 표시됩니다.","입력 중에는 ‘미저장 변경’, 저장 버튼을 누르면 ‘저장 중…’, 성공하면 ‘저장됨’이 표시됩니다."],
+    ["해당 값을 다시 수정하여 저장을 재시도합니다.","입력을 유지한 채 저장 버튼으로 재시도합니다."],
+    ["진행 중인 저장은 완료된 뒤 닫히므로 ‘저장됨’을 확인하면 안전합니다.","미저장 변경이 있으면 버릴지 확인하고, 저장 중에는 완료될 때까지 닫을 수 없습니다."],
+    ["상세 입력은 자동 저장됩니다. ‘저장됨’을 확인한 뒤 닫고, ‘저장 실패’가 보이면 연결을 확인한 뒤 값을 다시 입력합니다.","상세 입력은 상단 ‘저장’을 눌러 반영합니다. ‘취소’나 닫기를 누르면 미저장 변경을 버릴지 확인합니다. 저장 실패 시 입력을 유지한 채 다시 저장합니다."],
+    ["자동 저장 ‘저장 실패’:","‘저장 실패’:"],
+    ["입력값을 다시 수정하여 저장을 재시도하고","입력을 유지한 채 저장 버튼으로 재시도하고"],
+    ["저장과 문자 인식은 이어서 진행되므로 연락처 화면의 인식 상태를 확인합니다.","문자 인식 결과를 확인하고 연락처 상세의 ‘저장’을 눌러 등록합니다."],
+    ["카드를 다른 열로 끌어 놓으면 단계와 자동 성사 확률이 함께 변경됩니다.","카드를 다른 열로 끌어 놓으면 상세 화면이 열립니다. 변경할 단계와 성사 확률을 확인하고 저장해야 반영됩니다."],
+    ["대표로 저장됩니다.","상단 ‘저장’을 누르면 대표로 반영됩니다."],
+    ["지정한 담당자는 맨 위로 이동하며 다시 접속해도 유지됩니다.","지정한 담당자는 맨 위로 이동하며 상단 ‘저장’을 눌러야 다시 접속해도 유지됩니다."],
+    ["카드를 누르면 관련 목록으로 이동합니다.","파이프라인 분석 지표를 누르면 계산 대상 목록이 팝업으로 열립니다."],
+    ["오늘 할 일과 관리 그룹은 접거나 펼칠 수 있고,","오늘 할 일은 접거나 펼칠 수 있고,"],
+    ["초보 모드는 자주 쓰는 항목을 간단히 보여주고, 상세 모드는 그룹 분류와 세부 운영 설정까지 보여줍니다.","현재 화면에 표시된 설정을 사용합니다. 우측 상단의 ‘간편 모드’ 표시는 제거되었습니다."],
+    ["상세 모드에서는 그룹 분류의 설명·중요도 가중치와 그룹 이름·색상·기본 분류를 관리합니다.","단계나 분류 설정을 변경할 때는 기존 영업 항목에 미치는 영향을 먼저 확인합니다."],
+    ["전체 데이터와 화면별 변경 로그를 JSON 파일 하나로 저장합니다.","전체 데이터와 화면별 변경 로그를 Excel 파일(.xlsx)로 저장합니다."],
+    ["hlb_busisup_crm_backup_년-월-일_시-분-초.json","hlb_busisup_crm_backup_년-월-일_시-분-초.xlsx"],
+    ["JSON 파일이 HLB-현장지원팀 CRM 백업인지","선택한 .xlsx 또는 이전 .json 파일이 HLB-현장지원팀 CRM 백업인지"],
+    ["파일을 열어 summary와 data.auditLogs에서 화면별 입력·수정·삭제 건수를 확인할 수 있습니다.","Excel의 ‘백업정보’와 ‘변경로그’ 시트에서 화면별 입력·수정·삭제 내역을 확인합니다."],
+    ["파란색은 CRM 다음 연락일","연한 붉은색은 CRM 다음 연락일"],
+    ["파란색·노란색 일정은","연한 붉은색·노란색 일정은"],
+    ["예: 강지훈","예: 홍길동"]
+  ];
+  const guides={
+    manual_dashboard:"[현재 화면 안내] 화면 배치와 메뉴 구성은 유지하고 HLB 로고의 붉은색(#EF4036)과 차콜·흰색을 적용했습니다. 제목·메뉴는 굵은 Pretendard로 표시합니다. 우측 상단 ‘간편 모드’ 표시는 없습니다. 붉은 저장 버튼·선택 표시는 일반 조작 상태이며, 지연·오류는 문구와 상태 배지를 함께 확인합니다. 파이프라인 분석의 수주율·활성 항목 비중·후속조치 지연·실행과제 완료를 누르면 목록이 열리고, 항목을 누르면 파이프라인 또는 지원 업무 상세로 이동합니다. 수주율 목록은 수주·보류·실주, 실행과제 완료 목록은 전체 과제를 표시합니다.",
+    manual_pipeline:"[입력·저장 기준] 내부 담당자 입력 예시는 ‘홍길동’입니다. 새 항목과 상세 변경은 상단 저장, 표 수정은 해당 행의 저장 버튼으로 반영합니다. 고객 담당자는 여러 명 선택할 수 있으며 ‘대표로 지정’ 변경도 저장해야 유지됩니다. 선택한 담당자의 이름과 연락처는 고객 담당자 연락처 아래에 표시됩니다. 저장 전 값은 대시보드 집계에 반영되지 않습니다. 활동 추가·지원 업무 연결·전환은 영업 항목을 먼저 저장한 뒤 사용합니다.",
+    manual_contacts:"[연락처 입력과 목록] 직접 추가·명함 인식·회사명 ‘입력에 적용’·즐겨찾기 변경은 연락처 상세에서 저장해야 반영됩니다. 연락처·명함 이미지·연결 영업 정보는 함께 저장되며 하나라도 실패하면 전체가 취소됩니다. 입력을 유지한 채 다시 저장합니다. 목록은 기본 20줄이며 20·30·40·50줄 중 선택하고 하단 페이지 번호로 이동합니다. 전체 선택은 현재 페이지에 적용됩니다. CSV 업로드·내보내기는 리멤버 Outlook의 92개 열 구성과 호환되며 CSV 업로드는 별도의 실행 작업입니다.",
+    manual_tasks:"[담당자 입력 예시] 지원 업무 담당자 예시는 ‘홍길동’입니다. 담당자를 직접 입력하거나 연결한 영업 항목의 내부 담당자를 따르도록 지정하고, 지원 업무의 저장 버튼으로 반영합니다.",
+    manual_calendar:"[담당자와 연관 업무] 새 일정과 일정 수정에서 담당자를 입력하고 파이프라인·지원 업무를 각각 선택해 관련 내용을 참고할 수 있습니다. 두 종류를 함께 연결하거나 연결 안 함을 선택할 수 있으며 일정 저장 버튼으로 반영합니다.",
+    manual_settings:"[현재 백업·복원] 관리자 ‘내려받기’는 .xlsx 백업을 만듭니다. 백업정보·저장데이터·변경로그의 세 시트로 구성되며, 긴 값은 조각으로 나뉘므로 직접 편집하지 않습니다. 복원하기는 .xlsx와 이전 .json 백업을 받습니다. 휴지통은 접기·펼치기가 가능하고 접은 상태가 저장됩니다."
+  };
+  guides.manual_troubleshooting="[동시 저장] 서로 다른 항목은 독립적으로 저장됩니다. 같은 항목은 먼저 저장한 값이 보호되며 수정 전·내 입력·서버 최신 값을 비교하는 창이 열립니다. 기본 선택은 서버 최신 값이며, ‘내 입력 사용’은 해당 항목의 서버 값을 덮어쓰는 명시적 선택입니다. ‘돌아가서 계속 편집’은 저장하지 않고 입력을 유지합니다. 다시 저장하는 동안에도 다른 변경이 있으면 다시 비교합니다. 삭제 또는 그룹 삭제 충돌은 최신 데이터를 불러와 확인 후 다시 처리합니다. 전체 백업 복원 뒤 열린 이전 화면의 저장은 차단되므로 ‘내 입력 복사’ 후 페이지를 다시 엽니다. 화면을 닫거나 새로고침하면 미저장 입력은 사라질 수 있습니다.";
+  for(const section of sections){
+    if(!/^manual_/.test(section.id))continue;
+    for(const [oldText,newText] of replacements)section.content=section.content.replaceAll(oldText,newText);
+    const guide=guides[section.id];if(guide&&!section.content.includes(guide))section.content+="\n"+guide;
+  }
+}
+refreshCurrentManualContent(DEFAULT_MANUAL_SECTIONS);
 
 let AREAS = [];
 let stageData = {};
@@ -489,9 +539,7 @@ async function cloudStorageRequest(method,key,value,allowRetry){
       };
       if(method==="PUT"){
         options.headers["Content-Type"]="application/json";
-        /* 마지막으로 읽은 revision을 함께 보내 다른 기기·탭의 변경을 조용히 덮어쓰지 않게 함 */
-        const baseRevision=storageRevisions.get(key);
-        options.body=JSON.stringify(baseRevision===undefined?{value}:{value,baseRevision});
+        options.body=JSON.stringify(value);
       }
       response=await fetch(CLOUD_API_BASE+"/storage/"+encodeURIComponent(key),options);
     }catch(error){
@@ -517,10 +565,8 @@ async function cloudStorageRequest(method,key,value,allowRetry){
   if(!response.ok){
     let payload={};
     try{payload=await response.json();}catch(e){}
-    if(response.status===409 && payload.error==="revision_conflict"){
-      throw cloudError("다른 기기(또는 탭)에서 먼저 저장되었습니다. 화면을 새로고침해 최신 데이터를 불러온 뒤 같은 작업을 다시 해 주세요.","conflict");
-    }
-    throw cloudError("외부 DB 저장 중 오류가 발생했습니다"+(payload.requestId?" (요청 "+payload.requestId+")":"")+".","server");
+    const error=cloudError(payload.message||"외부 DB 저장 중 오류가 발생했습니다"+(payload.requestId?" (요청 "+payload.requestId+")":"")+".",response.status===409?"conflict":"server");
+    error.code=payload.error;error.conflicts=payload.conflicts;throw error;
   }
   try{
     return await response.json();
@@ -528,26 +574,164 @@ async function cloudStorageRequest(method,key,value,allowRetry){
     throw cloudError("서버 응답을 해석할 수 없습니다. 네트워크(프록시) 상태를 확인해 주세요.","server");
   }
 }
-/* 키별로 마지막으로 확인한 서버 revision (충돌 감지용) */
-const storageRevisions=new Map();
-function recordStorageRevision(key,result){
-  const revision=Number(result&&result.revision);
-  if(Number.isSafeInteger(revision)&&revision>=0)storageRevisions.set(key,revision);
-}
+/* Read baselines are private copies. Only acknowledged items advance their tokens. */
+const storageSnapshots=new Map(),pendingStorageRequests=new Map();
+let storageWriteQueue=Promise.resolve();
 async function storageGet(key){
   const result=await cloudStorageRequest("GET",key,undefined,true);
-  recordStorageRevision(key,result);
+  storageSnapshots.set(key,deepCopy(result));
   return Object.prototype.hasOwnProperty.call(result,"value") ? result.value : null;
 }
-async function storageSet(key,value){
-  const result=await cloudStorageRequest("PUT",key,value,true);
-  recordStorageRevision(key,result);
-  return result;
+function storageMutation(key,value,remove=false,expected){
+  const base=storageSnapshots.get(key),mutations=[];
+  if(base.collection){
+    const before=new Map((base.value||[]).map(item=>[item.id,item]));
+    const after=new Map((value||[]).map(item=>[item.id,item]));
+    for(const [id,item] of before)if(!after.has(id))mutations.push({id,version:base.versions[id]??null,deleted:true});
+    (value||[]).forEach((item,index)=>{if(!sameStoredValue(before.get(item.id),item))mutations.push({id:item.id,version:base.versions[item.id]??null,value:item,index});});
+  }else if(!sameStoredValue(base.value,value)||remove)mutations.push({id:"",version:base.versions[""]??null,...(remove?{deleted:true}:{value})});
+  if(expected)for(const mutation of mutations)if(mutation.id===expected.id)mutation.version=expected.version;
+  return {key,mutations,...(remove?{remove:true,head:base.head}:{})};
 }
-async function storageDelete(key){
-  const result=await cloudStorageRequest("DELETE",key,undefined,true);
-  storageRevisions.delete(key);
-  return result;
+function mergeStorageAcknowledgement(base,record,change){
+  const next=deepCopy(base);
+  next.head=record.head;next.revision=record.revision;next.updatedAt=record.updatedAt;
+  if(change.remove){next.value=null;next.versions=record.versions;return next;}
+  for(const mutation of change.mutations){
+    next.versions[mutation.id]=record.versions[mutation.id];
+    if(!base.collection){next.value=record.value;continue;}
+    const saved=(record.value||[]).find(item=>item.id===mutation.id),index=(next.value||[]).findIndex(item=>item.id===mutation.id);
+    if(!next.value)next.value=[];
+    if(saved){if(index>=0)next.value[index]=saved;else next.value.splice(mutation.index??next.value.length,0,saved);}
+    else if(index>=0)next.value.splice(index,1);
+  }
+  if(base.collection&&next.value===null&&Array.isArray(record.value)&&!record.value.length)next.value=[];
+  if(!sameStoredValue(next.value,record.value))next.head=base.head;
+  return next;
+}
+function reconcileStoredArray(target,values){
+  const existing=new Map(target.map(item=>[item.id,item]));
+  target.splice(0,target.length,...(values||[]).map(value=>{
+    const item=existing.get(value.id);if(!item)return deepCopy(value);
+    const image=item.cardImage,keepImage=item.cardThumb===value.cardThumb;
+    Object.keys(item).forEach(key=>{if(!Object.prototype.hasOwnProperty.call(value,key))delete item[key];});Object.assign(item,deepCopy(value));
+    if(image&&keepImage)item.cardImage=image;return item;
+  }));
+}
+function reflectStoredValue(key,value){
+  if(key==="tinico:contacts")reconcileStoredArray(contactsData,value);
+  else if(key==="tinico:stage:roadmap")reconcileStoredArray(roadmapData,value);
+  else if(key==="tinico:calendar:events")reconcileStoredArray(calendarEntries,value);
+  else if(key==="tinico:trash")reconcileStoredArray(trashData,value);
+  else if(key.startsWith("tinico:stage:")){const areaKey=key.slice(13);if(stageData[areaKey])reconcileStoredArray(stageData[areaKey],value);}
+}
+/* 접속 초기화 중에는 정규화·마이그레이션 저장이 키마다 따로 나가 왕복이 쌓인다.
+   초기화가 끝날 때까지 모아 두었다가 한 번의 트랜잭션으로 보낸다. */
+let bootWrites = null;
+function beginBootWrites(){ bootWrites = []; }
+function queueBootWrite(key, value){
+  if(!bootWrites) return storageSet(key, value);
+  bootWrites.push({key, value});
+  return Promise.resolve();
+}
+async function flushBootWrites(){
+  const queued = bootWrites;
+  bootWrites = null;
+  if(!queued || !queued.length) return;
+  /* 같은 키를 여러 번 담았으면 마지막 값만 보낸다 (한 요청에 같은 키를 두 번 담을 수 없다) */
+  const merged = new Map();
+  queued.forEach(entry=>merged.set(entry.key, entry));
+  await storageTransaction([...merged.values()]);
+}
+function storageSet(key,value,expected){return storageTransaction([{key,value,expected}]).then(result=>{reflectStoredValue(key,result.records[key].value);return result.records[key];});}
+function storageDelete(key){return storageTransaction([{key,value:null,remove:true}]);}
+function storageTransaction(entries){
+  const captured=deepCopy(entries);
+  const run=storageWriteQueue.catch(()=>{}).then(()=>performStorageTransaction(captured));
+  storageWriteQueue=run;return run;
+}
+async function performStorageTransaction(entries){
+  for(const entry of entries)if(!storageSnapshots.has(entry.key))await storageGet(entry.key);
+  const changes=entries.map(entry=>storageMutation(entry.key,entry.value,entry.remove,entry.expected));
+  const generation=entries[0].expected?.generation||storageSnapshots.get(entries[0].key).generation;
+  if(entries.some(entry=>(entry.expected?.generation||storageSnapshots.get(entry.key).generation)!==generation))throw new Error("복원 전후의 데이터가 섞여 있습니다. 입력 내용을 복사한 뒤 페이지를 다시 열어 주세요.");
+  const signature=JSON.stringify({generation,changes},(key,value)=>key==="updatedAt"?undefined:value);
+  let body=pendingStorageRequests.get(signature)||{requestId:crypto.randomUUID(),generation,changes};
+  pendingStorageRequests.set(signature,body);
+  for(;;){
+    try{
+      const result=await cloudStorageRequest("PUT",entries[0].key,body,true);
+      pendingStorageRequests.delete(signature);
+      const accepted={records:{}};
+      for(const change of body.changes){
+        const merged=mergeStorageAcknowledgement(storageSnapshots.get(change.key),result.records[change.key],change);
+        storageSnapshots.set(change.key,deepCopy(merged));accepted.records[change.key]=merged;
+      }
+      // Refresh only server-derived linked fields; dirty editor tokens remain pinned.
+      for(const [key,record] of Object.entries(result.records))if(!body.changes.some(change=>change.key===key)&&key.startsWith("tinico:stage:")){
+        const areaKey=key.slice("tinico:stage:".length),base=storageSnapshots.get(key);
+        if(!base)continue;
+        const mutations=(record.value||[]).filter(item=>base.versions[item.id]!==record.versions[item.id]).map(item=>({id:item.id,value:item}));
+        const merged=mergeStorageAcknowledgement(base,record,{mutations});storageSnapshots.set(key,deepCopy(merged));stageData[areaKey]=deepCopy(merged.value||[]);
+        const area=findAreaByKey(areaKey);if(area)renderStageBody(area);
+      }
+      return accepted;
+    }catch(error){
+      if(error.code==="revision_conflict"&&error.conflicts?.length){
+        pendingStorageRequests.delete(signature);
+        const resolution=await showStorageConflict(error,body,entries);
+        if(!resolution)throw error;
+        body={...body,requestId:crypto.randomUUID(),changes:resolution};pendingStorageRequests.set(signature,body);continue;
+      }
+      if(error.code==="workspace_restored"||error.code==="version_required")await showStorageConflict(error,body,entries);
+      throw error;
+    }
+  }
+}
+function showStorageConflict(error,body,entries=[]){
+  return new Promise(resolve=>{
+    const previousFocus=document.activeElement,overlay=document.createElement("div");overlay.className="tn-modal-overlay";overlay.id="save-conflict-overlay";
+    const modal=document.createElement("div");modal.className="tn-modal wide tn-conflict-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-labelledby","save-conflict-title");
+    const title=document.createElement("h2");title.id="save-conflict-title";title.textContent="저장 충돌 · 입력 내용은 유지됩니다";modal.appendChild(title);
+    const hint=document.createElement("p");hint.textContent=error.message;modal.appendChild(hint);
+    const changes=deepCopy(body.changes),choices=[];
+    const labels={name:"이름",title:"제목",company:"회사",stage:"단계",internalOwner:"내부 담당자",contactName:"고객 담당자",contactPhone:"고객 담당자 연락처",mobilePhone:"휴대전화",businessPhone:"회사 전화",email:"이메일",department:"부서",jobTitle:"직책",amount:"예상 매출",action:"다음에 할 일",nextAction:"다음 연락일",memo:"메모",activities:"활동",linkedContactIds:"선택한 담당자",dueDate:"마감일",owner:"담당자"};
+    const display=value=>value===undefined||value===null?"(없음)":typeof value==="object"?JSON.stringify(value,null,2):String(value);
+    for(const conflict of error.conflicts||[]){
+      const change=changes.find(item=>item.key===conflict.key),mutation=change?.mutations.find(item=>item.id===conflict.id);
+      const base=storageSnapshots.get(conflict.key),pinned=entries.find(entry=>entry.key===conflict.key)?.expected;
+      const original=pinned?.id===conflict.id?pinned.original:base?.collection?(base.value||[]).find(item=>item.id===conflict.id):base?.value;
+      const mine=mutation?.deleted?null:mutation?.value,latest=conflict.value;
+      const heading=document.createElement("h3");heading.textContent=mine?.title||mine?.name||original?.title||original?.name||conflict.key;modal.appendChild(heading);
+      const table=document.createElement("table");table.className="tn-conflict-table";
+      const header=table.createTHead().insertRow();["항목","수정 전","내 입력","서버 최신 값"].forEach(text=>{const th=document.createElement("th");th.textContent=text;header.appendChild(th);});
+      const fields=new Set([...Object.keys(original&&typeof original==="object"?original:{}),...Object.keys(mine&&typeof mine==="object"?mine:{}),...Object.keys(latest&&typeof latest==="object"?latest:{})]);
+      if(!fields.size)fields.add("값");
+      for(const field of fields){
+        if(field!=="값"&&sameStoredValue(original?.[field],mine?.[field])&&sameStoredValue(mine?.[field],latest?.[field]))continue;
+        const row=table.insertRow();[labels[field]||field,display(field==="값"?original:original?.[field]),display(field==="값"?mine:mine?.[field]),conflict.deleted?"삭제됨":display(field==="값"?latest:latest?.[field])].forEach(text=>{row.insertCell().textContent=text;});
+      }
+      modal.appendChild(table);
+      if(mutation&&conflict.id!==null&&!change.remove&&!body.changes.some(change=>change.mutations.some(item=>item.deleted))){
+        const select=document.createElement("select");select.setAttribute("aria-label",heading.textContent+" 충돌 해결");
+        select.add(new Option("서버 최신 값 사용","server"));
+        if(!conflict.deleted)select.add(new Option(mutation.deleted?"내 삭제 요청 적용":"내 입력 사용 (서버 값을 덮어씀)","mine"));
+        modal.appendChild(select);choices.push({select,mutation,conflict});
+      }
+    }
+    const actions=document.createElement("div");actions.className="tn-modal-actions";
+    const finish=value=>{overlay.remove();previousFocus?.focus();resolve(value);};
+    const copy=document.createElement("button");copy.className="tn-modal-btn";copy.textContent="내 입력 복사";copy.onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(body.changes,null,2));copy.textContent="복사됨";}catch{showToast("복사 권한을 확인해 주세요.");}};actions.appendChild(copy);
+    const cancel=document.createElement("button");cancel.className="tn-modal-btn";cancel.textContent="돌아가서 계속 편집";cancel.onclick=()=>finish(null);actions.appendChild(cancel);
+    if(choices.length===(error.conflicts||[]).length&&choices.length){
+      const retry=document.createElement("button");retry.className="tn-modal-btn save";retry.textContent="선택한 내용으로 저장";retry.onclick=()=>{
+        const ignoredImages=new Set();
+        choices.forEach(({select,mutation,conflict})=>{mutation.version=conflict.version;if(select.value==="server"){mutation.deleted=conflict.deleted;mutation.value=conflict.value;if(conflict.key==="tinico:contacts")ignoredImages.add(contactImageKey(conflict.id));}});finish(changes.filter(change=>!ignoredImages.has(change.key)));
+      };actions.appendChild(retry);
+    }
+    modal.appendChild(actions);overlay.appendChild(modal);document.getElementById("tn-root").appendChild(overlay);cancel.focus();
+    overlay.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();event.stopPropagation();finish(null);}if(event.key==="Tab"){const focusable=[...modal.querySelectorAll("button,select")];if(event.shiftKey&&document.activeElement===focusable[0]){event.preventDefault();focusable.at(-1).focus();}else if(!event.shiftKey&&document.activeElement===focusable.at(-1)){event.preventDefault();focusable[0].focus();}}});
+  });
 }
 
 let adminSessionToken="";
@@ -566,7 +750,9 @@ function updateAdminUi(){
   const backupStatus=document.getElementById("settings-backup-status");
   if(button){
     button.dataset.unlocked=unlocked?"true":"false";
-    button.textContent=unlocked?"관리자 인증됨":"관리자";
+    button.textContent=unlocked?"활성화됨":"활성화";
+    button.title=unlocked?"관리자 인증 완료 · 클릭하면 인증 시간을 갱신합니다.":"관리자 코드로 백업·복원을 활성화합니다.";
+    button.setAttribute("aria-label",unlocked?"관리자 백업·복원 활성화됨 · 인증 갱신":"관리자 백업·복원 활성화");
   }
   if(actions)actions.hidden=!unlocked;
   if(lockedNote)lockedNote.hidden=unlocked;
@@ -694,7 +880,7 @@ async function adminApiRequest(path,options={}){
   return payload;
 }
 
-const DEFAULT_APP_SETTINGS = {beginnerMode:true, onboardingSeen:false, lastBackupAt:"", dashboardCollapse:{today:false,groups:false}, dashboardOrder:["analytics","summary","today","ai","groups"], contactPageSize:20, googleCalendar:{clientId:"",eventMap:{},collapsed:false}};
+const DEFAULT_APP_SETTINGS = {beginnerMode:true, onboardingSeen:false, lastBackupAt:"", dashboardCollapse:{today:false,groups:false}, dashboardOrder:["analytics","summary","today","ai","groups"], contactPageSize:20, pipelinePageSize:20, trashCollapsed:false, googleCalendar:{clientId:"",eventMap:{},collapsed:false}};
 let appSettings = {...DEFAULT_APP_SETTINGS};
 let trashData = [];
 let undoTrashId = "";
@@ -711,7 +897,6 @@ const DEFAULT_STAGE_GUIDE = {
 };
 function stageGuide(stage){ return DEFAULT_STAGE_GUIDE[stage] || `${stage} 단계의 내부 운영 기준을 설정에서 합의해 사용합니다.`; }
 function isClosedStage(stage){ return RESERVED_STAGES.includes(normalizeStage(stage)); }
-function isLostStage(stage){ return normalizeStage(stage) === "실주"; }
 function deepCopy(value){ return JSON.parse(JSON.stringify(value)); }
 function nowIso(){ return new Date().toISOString(); }
 function formatDateTime(value){
@@ -785,36 +970,32 @@ async function restoreTrashEntry(id){
   const entry = trashData.find(x=>x.id === id);
   if(!entry) return;
   try{
+  const changes=[{key:"tinico:trash",value:trashData.filter(x=>x.id!==id)}];
+  let restoredArea=null;
   if(entry.type === "deal") {
     const target = findAreaByKey(entry.meta.areaKey) || AREAS[0];
     if(!target) return;
     const restored = normalizeItem(entry.payload);
     if((stageData[target.key] || []).some(x=>x.id === restored.id)) restored.id = uid();
-    stageData[target.key] = stageData[target.key] || [];
-    stageData[target.key].push(restored);
-    await saveArea(target.key);
-    buildStageView(target); renderStageBody(target);
+    changes.push({key:"tinico:stage:"+target.key,value:[...(stageData[target.key]||[]),restored]});
   } else if(entry.type === "contact") {
     const restored = normalizeContact(entry.payload);
     if(contactsData.some(x=>x.id === restored.id)) restored.id = uid();
-    contactsData.unshift(restored);
-    await saveContacts();
+    changes.push({key:"tinico:contacts",value:stripContactImages([restored,...contactsData])});
   } else if(entry.type === "roadmap") {
     const restored = normalizeSupportTask(entry.payload);
     if(roadmapData.some(x=>x.id === restored.id)) restored.id = uid();
-    roadmapData.push(restored);
-    await saveRoadmapData();
+    changes.push({key:"tinico:stage:roadmap",value:[...roadmapData,restored]});
   } else if(entry.type === "group") {
     const area = normalizeArea(entry.payload.area);
     if(AREAS.some(a=>a.key === area.key)) area.key = uid();
-    AREAS.push(area);
-    stageData[area.key] = (entry.payload.items || []).map(normalizeItem);
-    await saveAreas();
-    await saveArea(area.key);
-    buildStageView(area); renderStageBody(area);
+    restoredArea=area;
+    changes.push({key:"tinico:areas",value:[...AREAS,area].map(storedAreaValue)},{key:"tinico:stage:"+area.key,value:(entry.payload.items||[]).map(normalizeItem)});
   }
-  trashData = trashData.filter(x=>x.id !== id);
-  await saveTrash();
+  const result=await storageTransaction(changes);
+  if(restoredArea){AREAS.push(restoredArea);stageData[restoredArea.key]=[];}
+  for(const [key,record] of Object.entries(result.records))reflectStoredValue(key,record.value);
+  AREAS.forEach(area=>{buildStageView(area);renderStageBody(area);});
   renderRoadmap(); renderContacts(); renderPipeline(true); renderHome(); renderSettings();
   const toast = document.getElementById("tn-undo-toast"); if(toast) toast.hidden = true;
   }catch(error){
@@ -861,9 +1042,11 @@ async function moveDealToTrash(areaKey,id){
   const previousStage = stageData[areaKey];
   const previousTrash = [...trashData];
   try{
-    await addTrash("deal", found.item.title || "영업 항목", found.item, {areaKey});
-    stageData[areaKey] = stageData[areaKey].filter(x=>x.id !== id);
-    await saveArea(areaKey);
+    const entry={id:uid(),type:"deal",label:found.item.title||"영업 항목",deletedAt:nowIso(),payload:deepCopy(found.item),meta:{areaKey}};
+    const key="tinico:stage:"+areaKey;
+    const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key,value:stageData[areaKey].filter(x=>x.id!==id)}]);
+    trashData=result.records["tinico:trash"].value;stageData[areaKey]=result.records[key].value;
+    showUndo(`${entry.label}을(를) 휴지통으로 이동했습니다.`,entry.id);
     dealDrafts.delete(dealDrawerSaveKey(areaKey,id));
     if(selectedDealRef && selectedDealRef.id === id) closeDealDrawer(true);
   }catch(error){
@@ -885,11 +1068,9 @@ async function moveContactsToTrash(ids){
     /* 연락처 수만큼 전체 휴지통을 반복 업로드하지 않도록 한 번에 담아 1회만 저장.
        명함 원본은 별도 키에 남아 있으므로 휴지통에는 썸네일까지만 보관 */
     const entries = targets.map(ct=>({id:uid(), type:"contact", label:ct.name || ct.company || "연락처", deletedAt:nowIso(), payload:deepCopy({...ct, cardImage:undefined}), meta:{}}));
-    trashData.unshift(...entries);
-    await saveTrash();
-    contactsData = contactsData.filter(c=>!idSet.has(c.id));
+    const result=await storageTransaction([{key:"tinico:trash",value:[...entries,...trashData].slice(0,200)},{key:"tinico:contacts",value:stripContactImages(contactsData.filter(c=>!idSet.has(c.id)))}]);
+    trashData=result.records["tinico:trash"].value;contactsData=result.records["tinico:contacts"].value;
     selectedContactIds.clear();
-    await saveContacts();
     ids.forEach(id=>contactDrafts.delete(id));
     if(selectedContactId && idSet.has(selectedContactId)) closeContactDetail(true);
     showUndo(`연락처 ${targets.length}개를 휴지통으로 이동했습니다.`, entries[0]?.id || "");
@@ -901,17 +1082,42 @@ async function moveContactsToTrash(ids){
   }
   renderTrash(); renderContacts(); renderHome();
 }
+/* 휴지통 목록 접기·펼치기 — 접은 상태는 외부 DB의 앱 설정에 남아 다음 접속에도 유지된다 */
+function applyTrashCollapsed(){
+  const wrap = document.getElementById("settings-trash-list");
+  const button = document.getElementById("settings-trash-collapse");
+  if(!wrap || !button) return;
+  const collapsed = !!appSettings.trashCollapsed;
+  wrap.hidden = collapsed;
+  button.textContent = collapsed ? (trashData.length ? `펼치기 · ${trashData.length}개` : "펼치기") : "접기";
+  button.setAttribute("aria-expanded", String(!collapsed));
+}
+async function toggleTrashCollapsed(){
+  const previous = !!appSettings.trashCollapsed;
+  appSettings.trashCollapsed = !previous;
+  /* 저장 실패와 무관하게 화면을 먼저 반영하고, 실패하면 되돌린다 */
+  applyTrashCollapsed();
+  try{
+    await saveAppSettings();
+  }catch(error){
+    appSettings.trashCollapsed = previous;
+    applyTrashCollapsed();
+    console.error("trash collapse save failed", error);
+    showToast(error?.message || "휴지통 접기 상태 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  }
+}
 function renderTrash(){
   const wrap = document.getElementById("settings-trash-list");
   if(!wrap) return;
   wrap.innerHTML = "";
-  if(!trashData.length){ wrap.innerHTML = '<div class="tn-empty-compact">휴지통이 비어 있습니다.</div>'; return; }
+  if(!trashData.length){ wrap.innerHTML = '<div class="tn-empty-compact">휴지통이 비어 있습니다.</div>'; applyTrashCollapsed(); return; }
   trashData.slice(0,50).forEach(entry=>{
     const row = document.createElement("div"); row.className = "tn-trash-row";
     const typeLabel = {deal:"영업 항목",contact:"연락처",group:"그룹",roadmap:"영업지원 실행과제"}[entry.type] || entry.type;
     row.innerHTML = `<div><div class="tn-trash-title">${escapeHtml(entry.label)}</div><div class="tn-trash-meta">${escapeHtml(typeLabel)} · ${escapeHtml(formatDateTime(entry.deletedAt))}</div></div><div class="tn-trash-actions"><button class="tn-btn small" data-restore-trash="${escapeHtml(entry.id)}">복구</button><button class="tn-btn small danger" data-delete-trash="${escapeHtml(entry.id)}">영구 삭제</button></div>`;
     wrap.appendChild(row);
   });
+  applyTrashCollapsed();
 }
 function updateBeginnerControls(){
   const on = !!appSettings.beginnerMode;
@@ -933,15 +1139,44 @@ async function setBeginnerMode(on){
     showToast(error?.message||"모드 설정 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
   }
 }
+/* 명함 인식(OCR·스캐너)과 Excel 백업 코드는 첫 화면에 필요하지 않다.
+   실제로 그 기능을 쓸 때만 heavy.js 를 내려받아 첫 로딩을 가볍게 유지한다. */
+let heavyFeaturesPromise = null;
+function heavyFeaturesSrc(){
+  const tag = [...document.querySelectorAll("script[src]")].find(script=>/(^|\/)app\.js(\?|$)/.test(script.getAttribute("src")||""));
+  const version = tag ? (tag.getAttribute("src").split("?")[1]||"") : "";
+  return "heavy.js" + (version ? "?" + version : "");
+}
+function heavyFeaturesReady(){ return typeof openScanner === "function" && typeof buildBackupWorkbook === "function"; }
+function loadHeavyFeatures(){
+  if(heavyFeaturesReady()) return Promise.resolve();
+  if(!heavyFeaturesPromise){
+    heavyFeaturesPromise = new Promise((resolve,reject)=>{
+      const script = document.createElement("script");
+      script.src = heavyFeaturesSrc();
+      script.onload = ()=>resolve();
+      script.onerror = ()=>{ heavyFeaturesPromise = null; reject(new Error("명함 인식·백업 기능을 불러오지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.")); };
+      document.head.appendChild(script);
+    });
+  }
+  return heavyFeaturesPromise;
+}
+/* 기능을 불러온 뒤 실행한다. 이미 불러와 있으면 기다리지 않고 바로 실행해
+   버튼을 누른 즉시 반응하도록 한다. 불러오지 못하면 알리고 아무 것도 하지 않는다. */
+function withHeavyFeatures(run){
+  if(heavyFeaturesReady()) return run();
+  return loadHeavyFeatures().then(run, error=>{ showToast(error.message); });
+}
 async function exportFullBackup(){
   const button=document.getElementById("settings-backup-export");
   if(button){button.disabled=true;button.textContent="준비 중…";}
   try{
+    await loadHeavyFeatures();
     const backup=await adminApiRequest("/admin/backup");
-    const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"});
+    const blob=await buildBackupWorkbook(backup);
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download=`hlb_busisup_crm_backup_${formatBackupFileStamp(new Date(backup.exportedAt))}.json`;
+    a.download=`hlb_busisup_crm_backup_${formatBackupFileStamp(new Date(backup.exportedAt))}.xlsx`;
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     adminLastBackupAt=backup.exportedAt||nowIso();
@@ -952,9 +1187,17 @@ async function exportFullBackup(){
     if(button){button.disabled=false;button.textContent="내려받기";}
   }
 }
+/* Excel(.xlsx)은 ZIP이라 항상 PK로 시작한다. 예전에 내려받은 .json 백업도 그대로 복원할 수 있게 둘 다 받는다. */
+async function readBackupFile(file){
+  const buffer=await file.arrayBuffer();
+  const head=new Uint8Array(buffer.slice(0,2));
+  if(head[0]===0x50 && head[1]===0x4B){ await loadHeavyFeatures(); return readBackupWorkbook(buffer); }
+  return JSON.parse(new TextDecoder().decode(buffer));
+}
 async function importFullBackup(file){
   let backup;
-  try{ backup = JSON.parse(await file.text()); }catch(e){ showToast("백업 파일을 읽을 수 없습니다."); return; }
+  try{ backup = await readBackupFile(file); }
+  catch(error){ console.error("backup file read failed", error); showToast(error?.message||"백업 파일을 읽을 수 없습니다."); return; }
   if(!backup || ![2,3].includes(backup.tinikoCRMBackupVersion)){showToast("지원하지 않는 백업 파일입니다.");return;}
   const point=backup.exportedAt?formatDateTime(backup.exportedAt):"날짜 확인 불가";
   if(!confirm(`${point} 시점으로 전체 데이터를 되돌릴까요?\n\n현재 데이터와 변경 로그가 모두 교체됩니다. 복원 전에 현재 상태를 먼저 내려받는 것을 권장합니다.`))return;
@@ -1008,7 +1251,6 @@ function normalizeArea(area){
   };
 }
 function areaBucketKey(area){ return inferAreaBucket(area); }
-function areaBucketMeta(area){ return REVENUE_BUCKETS[areaBucketKey(area)] || REVENUE_BUCKETS.future; }
 function itemBucketKey(item, area){
   return validBucketKey(item && item.bucket) || areaBucketKey(area);
 }
@@ -1057,10 +1299,6 @@ function effectiveImportanceConfig(){
 async function loadImportanceConfig(){
   importanceConfig = cloneImportanceConfig(await storageGet("tinico:importance:config"));
 }
-async function saveImportanceConfig(){
-  importanceConfig = cloneImportanceConfig(importanceConfig);
-  await storageSet("tinico:importance:config", importanceConfig);
-}
 async function loadStageSettings(){
   const saved = await storageGet("tinico:settings:stages");
   if(Array.isArray(saved) && saved.length){
@@ -1083,10 +1321,66 @@ async function loadStageSettings(){
   }
   if(reservedRestored) await saveStageSettings();
 }
-async function saveStageSettings(){
-  await storageSet("tinico:settings:stages", STAGE_OPTIONS.map((label, idx)=>({
+/* 화면 값을 먼저 바꾼 뒤 저장하는 동작의 공통 처리.
+   저장이 실패하면 바꾸기 전으로 되돌리고 알려 화면과 DB가 어긋난 채 남지 않게 한다. */
+async function saveOrRollback(save, undo, failureMessage){
+  try{
+    await save();
+    return true;
+  }catch(error){
+    undo();
+    console.error("save failed", error);
+    showToast(error?.message || failureMessage || "저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+    return false;
+  }
+}
+function stageSettingsValue(){
+  return STAGE_OPTIONS.map((label, idx)=>({
     key:label, label, color:safeCssColor(STAGE_COLORS[label],PALETTE[idx % PALETTE.length].color)
-  })));
+  }));
+}
+async function saveStageSettings(){
+  await storageSet("tinico:settings:stages", stageSettingsValue());
+}
+/* ---------- 설정 저장의 원자성 ----------
+   단계·분류·그룹·영업 항목은 서로를 참조한다. 예를 들어 분류를 지우면 그 분류를 쓰던
+   그룹과 영업 항목도 함께 옮겨야 하는데, 저장을 나눠 보내면 중간에 실패했을 때
+   "설정에는 없는 분류를 항목이 가리키는" 상태가 DB에 남는다.
+   그래서 한 번의 트랜잭션으로 함께 저장하고, 실패하면 화면 값도 원래대로 되돌린다. */
+function settingsSnapshot(){
+  return {
+    stageOptions:[...STAGE_OPTIONS], stageColors:{...STAGE_COLORS},
+    buckets:deepCopy(REVENUE_BUCKETS), bucketOrder:[...BUCKET_ORDER],
+    importance:deepCopy(importanceConfig),
+    areas:deepCopy(AREAS), stageData:deepCopy(stageData)
+  };
+}
+function restoreSettingsSnapshot(snapshot){
+  STAGE_OPTIONS=snapshot.stageOptions; STAGE_COLORS=snapshot.stageColors;
+  REVENUE_BUCKETS=snapshot.buckets; BUCKET_ORDER=snapshot.bucketOrder;
+  importanceConfig=snapshot.importance; invalidateImportanceCache();
+  AREAS=snapshot.areas;
+  Object.keys(stageData).forEach(key=>{ if(!Object.hasOwn(snapshot.stageData,key)) delete stageData[key]; });
+  Object.entries(snapshot.stageData).forEach(([key,value])=>{ stageData[key]=value; });
+}
+/* parts: {stages, buckets, importance, areas, areaKeys:[...]} 중 바뀐 것만 지정한다 */
+async function saveSettingsTogether(parts, snapshot, failureMessage){
+  const entries=[];
+  if(parts.stages) entries.push({key:"tinico:settings:stages", value:stageSettingsValue()});
+  if(parts.buckets) entries.push({key:"tinico:settings:buckets", value:bucketSettingsValue()});
+  if(parts.importance){ importanceConfig=cloneImportanceConfig(importanceConfig); invalidateImportanceCache(); entries.push({key:"tinico:importance:config", value:importanceConfig}); }
+  if(parts.areas) entries.push({key:"tinico:areas", value:AREAS.map(storedAreaValue)});
+  (parts.areaKeys||[]).forEach(areaKey=>entries.push({key:"tinico:stage:"+areaKey, value:stageData[areaKey]||[]}));
+  if(!entries.length) return true;
+  try{
+    await storageTransaction(entries);
+    return true;
+  }catch(error){
+    restoreSettingsSnapshot(snapshot);
+    console.error("settings save failed", error);
+    showToast(error?.message || failureMessage || "설정 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+    return false;
+  }
 }
 async function loadBucketSettings(){
   const saved = await storageGet("tinico:settings:buckets");
@@ -1122,13 +1416,13 @@ async function loadBucketSettings(){
   });
   invalidateImportanceCache();
 }
-async function saveBucketSettings(){
-  await storageSet("tinico:settings:buckets", BUCKET_ORDER.map(key=>({
+function bucketSettingsValue(){
+  return BUCKET_ORDER.map(key=>({
     key,
     label:REVENUE_BUCKETS[key].label,
     desc:REVENUE_BUCKETS[key].desc,
     weight:Number(importanceConfig.bucketWeights[key] ?? REVENUE_BUCKETS[key].weight ?? 1),
-  })));
+  }));
 }
 
 /* ---------- 네비게이션 / 라우팅 ---------- */
@@ -1181,8 +1475,17 @@ function buildNav(){
   });
 }
 
+/* 대시보드를 다시 그릴 때마다 속성 선택자로 화면 전체를 훑지 않도록 찾은 요소를 기억해 둔다 */
+const dashboardPanelCache=new Map();
+function dashboardPanel(section){
+  const cached=dashboardPanelCache.get(section);
+  if(cached&&cached.isConnected)return cached;
+  const found=document.querySelector(`[data-collapse-section="${section}"]`);
+  if(found)dashboardPanelCache.set(section,found);
+  return found;
+}
 function setDashboardCollapsed(section,collapsed,persist=false){
-  const panel=document.querySelector(`[data-collapse-section="${section}"]`);
+  const panel=dashboardPanel(section);
   const button=document.getElementById(section==="today"?"tn-today-collapse":"tn-groups-collapse");
   if(!panel||!button)return;
   panel.classList.toggle("collapsed",!!collapsed);
@@ -1211,9 +1514,12 @@ function normalizedDashboardOrder(){
 }
 function applyDashboardOrder(){
   const layout=document.getElementById("tn-dashboard-layout");if(!layout)return;
-  normalizedDashboardOrder().forEach(key=>{
-    const item=layout.querySelector(`[data-dashboard-item="${key}"]`);if(item)layout.appendChild(item);
-  });
+  const wanted=normalizedDashboardOrder();
+  const current=[...layout.querySelectorAll(":scope > [data-dashboard-item]")];
+  /* 이미 원하는 순서면 DOM을 건드리지 않는다 (옮기면 매번 화면 재배치가 일어난다) */
+  if(current.length===wanted.length&&current.every((el,index)=>el.dataset.dashboardItem===wanted[index]))return;
+  const byKey=new Map(current.map(el=>[el.dataset.dashboardItem,el]));
+  wanted.forEach(key=>{const item=byKey.get(key);if(item)layout.appendChild(item);});
 }
 async function saveDashboardOrderFromDom(){
   const layout=document.getElementById("tn-dashboard-layout");if(!layout)return;
@@ -1361,14 +1667,22 @@ async function loadAreas(){
   const source = stored || DEFAULT_AREAS.map(({seed, ...rest})=>rest);
   const areas = source.map(normalizeArea);
   /* 정규화 결과가 저장본과 같으면 접속할 때마다 같은 값을 다시 올리지 않는다 */
-  if(!sameStoredValue(stored, areas)) await storageSet("tinico:areas", areas);
+  if(!sameStoredValue(stored, areas)) await queueBootWrite("tinico:areas", areas);
   return areas;
 }
 async function saveAreas(){
-  await storageSet("tinico:areas", AREAS.map(a=>({
+  await storageSet("tinico:areas", AREAS.map(storedAreaValue));
+}
+function storedAreaValue(a){return {
     key:a.key, icon:a.icon, color:a.color, colorSoft:a.colorSoft,
     title:a.title, subtitle:a.subtitle, bucket:areaBucketKey(a)
-  })));
+  };}
+async function moveGroupToTrash(area){
+  const key="tinico:stage:"+area.key;
+  const entry={id:uid(),type:"group",label:area.title,deletedAt:nowIso(),payload:deepCopy({area,items:stageData[area.key]||[]}),meta:{}};
+  const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key:"tinico:areas",value:AREAS.filter(item=>item.key!==area.key).map(storedAreaValue)},{key,value:null,remove:true}]);
+  trashData=result.records["tinico:trash"].value;AREAS=result.records["tinico:areas"].value.map(normalizeArea);delete stageData[area.key];
+  showUndo(`${area.title}을(를) 휴지통으로 이동했습니다.`,entry.id);
 }
 
 function normalizeItem(item){
@@ -1419,10 +1733,10 @@ async function cleanupLegacyDefaultPipelineItems(){
     });
     if(kept.length!==current.length){
       stageData[area.key]=kept;
-      await storageSet("tinico:stage:"+area.key,kept);
+      await queueBootWrite("tinico:stage:"+area.key,kept);
     }
   }
-  await storageSet(migrationKey,{appliedAt:nowIso(),removed});
+  await queueBootWrite(migrationKey,{appliedAt:nowIso(),removed});
   return removed;
 }
 
@@ -1445,7 +1759,7 @@ async function loadStageItems(areaKey){
     if(!validBucketKey(item.bucket)) item.bucket = areaBucketKey(area);
     return item;
   });
-  if(!sameStoredValue(stored, data)) await storageSet("tinico:stage:" + areaKey, data);
+  if(!sameStoredValue(stored, data)) await queueBootWrite("tinico:stage:" + areaKey, data);
   return data;
 }
 function normalizeSupportTask(raw){
@@ -1481,7 +1795,7 @@ async function loadRoadmap(){
     }
   }
   data = data.map(normalizeSupportTask);
-  if(!sameStoredValue(stored, data)) await storageSet("tinico:stage:roadmap", data);
+  if(!sameStoredValue(stored, data)) await queueBootWrite("tinico:stage:roadmap", data);
   return data;
 }
 function normalizeManualSection(raw, idx=0){
@@ -1490,6 +1804,7 @@ function normalizeManualSection(raw, idx=0){
 }
 /* 매뉴얼 마이그레이션 표시 키 — 접속마다 하나씩 순차 조회하면 왕복이 그만큼 쌓이므로
    한 번에 병렬로 읽고, 새로 기록할 표시도 마지막에 모아서 한 번에 저장한다. */
+const MANUAL_MIGRATION_STATE_KEY = "tinico:manual:migrations";
 const MANUAL_MIGRATION_KEYS = [
   "tinico:manual:migration:calendar_v1",
   "tinico:manual:migration:simple_ui_v4",
@@ -1502,15 +1817,26 @@ const MANUAL_MIGRATION_KEYS = [
   "tinico:manual:migration:calendar_fold_contact_activity_202608_v1",
   "tinico:manual:migration:contact_paging_csv_202609_v1",
   "tinico:manual:migration:deal_contact_combo_202609_v1",
-  "tinico:manual:migration:deal_contact_multi_202609_v1"
+  "tinico:manual:migration:deal_contact_multi_202609_v1",
+  "tinico:manual:migration:xlsx_backup_trash_fold_202609_v1"
 ];
 async function loadManualSections(){
-  const [stored, ...migrationFlagValues] = await Promise.all([
+  /* 어떤 매뉴얼 마이그레이션이 끝났는지는 키 하나에 모아 둔다.
+     예전 버전은 키 13개로 나눠 저장했으므로, 모아 둔 기록이 없을 때만 한 번 읽어 합친다. */
+  const [stored, consolidated] = await Promise.all([
     storageGet("tinico:manual:sections"),
-    ...MANUAL_MIGRATION_KEYS.map(key=>storageGet(key))
+    storageGet(MANUAL_MIGRATION_STATE_KEY)
   ]);
-  const migrationFlags = new Map(MANUAL_MIGRATION_KEYS.map((key, idx)=>[key, migrationFlagValues[idx]]));
-  const pendingMigrationWrites = [];
+  let applied = consolidated && typeof consolidated === "object" && !Array.isArray(consolidated) ? {...consolidated} : null;
+  const upgradingFromSeparateKeys = !applied;
+  if(upgradingFromSeparateKeys){
+    const legacy = await Promise.all(MANUAL_MIGRATION_KEYS.map(key=>storageGet(key)));
+    applied = {};
+    MANUAL_MIGRATION_KEYS.forEach((key, index)=>{ if(legacy[index]) applied[key] = legacy[index]; });
+  }
+  const migrationFlags = new Map(MANUAL_MIGRATION_KEYS.map(key=>[key, applied[key]]));
+  let migrationsChanged = upgradingFromSeparateKeys;
+  const markMigrationApplied = (key, value)=>{ applied[key] = value; migrationsChanged = true; };
   let data = stored;
   if(!Array.isArray(data) || !data.length) data = deepCopy(DEFAULT_MANUAL_SECTIONS);
   data = data.map(normalizeManualSection).sort((a,b)=>a.order-b.order);
@@ -1524,7 +1850,7 @@ async function loadManualSections(){
     if(contacts && !/가로형 명함의 네 모서리/.test(contacts.content)) contacts.content = "카메라 스캔에서는 가로형 명함의 네 모서리를 프레임에 맞추고 카메라를 명함과 평행하게 유지합니다.\n반사광과 그림자를 줄이고 글자가 선명해진 상태에서 촬영해야 OCR 정확도가 높아집니다.\n" + contacts.content;
     const settings = data.find(x=>x.id === "manual_settings");
     if(settings && !/AI 봇은 현재 저장된 매뉴얼/.test(settings.content)) settings.content += "\nAI 봇은 현재 저장된 매뉴얼의 제목·분류·내용을 검색하므로 운영 기준을 변경하면 매뉴얼도 함께 수정합니다.";
-    pendingMigrationWrites.push([migrationKey,{appliedAt:nowIso()}]);
+    markMigrationApplied(migrationKey,{appliedAt:nowIso()});
   }
   const uiManualMigrationKey = "tinico:manual:migration:simple_ui_v4";
   const uiManualMigrated = migrationFlags.get(uiManualMigrationKey);
@@ -1539,7 +1865,7 @@ async function loadManualSections(){
       }
       updatedIds.push(def.id);
     });
-    pendingMigrationWrites.push([uiManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(uiManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const calendarCrudManualMigrationKey = "tinico:manual:migration:calendar_crud_v1";
   const calendarCrudManualMigrated = migrationFlags.get(calendarCrudManualMigrationKey);
@@ -1552,7 +1878,7 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    pendingMigrationWrites.push([calendarCrudManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(calendarCrudManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const illustratedGuideManualMigrationKey = "tinico:manual:migration:illustrated_guide_202608_v1";
   const illustratedGuideManualMigrated = migrationFlags.get(illustratedGuideManualMigrationKey);
@@ -1567,7 +1893,7 @@ async function loadManualSections(){
       }
       updatedIds.push(def.id);
     });
-    pendingMigrationWrites.push([illustratedGuideManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(illustratedGuideManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const adminBackupManualMigrationKey="tinico:manual:migration:admin_backup_audit_202608_v1";
   const adminBackupManualMigrated=migrationFlags.get(adminBackupManualMigrationKey);
@@ -1580,7 +1906,7 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    pendingMigrationWrites.push([adminBackupManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(adminBackupManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const cameraOcrManualMigrationKey="tinico:manual:migration:camera_ocr_202608_v1";
   const cameraOcrManualMigrated=migrationFlags.get(cameraOcrManualMigrationKey);
@@ -1594,7 +1920,7 @@ async function loadManualSections(){
       if(existing){if(!existing.content.includes(content.split("\n")[0]))existing.content += "\n\n"+content;}
       else{const def=DEFAULT_MANUAL_SECTIONS.find(item=>item.id===id);if(def)data.push(normalizeManualSection(deepCopy(def),data.length));}
     });
-    pendingMigrationWrites.push([cameraOcrManualMigrationKey,{appliedAt:nowIso(),updatedIds:Object.keys(additions)}]);
+    markMigrationApplied(cameraOcrManualMigrationKey,{appliedAt:nowIso(),updatedIds:Object.keys(additions)});
   }
   const googleLightSyncManualMigrationKey="tinico:manual:migration:google_light_sync_202608_v1";
   const googleLightSyncManualMigrated=migrationFlags.get(googleLightSyncManualMigrationKey);
@@ -1607,7 +1933,7 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    pendingMigrationWrites.push([googleLightSyncManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(googleLightSyncManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const uiReliabilityManualMigrationKey="tinico:manual:migration:ui_reliability_202608_v1";
   const uiReliabilityManualMigrated=migrationFlags.get(uiReliabilityManualMigrationKey);
@@ -1620,7 +1946,7 @@ async function loadManualSections(){
     }
     const reliability=data.find(item=>item.id===id);
     if(reliability&&!/저장 키 접두사/.test(reliability.content))reliability.content += "\n초기화 오류의 과거 원인 중 하나였던 카메라·Google 매뉴얼 저장 키 오타를 수정했습니다. 현재 버전은 모든 저장 키가 서버 승인 tinico: 접두사를 사용하는지 자동 테스트합니다.";
-    pendingMigrationWrites.push([uiReliabilityManualMigrationKey,{appliedAt:nowIso(),updatedIds:[id]}]);
+    markMigrationApplied(uiReliabilityManualMigrationKey,{appliedAt:nowIso(),updatedIds:[id]});
   }
   const workflowUiManualMigrationKey="tinico:manual:migration:calendar_fold_contact_activity_202608_v1";
   const workflowUiManualMigrated=migrationFlags.get(workflowUiManualMigrationKey);
@@ -1639,7 +1965,7 @@ async function loadManualSections(){
     const contactsManual=data.find(item=>item.id==="manual_contacts");
     if(contactsManual&&!contactsManual.content.includes("고객 담당자 연락처 직접 입력"))contactsManual.content += "\n파이프라인 상세에서는 등록된 연락처를 선택하거나 ‘고객 담당자 직접 입력’과 ‘고객 담당자 연락처 직접 입력’에 이름과 전화번호를 직접 기록할 수 있습니다.";
     if(contactsManual)updatedIds.push("manual_contacts");
-    pendingMigrationWrites.push([workflowUiManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+    markMigrationApplied(workflowUiManualMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const contactPagingManualMigrationKey="tinico:manual:migration:contact_paging_csv_202609_v1";
   if(!migrationFlags.get(contactPagingManualMigrationKey)){
@@ -1647,7 +1973,7 @@ async function loadManualSections(){
     const contactsManual=data.find(item=>item.id==="manual_contacts");
     if(contactsManual){ if(!contactsManual.content.includes("[목록 페이지와 리멤버 CSV 안내]")) contactsManual.content += "\n\n"+addition; }
     else{ const def=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_contacts"); if(def) data.push(normalizeManualSection(deepCopy(def),data.length)); }
-    pendingMigrationWrites.push([contactPagingManualMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts"]}]);
+    markMigrationApplied(contactPagingManualMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts"]});
   }
   const dealContactComboMigrationKey="tinico:manual:migration:deal_contact_combo_202609_v1";
   if(!migrationFlags.get(dealContactComboMigrationKey)){
@@ -1663,7 +1989,7 @@ async function loadManualSections(){
       section.content=section.content.replace(staleLine,"").replace(staleSentence,inlineGuide);
       if(!section.content.includes("‘고객 담당자 입력’은 직접 입력과")) section.content=section.content.replace(/\s*$/,"")+"\n"+comboGuide;
     });
-    pendingMigrationWrites.push([dealContactComboMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]}]);
+    markMigrationApplied(dealContactComboMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]});
   }
   const dealContactMultiMigrationKey="tinico:manual:migration:deal_contact_multi_202609_v1";
   if(!migrationFlags.get(dealContactMultiMigrationKey)){
@@ -1673,11 +1999,11 @@ async function loadManualSections(){
       const section=data.find(entry=>entry.id===id);
       if(section && !section.content.includes("‘선택한 담당자’에 이름·소속·직함과 연락처로 쌓이며")) section.content=section.content.replace(/\s*$/,"")+"\n"+multiGuide;
     });
-    pendingMigrationWrites.push([dealContactMultiMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]}]);
+    markMigrationApplied(dealContactMultiMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]});
   }
   const featureGuides={
-    manual_contacts:"[대표 담당자 지정] 선택한 담당자 중 ‘대표로 지정’을 누르면 그 사람이 맨 위로 이동하고 대표로 저장됩니다. 자동으로 채워진 직함·연락처·이메일도 새 대표 기준으로 바뀌며, 직접 수정한 값은 유지됩니다. 대표를 해제하면 다음 담당자가 대표가 됩니다.",
-    manual_pipeline:"[대표 담당자 지정] ‘선택한 담당자’의 ‘대표로 지정’ 버튼으로 대표를 변경합니다. 지정한 담당자는 맨 위로 이동하며 다시 접속해도 유지됩니다.",
+    manual_contacts:"[대표 담당자 지정] 선택한 담당자 중 ‘대표로 지정’을 누르면 그 사람이 맨 위로 이동하고 상단 ‘저장’을 누르면 대표로 반영됩니다. 자동으로 채워진 직함·연락처·이메일도 새 대표 기준으로 바뀌며, 직접 수정한 값은 유지됩니다. 대표를 해제하면 다음 담당자가 대표가 됩니다.",
+    manual_pipeline:"[대표 담당자 지정] ‘선택한 담당자’의 ‘대표로 지정’ 버튼으로 대표를 변경합니다. 지정한 담당자는 맨 위로 이동하며 상단 ‘저장’을 눌러야 다시 접속해도 유지됩니다.",
     manual_calendar:"[일정 담당자와 연관 업무] 새 일정 또는 일정 수정에서 담당자를 직접 입력하거나 기존 업무 담당자 목록에서 선택합니다. 연관 업무의 파이프라인과 지원 업무를 각각 선택하면 상태·담당자·연락일 또는 마감일·다음 할 일을 참고할 수 있습니다. 두 업무를 함께 연결하거나 ‘연결 안 함’을 선택할 수 있습니다. 일정의 담당자는 업무 선택으로 바뀌지 않습니다. 원본 업무가 이동되면 유일한 ID로 찾아 표시하고, 삭제된 업무는 찾을 수 없다는 안내와 함께 연결을 유지합니다. 이 정보는 CRM 일정에 저장됩니다."
   };
   Object.entries(featureGuides).forEach(([id,guide])=>{
@@ -1696,14 +2022,36 @@ async function loadManualSections(){
   const pipelineManual=data.find(section=>section.id==="manual_pipeline");
   const kpiGuide="[파이프라인 분석 목록] 대시보드의 수주율·활성 항목 비중·후속조치 지연·실행과제 완료를 누르면 계산 대상 목록이 열립니다. 수주율은 수주·보류·실주, 실행과제 완료는 전체 과제의 상태를 표시하며 각 항목을 눌러 상세 화면으로 이동합니다. 보드에서 카드를 끌어 단계를 바꾼 뒤에는 상세 화면에서 저장해야 반영됩니다.";
   if(pipelineManual&&!pipelineManual.content.includes(kpiGuide))pipelineManual.content+="\n"+kpiGuide;
+  const xlsxBackupMigrationKey="tinico:manual:migration:xlsx_backup_trash_fold_202609_v1";
+  if(!migrationFlags.get(xlsxBackupMigrationKey)){
+    const guides={
+      manual_settings:"[백업 파일과 휴지통 안내]\n관리자 인증 뒤 ‘내려받기’를 누르면 백업이 Excel 파일(.xlsx)로 저장됩니다. ‘백업정보’, ‘저장데이터’, ‘변경로그’ 세 시트로 되어 있어 Excel에서 바로 열어 볼 수 있습니다. 한 칸에 들어가지 않는 긴 값은 ‘조각’ 번호를 붙여 여러 줄로 나뉘며 복원할 때 자동으로 합쳐집니다. 셀을 직접 고치면 복원되지 않을 수 있으니 확인 용도로만 사용합니다.\n‘복원하기’는 내려받은 .xlsx 파일을 선택하면 됩니다. 예전 버전에서 내려받은 .json 백업도 그대로 선택할 수 있습니다.\n휴지통 오른쪽의 ‘접기/펼치기’로 삭제 목록을 접어 둘 수 있습니다. 접으면 버튼에 남은 항목 수가 함께 표시되고, 접은 상태는 외부 DB에 저장되어 다음 접속에도 유지됩니다.",
+      manual_operation:"백업은 Excel 파일(.xlsx)로 내려받아 별도 폴더에 보관합니다. 파일명의 날짜·시각으로 시점을 구분하고, 복원 전에는 반드시 현재 상태를 먼저 내려받습니다."
+    };
+    const updatedIds=[];
+    Object.entries(guides).forEach(([id,guide])=>{
+      const section=data.find(entry=>entry.id===id);
+      if(!section)return;
+      const firstLine=guide.split("\n")[0];
+      if(!section.content.includes(firstLine)) section.content=section.content.replace(/\s*$/,"")+"\n"+guide;
+      updatedIds.push(id);
+    });
+    markMigrationApplied(xlsxBackupMigrationKey,{appliedAt:nowIso(),updatedIds});
+  }
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
     data.push(normalizeManualSection(deepCopy(cloudManualDef),data.length));
   }
+  refreshCurrentManualContent(data);
   data.forEach((x,idx)=>x.order=idx);
-  const writes = pendingMigrationWrites.map(([key,value])=>storageSet(key,value));
-  if(!sameStoredValue(stored, data)) writes.push(storageSet("tinico:manual:sections", data));
-  if(writes.length) await Promise.all(writes);
+  const writes = [];
+  if(migrationsChanged) writes.push({key:MANUAL_MIGRATION_STATE_KEY, value:applied});
+  if(!sameStoredValue(stored, data)) writes.push({key:"tinico:manual:sections", value:data});
+  /* 매뉴얼 본문과 진행 기록을 한 번에 저장해 한쪽만 남는 상태를 막는다 */
+  if(writes.length){
+    if(bootWrites) writes.forEach(entry=>queueBootWrite(entry.key, entry.value));
+    else await storageTransaction(writes);
+  }
   return data;
 }
 async function saveManualSections(){
@@ -1737,16 +2085,18 @@ function editDraft(map,key,original,seed){
   if(!draft){
     if(!original&&!seed)return null;
     draft={base:deepCopy(original||{}),value:deepCopy(original||seed),isNew:!original,saving:false,message:""};map.set(key,draft);
-  }else if(original&&!draft.saving&&!sameStoredValue(original,draft.base)){
+  }else if(original&&!draft.saving&&!draftDirty(draft)&&!sameStoredValue(original,draft.base)){
     const changes=draftChanges(draft.base,draft.value);
     const pendingImage=draft.pendingImage?draft.value.cardImage:null;
     Object.assign(draft.value,deepCopy(original),changes);if(pendingImage)draft.value.cardImage=pendingImage;
     draft.base=deepCopy(original);
+    draft.expected=null;
   }
   return draft;
 }
-function dealDraft(areaKey,id,seed){return editDraft(dealDrafts,dealDrawerSaveKey(areaKey,id),findDeal(areaKey,id)?.item,seed);}
-function contactDraft(id,seed){return editDraft(contactDrafts,id,contactsData.find(c=>c.id===id),seed);}
+function pinDraftVersion(draft,key,id){if(draft&&!draft.expected){const base=storageSnapshots.get(key),{cardImage,...original}=draft.base;draft.expected={id,version:base?.versions?.[id]??null,generation:base?.generation,original:deepCopy(original)};}return draft;}
+function dealDraft(areaKey,id,seed){return pinDraftVersion(editDraft(dealDrafts,dealDrawerSaveKey(areaKey,id),findDeal(areaKey,id)?.item,seed),"tinico:stage:"+areaKey,id);}
+function contactDraft(id,seed){return pinDraftVersion(editDraft(contactDrafts,id,contactsData.find(c=>c.id===id),seed),"tinico:contacts",id);}
 function draftDirty(draft){return !!draft&&(draft.isNew||!!draft.pendingImage||Object.keys(draftChanges(draft.base,draft.value)).length>0);}
 function updateEditStatus(kind,draft){
   const dirty=draftDirty(draft)||draft?.syncPending,saving=!!draft?.saving,processing=!!draft?.processing;
@@ -1772,18 +2122,24 @@ async function commitDealDraft(areaKey,id){
     await enqueueEditSave("tinico:stage:"+areaKey,async()=>{
       const existing=findDeal(areaKey,id)?.item;
       if(!existing&&!draft.isNew)throw new Error("항목이 삭제되었습니다. 입력 내용을 확인해 주세요.");
-      const saved=existing?{...deepCopy(existing),...changes}:snapshot;
+      let saved=snapshot;
       const next=existing?stageData[areaKey].map(item=>item.id===id?saved:item):[...(stageData[areaKey]||[]),saved];
-      await storageSet("tinico:stage:"+areaKey,next);
-      stageData[areaKey]=next;
+      const key="tinico:stage:"+areaKey;
+      const result=await storageTransaction([{key,value:next,expected:draft.expected}]);
+      stageData[areaKey]=deepCopy(result.records[key].value||[]);
+      saved=stageData[areaKey].find(item=>item.id===id);
+      if(!saved){dealDrafts.delete(dealDrawerSaveKey(areaKey,id));if(selectedDealRef?.id===id)closeDealDrawer(true);return;}
+      draft.refreshAfterSave=!sameStoredValue(saved,snapshot);
       const later=draftChanges(snapshot,draft.value);
+      if(draft.refreshAfterSave)Object.keys(draft.value).forEach(key=>{if(!Object.hasOwn(saved,key)&&!Object.hasOwn(later,key))delete draft.value[key];});
       Object.assign(draft.value,deepCopy(saved),later);draft.base=deepCopy(saved);draft.isNew=false;
+      draft.expected=null;pinDraftVersion(draft,key,id);
     });
     draft.message=draftDirty(draft)?"미저장 변경":"저장됨";
     renderHome();
     return true;
   }catch(error){draft.message="저장 실패 · 다시 저장하세요";showToast(error?.message||draft.message);return false;}
-  finally{draft.saving=false;renderStageBody(findAreaByKey(areaKey));renderPipeline(true);if(selectedDealRef?.id===id){updateEditStatus("deal",draft);updateDealActionButtons(draft);}}
+  finally{draft.saving=false;renderStageBody(findAreaByKey(areaKey));renderPipeline(true);if(selectedDealRef?.id===id){if(draft.refreshAfterSave&&draft.message==="저장됨")renderDealDrawer(false);updateEditStatus("deal",draft);updateDealActionButtons(draft);}}
 }
 async function commitContactDraft(id){
   const draft=contactDraft(id);if(!draft||draft.saving||draft.processing)return false;
@@ -1793,25 +2149,26 @@ async function commitContactDraft(id){
     await enqueueEditSave("tinico:contacts",async()=>{
       const existing=contactsData.find(ct=>ct.id===id);
       if(!existing&&!draft.isNew)throw new Error("연락처가 삭제되었습니다. 입력 내용을 확인해 주세요.");
-      const saved=existing?{...deepCopy(existing),...changes}:snapshot;
-      let oldImage;
-      if(draft.pendingImage){oldImage=await storageGet(contactImageKey(id));await saveContactCardImage(saved,snapshot.cardImage);}
+      let saved=snapshot;
+      if(draft.pendingImage){saved.cardImage=snapshot.cardImage;saved.cardThumb=(await makeCardThumb(snapshot.cardImage))||saved.cardThumb||"";}
       const next=existing?contactsData.map(ct=>ct.id===id?saved:ct):[saved,...contactsData];
-      try{await storageSet("tinico:contacts",stripContactImages(next));}
-      catch(error){
-        if(draft.pendingImage){try{if(oldImage)await storageSet(contactImageKey(id),oldImage);else await storageDelete(contactImageKey(id));}catch(rollbackError){showToast("명함 이미지 복구에 실패했습니다. 입력 화면을 유지하고 저장을 다시 시도하세요.");}}
-        throw error;
-      }
-      contactsData=next;
+      const entries=[{key:"tinico:contacts",value:stripContactImages(next),expected:draft.expected}];
+      if(draft.pendingImage)entries.push({key:contactImageKey(id),value:snapshot.cardImage});
+      const result=await storageTransaction(entries);
+      contactsData=deepCopy(result.records["tinico:contacts"].value||[]);
+      saved=contactsData.find(ct=>ct.id===id);
+      if(!saved){contactDrafts.delete(id);closeContactDetail(true);return;}
+      if(draft.pendingImage&&result.records[contactImageKey(id)])saved.cardImage=result.records[contactImageKey(id)].value;
+      else if(draft.pendingImage)delete draft.value.cardImage;
       const later=draftChanges(snapshot,draft.value);
       Object.assign(draft.value,deepCopy(saved),later);draft.base=deepCopy(saved);draft.isNew=false;draft.pendingImage=false;
+      draft.expected=null;pinDraftVersion(draft,"tinico:contacts",id);
     });
     draft.message=draftDirty(draft)?"미저장 변경":"저장됨";
-    try{await syncLinkedDealsFromContact(contactsData.find(ct=>ct.id===id));draft.syncPending=false;}
-    catch(error){draft.message="연락처 저장됨 · 영업 연결 재시도 필요";draft.syncPending=true;showToast("연락처는 저장됐지만 연결 영업 항목 반영에 실패했습니다. 저장을 눌러 다시 시도하세요.");}
-    renderContacts();renderHome();return true;
+    draft.syncPending=false;
+    renderContacts();renderPipeline(true);renderHome();return true;
   }catch(error){draft.message="저장 실패 · 다시 저장하세요";showToast(error?.message||draft.message);return false;}
-  finally{draft.saving=false;if(selectedContactId===id){updateEditStatus("contact",draft);if(draft.syncPending)document.getElementById("contact-drawer-save").disabled=false;}}
+  finally{draft.saving=false;if(selectedContactId===id){if(draft.message==="저장됨")renderContactDrawer(false);updateEditStatus("contact",draft);if(draft.syncPending)document.getElementById("contact-drawer-save").disabled=false;}}
 }
 function updateDealActionButtons(draft){
   document.querySelectorAll('#deal-drawer-body [data-add-activity],#deal-drawer-body [data-add-support-task],#deal-drawer-body [data-ai-analyze],#deal-drawer-body [data-convert-support]').forEach(button=>{
@@ -1966,7 +2323,9 @@ async function convertDealToSupportTask(areaKey,id){
   roadmapData.push(task);
   stageData[areaKey]=stageData[areaKey].filter(x=>x.id!==id);
   try{
-    await saveRoadmapData();await saveArea(areaKey);
+    const key="tinico:stage:"+areaKey;
+    const result=await storageTransaction([{key:"tinico:stage:roadmap",value:roadmapData},{key,value:stageData[areaKey]}]);
+    roadmapData=result.records["tinico:stage:roadmap"].value;stageData[areaKey]=result.records[key].value;
   }catch(error){
     roadmapData=roadmapData.filter(x=>x.id!==task.id);
     stageData[areaKey]=previousStage;
@@ -2005,7 +2364,7 @@ function renderDealDrawer(resetScroll){
       <div class="tn-drawer-fields">
         <div class="tn-drawer-field"><label>현재 단계</label><select data-stage class="tn-stage ${escapeHtml(stage)}"></select></div>
         <div class="tn-guide-box" data-stage-guide>${escapeHtml(stageGuide(stage))}<br><b>성사 확률은 단계에 따라 자동으로 계산됩니다.</b></div>
-        <div class="tn-drawer-field"><label>내부 담당자</label><input data-f="internalOwner" placeholder="예: 강지훈" value="${escapeHtml(item.internalOwner)}"></div>
+        <div class="tn-drawer-field"><label>내부 담당자</label><input data-f="internalOwner" placeholder="예: 홍길동" value="${escapeHtml(item.internalOwner)}"></div>
         <div class="tn-drawer-field">
           <label for="deal-contact-name">고객 담당자 입력</label>
           <div class="tn-combo" data-contact-combo>
@@ -2539,6 +2898,73 @@ function renderPipeBoard(list){
   });
 }
 
+/* 항목이 많을 때 표 전체를 한 번에 만들면 화면이 멈칫한다. 연락처와 같은 방식으로 나눠 그린다. */
+let pipePage = 1;
+function pipePageSize(){
+  const saved = Number(appSettings.pipelinePageSize);
+  return CONTACT_PAGE_SIZES.includes(saved) ? saved : CONTACT_PAGE_SIZES[0];
+}
+function pipePageCount(total){ return Math.max(1, Math.ceil(total / pipePageSize())); }
+function pipePageItems(list){
+  const size = pipePageSize();
+  pipePage = Math.max(1, Math.min(pipePage, pipePageCount(list.length)));
+  const start = (pipePage - 1) * size;
+  return list.slice(start, start + size);
+}
+function goToPipePage(page){
+  const next = Math.max(1, Math.min(pipePageCount(pipeDeals().length), Number(page) || 1));
+  if(next === pipePage) return;
+  pipePage = next;
+  renderPipeline(true);
+  document.getElementById("pipe-table-wrap")?.scrollIntoView({block:"start", behavior:"smooth"});
+}
+async function setPipePageSize(value){
+  const size = CONTACT_PAGE_SIZES.includes(Number(value)) ? Number(value) : CONTACT_PAGE_SIZES[0];
+  if(size === pipePageSize()) return;
+  const previous = appSettings.pipelinePageSize;
+  appSettings.pipelinePageSize = size;
+  pipePage = 1;
+  renderPipeline(true);
+  await saveOrRollback(saveAppSettings,()=>{appSettings.pipelinePageSize = previous; renderPipeline(true);},"표시 줄 수 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+}
+function renderPipePager(total){
+  const pager = document.getElementById("pipe-pager");
+  if(!pager) return;
+  /* 보드 화면이거나 한 페이지에 다 들어가면 숨긴다 */
+  const pages = pipePageCount(total);
+  pager.hidden = pipeViewMode !== "table" || (pages <= 1 && total <= pipePageSize());
+  if(pager.hidden) return;
+  const size = pipePageSize();
+  const numbers = document.getElementById("pipe-page-numbers");
+  numbers.innerHTML = "";
+  contactPagerNumbers(pipePage, pages).forEach(entry=>{
+    if(entry === "gap"){
+      const gap = document.createElement("span");
+      gap.className = "tn-pager-gap"; gap.textContent = "…"; gap.setAttribute("aria-hidden", "true");
+      numbers.appendChild(gap); return;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "tn-pager-btn" + (entry === pipePage ? " active" : "");
+    button.dataset.page = String(entry);
+    button.textContent = String(entry);
+    if(entry === pipePage) button.setAttribute("aria-current", "page");
+    button.addEventListener("click", ()=>goToPipePage(entry));
+    numbers.appendChild(button);
+  });
+  document.getElementById("pipe-page-first").disabled = pipePage <= 1;
+  document.getElementById("pipe-page-prev").disabled = pipePage <= 1;
+  document.getElementById("pipe-page-next").disabled = pipePage >= pages;
+  document.getElementById("pipe-page-last").disabled = pipePage >= pages;
+  const sizeSelect = document.getElementById("pipe-page-size");
+  if(sizeSelect && Number(sizeSelect.value) !== size) sizeSelect.value = String(size);
+  const range = document.getElementById("pipe-page-range");
+  if(range){
+    const from = total ? (pipePage - 1) * size + 1 : 0;
+    const to = Math.min(total, pipePage * size);
+    range.textContent = total ? `${from}–${to} / 전체 ${total}건` : "표시할 항목이 없습니다.";
+  }
+}
 function renderPipeTable(list){
   const tbody = document.getElementById("pipe-tbody");
   tbody.innerHTML = "";
@@ -2548,7 +2974,10 @@ function renderPipeTable(list){
     tbody.appendChild(tr);
     return;
   }
-  list.forEach(d=>tbody.appendChild(makeDealRow(d.area, d.item, {showGroup:true, refresh:()=>renderPipeline(true)})));
+  /* 화면에 보이는 페이지만 실제 행으로 만든다 */
+  const fragment = document.createDocumentFragment();
+  list.forEach(d=>fragment.appendChild(makeDealRow(d.area, d.item, {showGroup:true, refresh:()=>renderPipeline(true)})));
+  tbody.appendChild(fragment);
 }
 
 function renderPipeline(force){
@@ -2562,6 +2991,7 @@ function renderPipeline(force){
   const list = pipeDeals();
 
   const totalCnt = list.length;
+  renderPipePager(totalCnt);
   const totalAmt = list.filter(d=>!isClosedStage(d.stage)).reduce((s,d)=>s + (parseFloat(d.item.amount)||0), 0);
   document.getElementById("pipeline-total").textContent = `항목 ${totalCnt}건 · 활성 ${fmtAmount(Math.round(totalAmt))}`;
 
@@ -2573,7 +3003,7 @@ function renderPipeline(force){
     board.hidden = true;
     tableWrap.hidden = false;
     hint.textContent = "표에서 값을 수정한 뒤 해당 행의 저장 버튼을 눌러 반영하세요. 행을 클릭하면 상세 화면이 열립니다.";
-    renderPipeTable(list);
+    renderPipeTable(pipePageItems(list));
   }else{
     board.hidden = false;
     tableWrap.hidden = true;
@@ -2658,12 +3088,16 @@ async function saveAreaModal(){
   if(!title){ showToast("이름을 입력하세요."); return; }
   const chosen = PALETTE[modalSelectedColorIdx];
 
+  const snapshot = settingsSnapshot();
   if(modalMode === "add"){
     const newArea = {key:uid(), bucket, icon:"", color:chosen.color, colorSoft:chosen.colorSoft, title, subtitle};
     AREAS.push(newArea);
     stageData[newArea.key] = [];
-    await saveAreas();
-    await storageSet("tinico:stage:" + newArea.key, []);
+    /* 그룹 목록과 그 그룹의 빈 항목함을 함께 만들어 목록에만 있고 항목함이 없는 그룹을 막는다 */
+    if(!await saveSettingsTogether({areas:true, areaKeys:[newArea.key]}, snapshot, "그룹 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+      refreshConfiguredViews();
+      return;
+    }
     buildStageView(newArea);
     renderStageBody(newArea);
   }else{
@@ -2671,7 +3105,10 @@ async function saveAreaModal(){
     if(!area){ closeAreaModal(); showToast("편집 중이던 그룹이 삭제되었거나 찾을 수 없습니다."); return; }
     area.title = title; area.subtitle = subtitle; area.bucket = bucket;
     area.color = chosen.color; area.colorSoft = chosen.colorSoft;
-    await saveAreas();
+    if(!await saveSettingsTogether({areas:true}, snapshot, "그룹 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+      refreshConfiguredViews();
+      return;
+    }
     const pageDot = document.getElementById("pagedot-"+area.key);
     if(pageDot) pageDot.style.background = area.color;
     const pageTitle = document.getElementById("pagetitle-"+area.key);
@@ -2692,8 +3129,7 @@ async function deleteAreaFromModal(){
   const area = AREAS.find(a=>a.key === modalEditingKey);
   if(!area) return;
   if(!confirm("그룹과 안의 항목을 휴지통으로 이동할까요?")) return;
-  await addTrash("group", area.title, {area,items:stageData[area.key] || []});
-  AREAS = AREAS.filter(a=>a.key !== area.key); delete stageData[area.key]; await saveAreas(); await storageDelete("tinico:stage:"+area.key);
+  try{await moveGroupToTrash(area);}catch(error){showToast(error.message);return;}
   const view=document.getElementById("view-"+area.key);if(view)view.remove();closeAreaModal();showView("home");renderHome();renderSettings();
 }
 
@@ -2725,6 +3161,7 @@ function closeImportanceModal(){
   document.getElementById("importance-modal-overlay").hidden = true;
 }
 async function saveImportanceModal(){
+  const snapshot = settingsSnapshot();
   importanceConfig = cloneImportanceConfig({
     highScore:numValue("imp-high-score", DEFAULT_IMPORTANCE_CONFIG.highScore),
     highAmount:numValue("imp-high-amount", DEFAULT_IMPORTANCE_CONFIG.highAmount),
@@ -2737,7 +3174,10 @@ async function saveImportanceModal(){
       support:numValue("imp-weight-support", DEFAULT_IMPORTANCE_CONFIG.bucketWeights.support),
     }
   });
-  await saveImportanceConfig();
+  if(!await saveSettingsTogether({importance:true}, snapshot, "중요도 기준 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+    refreshConfiguredViews();
+    return;
+  }
   closeImportanceModal();
   AREAS.forEach(a=>renderStageBody(a));
   renderPipeline(true);
@@ -2910,26 +3350,36 @@ async function saveManualModal(){
   const content=document.getElementById("manual-modal-content").value.trim();
   if(!title){ showToast("매뉴얼 제목을 입력하세요."); return; }
   if(!content){ showToast("매뉴얼 내용을 입력하세요."); return; }
+  const previous=deepCopy(manualSections);
   if(editingManualId){
     const item=manualSections.find(x=>x.id===editingManualId); if(!item) return;
     Object.assign(item,{title,category,format,content,updatedAt:nowIso()});
   }else manualSections.push(normalizeManualSection({id:uid(),title,category,format,content,updatedAt:nowIso()},manualSections.length));
-  await saveManualSections(); closeManualModal(); renderManualSettings();
+  if(!await saveOrRollback(saveManualSections,()=>{manualSections=previous;},"매뉴얼 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){renderManualSettings();return;}
+  closeManualModal(); renderManualSettings();
 }
 async function deleteManualSection(id){
   const item=manualSections.find(x=>x.id===id); if(!item) return;
   if(!confirm(`"${item.title}" 매뉴얼을 삭제할까요?`)) return;
-  manualSections=manualSections.filter(x=>x.id!==id); await saveManualSections(); closeManualModal(); renderManualSettings();
+  const previous=deepCopy(manualSections);
+  manualSections=manualSections.filter(x=>x.id!==id);
+  if(!await saveOrRollback(saveManualSections,()=>{manualSections=previous;},"매뉴얼 삭제 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){renderManualSettings();return;}
+  closeManualModal(); renderManualSettings();
 }
 async function moveManualSection(id,dir){
   const idx=manualSections.findIndex(x=>x.id===id); if(idx<0) return;
   const to=idx+dir; if(to<0 || to>=manualSections.length) return;
+  const previous=deepCopy(manualSections);
   [manualSections[idx],manualSections[to]]=[manualSections[to],manualSections[idx]];
-  await saveManualSections(); renderManualSettings();
+  await saveOrRollback(saveManualSections,()=>{manualSections=previous;},"매뉴얼 순서 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  renderManualSettings();
 }
 async function resetManualSections(){
   if(!confirm("현재 매뉴얼을 기본 내용으로 교체할까요? 직접 추가하거나 수정한 내용은 삭제됩니다.")) return;
-  manualSections=deepCopy(DEFAULT_MANUAL_SECTIONS).map(normalizeManualSection); await saveManualSections(); renderManualSettings();
+  const previous=deepCopy(manualSections);
+  manualSections=deepCopy(DEFAULT_MANUAL_SECTIONS).map(normalizeManualSection);
+  await saveOrRollback(saveManualSections,()=>{manualSections=previous;},"매뉴얼 초기화 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  renderManualSettings();
 }
 
 let stageModalMode = "add";
@@ -2992,6 +3442,8 @@ async function saveStageModal(){
   const color = stageSelectedColorIdx >= 0
     ? PALETTE[stageSelectedColorIdx].color
     : (STAGE_COLORS[stageEditingName] || PALETTE[0].color);
+  const snapshot = settingsSnapshot();
+  let renamedAreaKeys = [];
   if(stageModalMode === "add"){
     if(STAGE_OPTIONS.includes(name)){ showToast("이미 있는 단계입니다."); return; }
     STAGE_OPTIONS.push(name);
@@ -3005,11 +3457,15 @@ async function saveStageModal(){
     delete STAGE_COLORS[old];
     STAGE_COLORS[name] = color;
     if(name !== old){
+      /* 이름을 바꾸면 그 단계를 쓰던 영업 항목도 함께 옮겨야 하므로 한 번에 저장한다 */
+      renamedAreaKeys = AREAS.filter(area=>(stageData[area.key] || []).some(item=>item.stage === old)).map(area=>area.key);
       AREAS.forEach(area=>(stageData[area.key] || []).forEach(item=>{ if(item.stage === old) item.stage = name; }));
-      await saveAllStageData();
     }
   }
-  await saveStageSettings();
+  if(!await saveSettingsTogether({stages:true, areaKeys:renamedAreaKeys}, snapshot, "단계 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+    refreshConfiguredViews();
+    return;
+  }
   closeStageModal();
   refreshConfiguredViews();
 }
@@ -3017,13 +3473,18 @@ async function deleteStageFromSettings(stage){
   if(RESERVED_STAGES.includes(stage)){ showToast("수주·보류·실주는 수주율과 확률 계산에 사용되는 기본 단계라 삭제할 수 없습니다."); return; }
   if(STAGE_OPTIONS.length <= 1){ showToast("단계는 최소 1개가 필요합니다."); return; }
   if(!confirm(`"${stage}" 단계를 삭제할까요? 해당 단계의 항목은 남은 첫 진행 단계로 이동합니다.`)) return;
+  const snapshot = settingsSnapshot();
   STAGE_OPTIONS = STAGE_OPTIONS.filter(s=>s !== stage);
   delete STAGE_COLORS[stage];
   /* 삭제된 단계의 항목이 수주·보류·실주로 잘못 집계되지 않게 첫 진행 단계로 이동 */
   const fallback = STAGE_OPTIONS.find(s=>!RESERVED_STAGES.includes(s)) || STAGE_OPTIONS[0];
+  const movedAreaKeys = AREAS.filter(area=>(stageData[area.key] || []).some(item=>item.stage === stage)).map(area=>area.key);
   AREAS.forEach(area=>(stageData[area.key] || []).forEach(item=>{ if(item.stage === stage) item.stage = fallback; }));
-  await saveStageSettings();
-  await saveAllStageData();
+  /* 단계 설정과 옮겨진 항목을 한 번에 저장해 없는 단계를 가리키는 항목이 남지 않게 한다 */
+  if(!await saveSettingsTogether({stages:true, areaKeys:movedAreaKeys}, snapshot, "단계 삭제 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+    refreshConfiguredViews();
+    return;
+  }
   closeStageModal();
   refreshConfiguredViews();
 }
@@ -3048,6 +3509,7 @@ async function saveBucketModal(){
   const desc = document.getElementById("bucket-modal-desc").value.trim();
   const weight = numValue("bucket-modal-weight", 1);
   if(!label){ showToast("분류 이름을 입력하세요."); return; }
+  const snapshot = settingsSnapshot();
   if(bucketModalMode === "add"){
     const key = safeKeyFromLabel(label, "bucket");
     REVENUE_BUCKETS[key] = {key, label, desc, weight};
@@ -3059,8 +3521,11 @@ async function saveBucketModal(){
     importanceConfig.bucketWeights[key] = weight;
   }
   invalidateImportanceCache();
-  await saveBucketSettings();
-  await saveImportanceConfig();
+  /* 분류 목록과 가중치는 서로를 참조하므로 함께 저장한다 */
+  if(!await saveSettingsTogether({buckets:true, importance:true}, snapshot, "분류 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+    refreshConfiguredViews();
+    return;
+  }
   closeBucketModal();
   refreshConfiguredViews();
 }
@@ -3068,27 +3533,30 @@ async function deleteBucketFromSettings(key){
   if(BUCKET_ORDER.length <= 1){ showToast("그룹 분류는 최소 1개가 필요합니다."); return; }
   const meta = bucketMetaByKey(key);
   if(!confirm(`"${meta.label}" 분류를 삭제할까요? 해당 분류의 항목은 남은 첫 분류로 이동합니다.`)) return;
+  const snapshot = settingsSnapshot();
   const fallback = BUCKET_ORDER.find(k=>k !== key);
+  const movedAreaKeys = [];
   AREAS.forEach(area=>{
     if(area.bucket === key) area.bucket = fallback;
+    if((stageData[area.key] || []).some(item=>item.bucket === key)) movedAreaKeys.push(area.key);
     (stageData[area.key] || []).forEach(item=>{ if(item.bucket === key) item.bucket = fallback; });
   });
   BUCKET_ORDER = BUCKET_ORDER.filter(k=>k !== key);
   delete REVENUE_BUCKETS[key];
   delete importanceConfig.bucketWeights[key];
   invalidateImportanceCache();
-  await saveAreas();
-  await saveAllStageData();
-  await saveBucketSettings();
-  await saveImportanceConfig();
+  /* 분류·가중치·그룹·옮겨진 항목을 한 번에 저장한다. 중간에 끊기면 없는 분류를 가리키는 항목이 남는다 */
+  if(!await saveSettingsTogether({buckets:true, importance:true, areas:true, areaKeys:movedAreaKeys}, snapshot, "분류 삭제 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){
+    refreshConfiguredViews();
+    return;
+  }
   closeBucketModal();
   refreshConfiguredViews();
 }
 async function deleteGroupFromSettings(key){
   const area=findAreaByKey(key);if(!area)return;
   if(!confirm(`"${area.title}" 그룹과 안의 항목을 휴지통으로 이동할까요?`))return;
-  await addTrash("group",area.title,{area,items:stageData[key]||[]});
-  AREAS=AREAS.filter(a=>a.key!==key);delete stageData[key];await saveAreas();await storageDelete("tinico:stage:"+key);
+  try{await moveGroupToTrash(area);}catch(error){showToast(error.message);return;}
   const view=document.getElementById("view-"+key);if(view)view.remove();showView("settings");renderHome();renderPipeline(true);renderSettings();
 }
 
@@ -3202,13 +3670,16 @@ function updateRoadmapRelationUi(){
     if(!owner.disabled) owner.dataset.manualOwner=owner.value;
     owner.disabled=true;owner.classList.add("tn-owner-inherited");owner.value=linked.item.internalOwner||"";owner.placeholder=linked.item.internalOwner?"파이프라인 담당자를 사용합니다.":"연결된 영업 항목의 내부 담당자가 비어 있습니다.";
   }else{
-    owner.disabled=false;owner.classList.remove("tn-owner-inherited");owner.value=owner.dataset.manualOwner!==undefined?owner.dataset.manualOwner:owner.value;owner.placeholder="예: 강지훈";
+    owner.disabled=false;owner.classList.remove("tn-owner-inherited");owner.value=owner.dataset.manualOwner!==undefined?owner.dataset.manualOwner:owner.value;owner.placeholder="예: 홍길동";
   }
 }
+let roadmapEditorSeed=null,roadmapSaving=false;
 function openRoadmapModal(id="",defaults={}){
+  if(roadmapSaving)return;
   editingRoadmapId=id;
   const item=id?roadmapData.find(x=>x.id===id):normalizeSupportTask({id:uid(),title:"",type:"내부 확인",status:"미착수",priority:"중간",progress:0,...defaults});
   if(!item)return;
+  roadmapEditorSeed=deepCopy(item);
   document.getElementById("roadmap-modal-title").textContent=id?"지원 업무 수정":"새 지원 업무";
   document.getElementById("roadmap-modal-name").value=item.title||"";
   fillSelectOptions(document.getElementById("roadmap-modal-type"),SUPPORT_TASK_TYPES,item.type);
@@ -3232,8 +3703,9 @@ function openRoadmapModal(id="",defaults={}){
   document.getElementById("roadmap-modal-overlay").hidden=false;
   document.getElementById("roadmap-modal-name").focus();
 }
-function closeRoadmapModal(){ document.getElementById("roadmap-modal-overlay").hidden=true; editingRoadmapId=""; }
+function closeRoadmapModal(){if(roadmapSaving)return;document.getElementById("roadmap-modal-overlay").hidden=true;editingRoadmapId="";}
 async function saveRoadmapModal(){
+  if(roadmapSaving)return;
   const title=document.getElementById("roadmap-modal-name").value.trim();
   const purpose=document.getElementById("roadmap-modal-purpose").value.trim();
   const deliverable=document.getElementById("roadmap-modal-deliverable").value.trim();
@@ -3245,21 +3717,32 @@ async function saveRoadmapModal(){
   const relation=parseTaskDealValue(document.getElementById("roadmap-modal-deal").value);
   const inheritOwner=!!relation.dealId && document.getElementById("roadmap-modal-inherit-owner").checked;
   const values={title,type:document.getElementById("roadmap-modal-type").value,status,priority:document.getElementById("roadmap-modal-priority").value,progress,purpose,deliverable,owner:inheritOwner?"":document.getElementById("roadmap-modal-owner").value.trim(),collaborators:document.getElementById("roadmap-modal-collaborators").value.trim(),startDate:document.getElementById("roadmap-modal-start").value,dueDate:document.getElementById("roadmap-modal-due").value,nextAction:document.getElementById("roadmap-modal-next").value.trim(),blocker:document.getElementById("roadmap-modal-blocker").value.trim(),notes:document.getElementById("roadmap-modal-notes").value.trim(),relatedAreaKey:relation.areaKey,relatedDealId:relation.dealId,inheritOwner,updatedAt:nowIso(),checked:status==="완료"};
-  if(editingRoadmapId){ const item=roadmapData.find(x=>x.id===editingRoadmapId); if(!item)return; const wasDone=item.status==="완료"; Object.assign(item,values); item.completedAt=status==="완료"?(wasDone&&item.completedAt?item.completedAt:todayStr()):""; }
-  else roadmapData.push(normalizeSupportTask({...values,id:uid(),createdAt:nowIso(),completedAt:status==="완료"?todayStr():""}));
-  await saveRoadmapData(); closeRoadmapModal(); renderRoadmap(); renderHome(); if(selectedDealRef)renderDealDrawer(false);
+  const existing=roadmapData.find(item=>item.id===editingRoadmapId);
+  const item=normalizeSupportTask({...roadmapEditorSeed,...values,completedAt:status==="완료"?(existing?.completedAt||todayStr()):""});
+  const next=existing?roadmapData.map(task=>task.id===item.id?item:task):[...roadmapData,item];
+  const button=document.getElementById("roadmap-modal-save");roadmapSaving=true;button.disabled=true;
+  try{await storageSet("tinico:stage:roadmap",next);roadmapSaving=false;closeRoadmapModal();renderRoadmap();renderHome();if(selectedDealRef)renderDealDrawer(false);}
+  catch(error){showToast(error.message||"지원 업무 저장에 실패했습니다. 입력 내용은 유지됩니다.");}
+  finally{roadmapSaving=false;button.disabled=false;}
 }
 async function deleteRoadmapTask(id){
   const item=roadmapData.find(x=>x.id===id); if(!item)return;
   if(!confirm(`"${item.title}" 실행과제를 휴지통으로 이동할까요?`))return;
-  await addTrash("roadmap",item.title||"영업지원 실행과제",item);
-  roadmapData=roadmapData.filter(x=>x.id!==id); await saveRoadmapData(); closeRoadmapModal(); renderRoadmap(); renderHome(); if(selectedDealRef)renderDealDrawer(false);
+  try{
+    const entry={id:uid(),type:"roadmap",label:item.title||"영업지원 실행과제",deletedAt:nowIso(),payload:deepCopy(item),meta:{}};
+    const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key:"tinico:stage:roadmap",value:roadmapData.filter(x=>x.id!==id)}]);
+    trashData=result.records["tinico:trash"].value;roadmapData=result.records["tinico:stage:roadmap"].value;
+    showUndo(`${entry.label}을(를) 휴지통으로 이동했습니다.`,entry.id);renderTrash();
+    closeRoadmapModal();renderRoadmap();renderHome();if(selectedDealRef)renderDealDrawer(false);
+  }catch(error){showToast(error.message||"지원 업무 삭제에 실패했습니다.");}
 }
 async function quickChangeRoadmapStatus(id,status){
   const item=roadmapData.find(x=>x.id===id); if(!item)return;
+  const previous=deepCopy(roadmapData);
   item.status=status; item.checked=status==="완료"; item.updatedAt=nowIso();
   if(status==="완료"){item.progress=100;item.completedAt=item.completedAt||todayStr();}else{item.completedAt="";if(item.progress===100)item.progress=75;}
-  await saveRoadmapData(); renderRoadmap(); renderHome(); if(selectedDealRef)renderDealDrawer(false);
+  await saveOrRollback(saveRoadmapData,()=>roadmapData.splice(0,roadmapData.length,...previous),"지원 업무 상태 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  renderRoadmap(); renderHome(); if(selectedDealRef)renderDealDrawer(false);
 }
 
 /* ================= 연락처 (Contacts CRUD) ================= */
@@ -3324,6 +3807,42 @@ function migrateSystemTextOutOfMemo(contact){
 }
 /* ---- 명함 원본 이미지: 연락처 배열과 분리해 연락처별 키로 저장 ----
    목록·저장에는 소형 썸네일만 포함해, 이름 한 글자 수정에도 전체 이미지가 재업로드되던 문제를 해소 */
+function setOcrStatus(msg, actionLabel = "", actionHandler = null){
+  const el = document.getElementById("ocr-status");
+  if(!msg){ el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  el.innerHTML = "";
+  const text = document.createElement("span");
+  text.className = "tn-status-text";
+  text.textContent = msg;
+  el.appendChild(text);
+  if(actionLabel && typeof actionHandler === "function"){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "tn-status-action";
+    btn.textContent = actionLabel;
+    btn.addEventListener("click", actionHandler, {once:true});
+    el.appendChild(btn);
+  }
+}
+function normalizePhoneNumber(value){
+  let digits = String(value || "").replace(/\D/g, "");
+  if(digits.startsWith("82")) digits = "0" + digits.slice(2);
+  if(/^01[016789]\d{7,8}$/.test(digits)){
+    return digits.length === 11 ? `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}` : `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
+  }
+  if(/^02\d{7,8}$/.test(digits)) return digits.length === 10 ? `${digits.slice(0,2)}-${digits.slice(2,6)}-${digits.slice(6)}` : `${digits.slice(0,2)}-${digits.slice(2,5)}-${digits.slice(5)}`;
+  if(/^0\d{8,10}$/.test(digits)) return `${digits.slice(0,3)}-${digits.slice(3,-4)}-${digits.slice(-4)}`;
+  return String(value || "").trim();
+}
+function loadImageFromDataUrl(dataUrl){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=>resolve(img);
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
 function contactImageKey(id){ return "tinico:contact:image:" + id; }
 function contactHasCardImage(ct){ return !!(ct && (ct.cardImage || ct.cardThumb)); }
 function stripContactImages(contacts){ return contacts.map(({cardImage, ...rest})=>rest); }
@@ -3351,11 +3870,6 @@ async function makeCardThumb(dataUrl){
   }catch(e){
     return "";
   }
-}
-async function saveContactCardImage(ct, dataUrl){
-  await storageSet(contactImageKey(ct.id), dataUrl);
-  ct.cardImage = dataUrl;
-  ct.cardThumb = (await makeCardThumb(dataUrl)) || ct.cardThumb || "";
 }
 async function loadContactCardImage(ct){
   if(!ct) return "";
@@ -3454,986 +3968,6 @@ function fileToCenteredCardDataUrl(file, maxW=2400, quality=.95){
   });
 }
 
-/* OCR (Tesseract.js) 지연 로드 — API 키 없이 브라우저에서 처리 */
-let ocrLoaderPromise = null;
-let ocrWorkerPoolPromise = null;
-let ocrProgressLabel = "명함 인식";
-let ocrPassProgress = null;
-let ocrJobActive = false;
-function promiseWithTimeout(promise, ms, message){
-  return new Promise((resolve, reject)=>{
-    const timer = setTimeout(()=>reject(new Error(message)), ms);
-    promise.then(
-      value=>{ clearTimeout(timer); resolve(value); },
-      error=>{ clearTimeout(timer); reject(error); }
-    );
-  });
-}
-function loadTesseract(){
-  if(window.Tesseract) return Promise.resolve();
-  if(!ocrLoaderPromise){
-    ocrLoaderPromise = new Promise((resolve, reject)=>{
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-      s.onload = resolve;
-      s.onerror = ()=>{ ocrLoaderPromise = null; reject(new Error("OCR 라이브러리 로드 실패")); };
-      document.head.appendChild(s);
-    });
-  }
-  return ocrLoaderPromise;
-}
-
-function setOcrStatus(msg, actionLabel = "", actionHandler = null){
-  const el = document.getElementById("ocr-status");
-  if(!msg){ el.hidden = true; el.innerHTML = ""; return; }
-  el.hidden = false;
-  el.innerHTML = "";
-  const text = document.createElement("span");
-  text.className = "tn-status-text";
-  text.textContent = msg;
-  el.appendChild(text);
-  if(actionLabel && typeof actionHandler === "function"){
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "tn-status-action";
-    btn.textContent = actionLabel;
-    btn.addEventListener("click", actionHandler, {once:true});
-    el.appendChild(btn);
-  }
-}
-
-function reportOcrPassProgress(){
-  if(!ocrPassProgress || !ocrPassProgress.total) return;
-  let active = 0;
-  ocrPassProgress.current.forEach(v=>{ active += v; });
-  const ratio = Math.min(1, (ocrPassProgress.done + active) / ocrPassProgress.total);
-  setOcrStatus(`${ocrProgressLabel} 중... ${Math.min(99, Math.round(ratio * 100))}%`);
-}
-/* 저사양 기기는 1개, 그 외에는 2개 워커로 보정본 여러 장을 동시에 인식 */
-function ocrWorkerCount(){
-  const memory = Number(navigator.deviceMemory || 4);
-  const cores = Number(navigator.hardwareConcurrency || 4);
-  return memory <= 3 || cores <= 2 ? 1 : 2;
-}
-function describeOcrEngineStatus(m){
-  const progress = Math.round(Math.max(0, Math.min(1, m.progress || 0)) * 100);
-  if(m.status === "loading language traineddata") return `한국어·영어 인식 데이터를 내려받는 중... ${progress}% (최초 1회만 걸립니다)`;
-  if(/loading tesseract core|initializing tesseract|initializing api/i.test(m.status || "")) return "문자 인식 엔진을 준비하는 중...";
-  return "";
-}
-async function getOcrWorkerPool(){
-  await loadTesseract();
-  if(!ocrWorkerPoolPromise){
-    ocrWorkerPoolPromise = Promise.all(Array.from({length: ocrWorkerCount()}, (_, index)=>
-      Tesseract.createWorker("kor+eng", 1, {
-        logger: m=>{
-          if(m.status === "recognizing text"){
-            if(ocrPassProgress){
-              ocrPassProgress.current.set(index, Math.max(0, Math.min(1, m.progress || 0)));
-              reportOcrPassProgress();
-            }
-            return;
-          }
-          /* 엔진·언어 데이터 다운로드 단계도 표시해 멈춘 것처럼 보이지 않게 함 */
-          if(ocrJobActive){
-            const message = describeOcrEngineStatus(m);
-            if(message) setOcrStatus(message);
-          }
-        }
-      })
-    )).catch(e=>{
-      ocrWorkerPoolPromise = null;
-      throw e;
-    });
-  }
-  return ocrWorkerPoolPromise;
-}
-
-function loadImageFromDataUrl(dataUrl){
-  return new Promise((resolve, reject)=>{
-    const img = new Image();
-    img.onload = ()=>resolve(img);
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
-}
-function percentileFromHistogram(hist, total, ratio){
-  const target = total * ratio;
-  let sum = 0;
-  for(let i=0;i<256;i++){
-    sum += hist[i];
-    if(sum >= target) return i;
-  }
-  return ratio < .5 ? 0 : 255;
-}
-function otsuThreshold(hist, total){
-  let sum = 0;
-  for(let i=0;i<256;i++) sum += i * hist[i];
-  let sumB = 0, wB = 0, best = 0, threshold = 150;
-  for(let i=0;i<256;i++){
-    wB += hist[i];
-    if(!wB) continue;
-    const wF = total - wB;
-    if(!wF) break;
-    sumB += i * hist[i];
-    const mB = sumB / wB;
-    const mF = (sum - sumB) / wF;
-    const between = wB * wF * (mB - mF) * (mB - mF);
-    if(between > best){ best = between; threshold = i; }
-  }
-  return threshold;
-}
-async function prepareOcrVariants(dataUrl){
-  const img = await loadImageFromDataUrl(dataUrl);
-  const naturalW = img.naturalWidth || img.width;
-  const naturalH = img.naturalHeight || img.height;
-  const longest = Math.max(naturalW, naturalH);
-  /* 명함 크롭 기준 약 450~650dpi를 유지하는 범위에서 픽셀 수를 줄여 인식 시간을 단축 */
-  const deviceMemory = Number(navigator.deviceMemory || 4);
-  const maxLongest = deviceMemory <= 3 ? 1700 : deviceMemory <= 6 ? 2000 : 2300;
-  const targetLongest = Math.min(maxLongest, Math.max(1600, longest));
-  const scale = targetLongest / longest;
-  const width = Math.max(1, Math.round(naturalW * scale));
-  const height = Math.max(1, Math.round(naturalH * scale));
-
-  const base = document.createElement("canvas");
-  base.width = width; base.height = height;
-  const bctx = base.getContext("2d", {willReadFrequently:true, alpha:false});
-  bctx.imageSmoothingEnabled = true;
-  bctx.imageSmoothingQuality = "high";
-  bctx.fillStyle = "#fff";
-  bctx.fillRect(0,0,width,height);
-  bctx.drawImage(img,0,0,width,height);
-
-  const source = bctx.getImageData(0,0,width,height).data;
-  const hist = new Uint32Array(256);
-  const gray = new Uint8Array(width * height);
-  let avg = 0;
-  for(let p=0,i=0;i<source.length;i+=4,p++){
-    const v = Math.round(source[i]*.299 + source[i+1]*.587 + source[i+2]*.114);
-    gray[p]=v; hist[v]++; avg+=v;
-  }
-  avg /= Math.max(1,gray.length);
-  const low = percentileFromHistogram(hist,gray.length,.008);
-  const high = Math.max(low+36,percentileFromHistogram(hist,gray.length,.992));
-
-  /* 명암 확장 + 약한 언샤프 마스크: 얇은 명함 글자 획을 살림 */
-  const stretched = new Uint8Array(gray.length);
-  for(let p=0;p<gray.length;p++){
-    let v=(gray[p]-low)*255/(high-low);
-    v=(v-128)*1.22+128;
-    stretched[p]=Math.max(0,Math.min(255,Math.round(v)));
-  }
-  const sharpened = new Uint8Array(gray.length);
-  for(let y=0;y<height;y++){
-    for(let x=0;x<width;x++){
-      const p=y*width+x;
-      const c=stretched[p];
-      if(x===0||y===0||x===width-1||y===height-1){sharpened[p]=c;continue;}
-      const lap=4*c-stretched[p-1]-stretched[p+1]-stretched[p-width]-stretched[p+width];
-      sharpened[p]=Math.max(0,Math.min(255,Math.round(c+lap*.26)));
-    }
-  }
-
-  const enhancedCanvas=document.createElement("canvas");
-  enhancedCanvas.width=width; enhancedCanvas.height=height;
-  const ectx=enhancedCanvas.getContext("2d",{alpha:false});
-  const enhanced=ectx.createImageData(width,height);
-  const enhancedHist=new Uint32Array(256);
-  for(let p=0,i=0;p<sharpened.length;p++,i+=4){
-    const v=sharpened[p]; enhancedHist[v]++;
-    enhanced.data[i]=enhanced.data[i+1]=enhanced.data[i+2]=v; enhanced.data[i+3]=255;
-  }
-  ectx.putImageData(enhanced,0,0);
-
-  /* 전체 명암이 고른 명함용 Otsu 이진화 */
-  const threshold=otsuThreshold(enhancedHist,sharpened.length);
-  const binaryCanvas=document.createElement("canvas");
-  binaryCanvas.width=width; binaryCanvas.height=height;
-  const xctx=binaryCanvas.getContext("2d",{alpha:false});
-  const binary=xctx.createImageData(width,height);
-  const invert=avg<108;
-  for(let p=0,i=0;p<sharpened.length;p++,i+=4){
-    let v=sharpened[p]>threshold?255:0;
-    if(invert)v=255-v;
-    binary.data[i]=binary.data[i+1]=binary.data[i+2]=v; binary.data[i+3]=255;
-  }
-  xctx.putImageData(binary,0,0);
-
-  /* 그림자·조명 편차가 있는 촬영본용 지역 적응형 이진화 */
-  const adaptiveCanvas=document.createElement("canvas");
-  adaptiveCanvas.width=width; adaptiveCanvas.height=height;
-  const actx=adaptiveCanvas.getContext("2d",{alpha:false});
-  const adaptive=actx.createImageData(width,height);
-  const stride=width+1;
-  const integral=new Uint32Array((width+1)*(height+1));
-  for(let y=1;y<=height;y++){
-    let row=0;
-    for(let x=1;x<=width;x++){
-      row+=sharpened[(y-1)*width+(x-1)];
-      integral[y*stride+x]=integral[(y-1)*stride+x]+row;
-    }
-  }
-  const radius=Math.max(12,Math.round(Math.min(width,height)/70));
-  const bias=11;
-  for(let y=0,p=0;y<height;y++){
-    const y0=Math.max(0,y-radius), y1=Math.min(height-1,y+radius);
-    for(let x=0;x<width;x++,p++){
-      const x0=Math.max(0,x-radius), x1=Math.min(width-1,x+radius);
-      const A=integral[y0*stride+x0], B=integral[y0*stride+(x1+1)];
-      const C=integral[(y1+1)*stride+x0], D=integral[(y1+1)*stride+(x1+1)];
-      const mean=(D-B-C+A)/((x1-x0+1)*(y1-y0+1));
-      let v=sharpened[p] > mean-bias ? 255 : 0;
-      if(invert)v=255-v;
-      const i=p*4; adaptive.data[i]=adaptive.data[i+1]=adaptive.data[i+2]=v; adaptive.data[i+3]=255;
-    }
-  }
-  actx.putImageData(adaptive,0,0);
-
-  /* 명함 상·하단을 겹쳐 잘라 작은 이름/연락처를 더 큰 글자로 인식하는 보조 영상 */
-  function regionDataUrl(startRatio,heightRatio){
-    const y=Math.max(0,Math.round(height*startRatio));
-    const h=Math.max(1,Math.min(height-y,Math.round(height*heightRatio)));
-    const region=document.createElement("canvas");
-    region.width=width;region.height=Math.round(width*(h/width));
-    const rctx=region.getContext("2d",{alpha:false});
-    rctx.fillStyle="#fff";rctx.fillRect(0,0,region.width,region.height);
-    rctx.drawImage(enhancedCanvas,0,y,width,h,0,0,region.width,region.height);
-    return region.toDataURL("image/jpeg",.96);
-  }
-
-  return {
-    enhanced: enhancedCanvas.toDataURL("image/jpeg",.96),
-    binary: binaryCanvas.toDataURL("image/png"),
-    adaptive: adaptiveCanvas.toDataURL("image/png"),
-    upper: regionDataUrl(0,.62),
-    lower: regionDataUrl(.38,.62)
-  };
-}
-
-function normalizePhoneNumber(value){
-  let digits = String(value || "").replace(/\D/g, "");
-  if(digits.startsWith("82")) digits = "0" + digits.slice(2);
-  if(/^01[016789]\d{7,8}$/.test(digits)){
-    return digits.length === 11 ? `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}` : `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
-  }
-  if(/^02\d{7,8}$/.test(digits)) return digits.length === 10 ? `${digits.slice(0,2)}-${digits.slice(2,6)}-${digits.slice(6)}` : `${digits.slice(0,2)}-${digits.slice(2,5)}-${digits.slice(5)}`;
-  if(/^0\d{8,10}$/.test(digits)) return `${digits.slice(0,3)}-${digits.slice(3,-4)}-${digits.slice(-4)}`;
-  return String(value || "").trim();
-}
-function editDistanceAtMost(a, b, max){
-  if(Math.abs(a.length - b.length) > max) return max + 1;
-  let prev = Array.from({length: b.length + 1}, (_, j)=>j);
-  for(let i = 1; i <= a.length; i++){
-    const cur = [i];
-    for(let j = 1; j <= b.length; j++){
-      cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
-    }
-    if(Math.min(...cur) > max) return max + 1;
-    prev = cur;
-  }
-  return prev[b.length];
-}
-function cleanOcrText(text){
-  return String(text || "")
-    .replace(/[‐‑‒–—]/g,"-")
-    .replace(/[“”]/g,'"').replace(/[‘’]/g,"'")
-    .replace(/[＠﹫]/g,"@").replace(/[。｡]/g,".")
-    /* 이메일 보정은 줄바꿈을 삼키지 않도록 공백·탭만 제거 */
-    .replace(/[ \t]*@[ \t]*/g,"@")
-    .replace(/([A-Za-z0-9])[ \t]*\.[ \t]*(?=[A-Za-z0-9])/g,"$1.")
-    .replace(/\b(?:e[- ]?mail|메일)[ \t]*[:：]?[ \t]*/ig,"")
-    .replace(/([A-Za-z0-9._%+-])[ \t]+([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+)/g,"$1$2")
-    .replace(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+)[ \t]+([A-Za-z]{2,})/g,"$1.$2")
-    .split(/\n+/)
-    .map(v=>v.replace(/[ \t]+/g," ").trim())
-    .filter(Boolean)
-    .join("\n");
-}
-
-function meaningfulOcrScore(text, confidence=0){
-  const raw = cleanOcrText(text);
-  if(!raw) return -999;
-  let score = Number(confidence || 0);
-  if(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(raw)) score += 30;
-  if(/(?:\+?82[-.\s]?)?0?1[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/.test(raw)) score += 22;
-  if(/(?:주식회사|\(주\)|㈜|Group|Corp|Inc|Ltd|LLC|병원|대학교|연구소)/i.test(raw)) score += 15;
-  if(/(?:^|\n)(?:[가-힣]\s*){2,4}(?:\n|$)/.test(raw)) score += 14;
-  const useful = (raw.match(/[A-Za-z0-9가-힣@.+-]/g) || []).length;
-  score += Math.min(25, useful / 12);
-  const weird = (raw.match(/[^\sA-Za-z0-9가-힣@.,:+()\-\/|&]/g) || []).length;
-  score -= weird * 1.5;
-  return score;
-}
-function mergeOcrTexts(primary, secondary){
-  const lines = [];
-  const seen = new Set();
-  [primary, secondary].forEach(text=>{
-    cleanOcrText(text).split(/\n+/).forEach(line=>{
-      const key = line.toLowerCase().replace(/[^0-9a-z가-힣]/g,"");
-      if(key.length < 2 || seen.has(key)) return;
-      seen.add(key); lines.push(line);
-    });
-  });
-  return lines.join("\n");
-}
-
-/* OCR 인식 텍스트에서 이름·회사·직책·전화·이메일 자동 추출 */
-function parseCardText(text){
-  const raw = cleanOcrText(text);
-  const out = {phone:"", mobilePhone:"", businessPhone:"", fax:"", email:"", name:"", company:"", role:"", department:"", jobTitle:"", raw};
-  const emailCompact = raw.replace(/\s+/g, " ");
-  const emailM = emailCompact.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  if(emailM) out.email = emailM[0].replace(/[.,;:]+$/, "");
-  /* 명함의 웹사이트 주소와 대조해 하이픈↔점 오독·한 글자 유실로 어긋난 이메일 도메인을 교정 */
-  if(out.email){
-    const emailDomain = out.email.split("@")[1] || "";
-    const site = raw.match(/www\.([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.[a-z]{2,})/i);
-    const flatten = s=>String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
-    if(site && emailDomain && site[1].toLowerCase() !== emailDomain.toLowerCase()){
-      const a = flatten(site[1]), b = flatten(emailDomain);
-      const tolerance = a.length >= 10 ? 2 : 1;
-      if(a === b || editDistanceAtMost(a, b, tolerance) <= tolerance){
-        out.email = out.email.split("@")[0] + "@" + site[1].toLowerCase();
-      }
-    }
-  }
-
-  const phoneLineMatches = raw.split(/\n+/).map(line=>{
-    /* 전화번호 영역에서 자주 혼동되는 O↔0, I/l↔1만 제한적으로 보정 */
-    const phoneLike = /(?:tel|mobile|phone|fax|전화|휴대|팩스)/i.test(line) || (line.match(/\d/g)||[]).length >= 7;
-    const scanLine = phoneLike ? line.replace(/[Oo]/g,"0").replace(/[Il|]/g,"1") : line;
-    return {line, values:scanLine.match(/(?:\+?82[-.\s]?)?(?:0?1[016789]|0\d{1,2})[-.\s]?\d{3,4}[-.\s]?\d{4}/g)||[]};
-  }).filter(x=>x.values.length);
-  for(const entry of phoneLineMatches){
-    for(const value of entry.values){
-      const normalized = normalizePhoneNumber(value);
-      if(/fax|팩스/i.test(entry.line)){ if(!out.fax) out.fax = normalized; continue; }
-      if(/^01[016789]-/.test(normalized)){ if(!out.mobilePhone) out.mobilePhone = normalized; }
-      else if(!out.businessPhone) out.businessPhone = normalized;
-    }
-  }
-  out.phone = out.mobilePhone || out.businessPhone || "";
-
-  const lines = raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-  const ROLE_RE = /(대표(?:이사)?|회장|부회장|상무|전무|이사|본부장|부장|차장|과장|대리|주임|사원|팀장|실장|소장|센터장|매니저|연구원|교수|박사|CEO|CTO|CFO|COO|President|Vice President|Manager|Director|Engineer|Researcher)/i;
-  const DEPARTMENT_RE = /(팀|부|실|본부|센터|사업부|연구소|Department|Division|Team|Center|Office)$/i;
-  /* 영문 법인 접미사는 단어 경계를 요구해 "group.com"의 co 같은 부분 일치를 차단 */
-  const COMPANY_RE = /(주식회사|\(주\)|㈜|그룹|병원|의료원|대학교|대학|연구소|연구원|재단|협회|산업|테크|메디칼|메디컬|바이오|제약|건설|전자|솔루션|\b(?:Group|Holdings?|Corporation|Corp|Company|Co|Incorporated|Inc|Limited|Ltd|LLC|GmbH)\b\.?)/i;
-  const URLISH_RE = /(?:https?:|www\.|\.(?:com|net|org|io|kr|co\.kr)\b)/i;
-
-  for(const line of lines){
-    const l = line.replace(/^[|·•,:;\-\s]+|[|·•,:;\-\s]+$/g, "").trim();
-    if(!out.role && ROLE_RE.test(l) && l.length <= 42){
-      out.role = l.replace(/\s*[|/]\s*/g, " / ");
-      const split = splitLegacyRole(out.role);
-      out.jobTitle = split.jobTitle;
-      out.department = split.department;
-    }
-    if(!out.department && DEPARTMENT_RE.test(l) && !ROLE_RE.test(l) && l.length <= 42) out.department = l;
-    /* 법인 접미사만 있는 잡음 줄과 주소·URL 줄은 제외하고, 실제 상호가 함께 있는 줄만 회사명으로 인정 */
-    if(!out.company && COMPANY_RE.test(l) && l.length <= 48 && !/@/.test(l) && !URLISH_RE.test(l)
-      && l.replace(COMPANY_RE, "").replace(/[^A-Za-z0-9가-힣]/g, "").length >= 2) out.company = l;
-  }
-
-  for(const line of lines){
-    const compact = line.replace(/\s+/g, "");
-    if(/^[가-힣]{2,4}$/.test(compact) && !ROLE_RE.test(compact) && !COMPANY_RE.test(compact)){
-      out.name = compact; break;
-    }
-  }
-  if(!out.name){
-    for(const line of lines){
-      const l = line.trim();
-      if(/^[A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+){1,3}$/.test(l) && !ROLE_RE.test(l) && !COMPANY_RE.test(l)){
-        out.name = l; break;
-      }
-    }
-  }
-  if(!out.company){
-    for(const line of lines){
-      const l = line.trim();
-      /* 잡음으로 생긴 2~3자 대문자 조각("LB","AAS")을 회사명으로 오인하지 않도록 최소 길이를 요구 */
-      if(l.length >= 3 && l.length <= 30 && (l.includes(" ") || l.length >= 4)
-        && /^[A-Z][A-Z0-9&.\- ]+(?:Group|GROUP)?$/.test(l) && !ROLE_RE.test(l)){
-        out.company = l; break;
-      }
-    }
-  }
-  return out;
-}
-
-function mergeParsedCards(candidates){
-  const merged = {phone:"", mobilePhone:"", businessPhone:"", fax:"", email:"", name:"", company:"", role:"", department:"", jobTitle:"", raw:""};
-  for(const c of candidates){
-    const p = parseCardText(c.text);
-    for(const key of ["email","mobilePhone","businessPhone","fax","phone","name","company","department","jobTitle","role"]){
-      if(!merged[key] && p[key]) merged[key] = p[key];
-    }
-  }
-  merged.raw = candidates.map(c=>cleanOcrText(c.text)).filter(Boolean).reduce((acc,text)=>mergeOcrTexts(acc,text),"");
-  return merged;
-}
-
-let ocrJobQueue=Promise.resolve();
-async function ocrCardImage(dataUrl){
-  /* 인식 작업 두 개가 동시에 워커·진행 상태를 공유하며 충돌하지 않도록 항상 순차 실행 */
-  const job=ocrJobQueue.then(()=>runOcrCardImage(dataUrl));
-  ocrJobQueue=job.catch(()=>{});
-  return job;
-}
-async function runOcrCardImage(dataUrl){
-  setOcrStatus("명함 이미지를 고해상도로 보정하는 중...");
-  ocrJobActive = true;
-  try{
-  const [workers,variants]=await Promise.all([
-    promiseWithTimeout(getOcrWorkerPool(), 90000, "문자 인식 엔진 다운로드가 지연되고 있습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요."),
-    prepareOcrVariants(dataUrl)
-  ]);
-  const candidates=[];
-
-  /* 한 라운드의 보정본들을 워커 수만큼 동시에 인식해 대기 시간을 줄임 */
-  async function recognizeRound(label,jobs){
-    ocrProgressLabel=label;
-    ocrPassProgress={total:jobs.length,done:0,current:new Map()};
-    reportOcrPassProgress();
-    let next=0;
-    try{
-      await Promise.all(workers.map(async(worker,index)=>{
-        while(next<jobs.length){
-          const job=jobs[next++];
-          await worker.setParameters({
-            tessedit_pageseg_mode:String(job.psm),
-            preserve_interword_spaces:"1",
-            user_defined_dpi:"300"
-          });
-          const result=await worker.recognize(job.image);
-          const candidate={text:result.data.text||"",confidence:result.data.confidence||0,label:job.label};
-          candidate.score=meaningfulOcrScore(candidate.text,candidate.confidence);
-          candidates.push(candidate);
-          /* 한 워커가 실패해도 남은 워커가 null 진행 상태를 만지지 않도록 방어 */
-          if(ocrPassProgress){
-            ocrPassProgress.done+=1;
-            ocrPassProgress.current.delete(index);
-            reportOcrPassProgress();
-          }
-        }
-      }));
-    }finally{
-      ocrPassProgress=null;
-    }
-    candidates.sort((a,b)=>b.score-a.score);
-    return mergeParsedCards(candidates);
-  }
-
-  let parsed=await recognizeRound("명함 인식",[
-    {label:"기본 보정 인식",image:variants.enhanced,psm:11},
-    {label:"그림자 보정 인식",image:variants.adaptive,psm:11}
-  ]);
-  /* 이름·회사·전화·이메일 중 하나라도 비었거나 품질이 낮으면 보완 인식을 한 번에 병렬 수행 */
-  const missingCore=()=>!parsed.name || !parsed.company || !parsed.email || !(parsed.mobilePhone||parsed.businessPhone);
-  if(missingCore() || (candidates[0]?.score||0)<92){
-    parsed=await recognizeRound("정밀 보완 인식",[
-      {label:"고대비 정밀 인식",image:variants.binary,psm:6},
-      {label:"이름·회사 영역 인식",image:variants.upper,psm:11},
-      {label:"연락처 영역 인식",image:variants.lower,psm:11}
-    ]);
-  }
-
-  return {
-    text:parsed.raw,
-    parsed,
-    confidence:Math.round(Math.max(...candidates.map(c=>Number(c.confidence||0)))),
-    passes:candidates.length
-  };
-  }finally{
-    ocrJobActive = false;
-  }
-}
-
-/* 회사명 이미지 검색: API 없이 일반 이미지 검색에서 사용자가 확인 후 저장 */
-function compactOcrClues(raw){
-  return String(raw || "").split(/\n+/).map(s=>s.trim()).filter(Boolean).slice(0,8).join(" · ").slice(0,300);
-}
-function extractEmailDomain(email){
-  const m = String(email || "").toLowerCase().match(/@([a-z0-9.-]+)$/);
-  if(!m) return "";
-  const host = m[1].replace(/^www\./, "");
-  if(/^(gmail|naver|daum|hanmail|kakao|outlook|hotmail|icloud)\./.test(host)) return "";
-  return host;
-}
-function ocrSearchTerms(raw){
-  const stop = /^(manager|director|president|ceo|cto|cfo|team|department|business|support|sales|marketing|engineer|과장|차장|부장|이사|대표|팀장|대리|사원|현장지원팀|전화|팩스|이메일|mobile|tel|fax)$/i;
-  return String(raw || "").split(/\n+/)
-    .map(v=>v.replace(/[|_*~]+/g," ").replace(/\s+/g," ").trim())
-    .filter(v=>v.length >= 2 && v.length <= 36)
-    .filter(v=>!/@|https?:|www\.|\d{3,}[-.\s]?\d{3,}/i.test(v))
-    .filter(v=>!stop.test(v))
-    .slice(0,4);
-}
-function buildCompanySearchQuery(contact, rawText=""){
-  const parts = [];
-  if(contact.company) parts.push(contact.company);
-  const domain = extractEmailDomain(contact.email);
-  if(domain) parts.push(domain, domain.split(".")[0].replace(/[-_]/g," "));
-  ocrSearchTerms(rawText || contact.ocrRaw).forEach(v=>parts.push(v));
-  if(contact.name) parts.push(contact.name);
-  const unique = [...new Set(parts.map(v=>String(v||"").trim()).filter(Boolean))];
-  return (unique.slice(0,5).join(" ") + " 회사 로고").trim();
-}
-function closeCompanySearchModal(){
-  document.getElementById("company-search-overlay").hidden = true;
-  pendingCompanyContactId = null;
-}
-function openCompanySearchModal(contact, rawText=""){
-  if(!contact){ showToast("검색할 연락처를 찾지 못했습니다."); return; }
-  if(!contactHasCardImage(contact)){ showToast("검색할 명함 이미지가 없습니다. 먼저 명함 이미지를 추가해 주세요."); return; }
-  pendingCompanyContactId = contact.id;
-  const previewEl = document.getElementById("company-search-image");
-  previewEl.src = contact.cardImage || contact.cardThumb;
-  /* 원본이 아직 메모리에 없으면 백그라운드에서 불러와 선명한 이미지로 교체 */
-  if(!contact.cardImage) loadContactCardImage(contact).then(full=>{ if(full && pendingCompanyContactId === contact.id) previewEl.src = full; }).catch(()=>{});
-  const clue = compactOcrClues(rawText || contact.ocrRaw);
-  const domain = extractEmailDomain(contact.email);
-  document.getElementById("company-search-clues").textContent = [
-    domain ? `이메일 도메인: ${domain}` : "",
-    clue ? `OCR 참고: ${clue}` : ""
-  ].filter(Boolean).join(" / ") || "명함 이미지와 로고를 보고 검색어를 조정하세요.";
-  document.getElementById("company-search-query").value = buildCompanySearchQuery(contact, rawText);
-  document.getElementById("company-search-name").value = contact.company || "";
-  document.getElementById("company-search-overlay").hidden = false;
-  setTimeout(()=>document.getElementById("company-search-query").focus(), 0);
-}
-function openCompanySearchEngine(engine){
-  const query = document.getElementById("company-search-query").value.trim();
-  let url = "";
-  if(engine === "google"){
-    if(!query){ showToast("이미지 검색어를 입력하세요."); return; }
-    url = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`;
-  }else if(engine === "naver"){
-    if(!query){ showToast("이미지 검색어를 입력하세요."); return; }
-    url = `https://search.naver.com/search.naver?where=image&query=${encodeURIComponent(query)}`;
-  }else{
-    url = "https://lens.google.com/";
-  }
-  window.open(url, "_blank", "noopener,noreferrer");
-}
-async function downloadCompanySearchImage(){
-  const contact = contactDrafts.get(pendingCompanyContactId)?.value;
-  if(!contactHasCardImage(contact)){ showToast("저장할 명함 이미지가 없습니다."); return; }
-  const image = (await loadContactCardImage(contact)) || contact.cardThumb;
-  if(!image){ showToast("명함 원본 이미지를 불러오지 못했습니다. 네트워크 확인 후 다시 시도해 주세요."); return; }
-  const a = document.createElement("a");
-  a.href = image;
-  a.download = `business_card_${(contact.name || contact.company || "contact").replace(/[^0-9A-Za-z가-힣_-]+/g,"_")}.jpg`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-async function saveConfirmedCompanyName(){
-  const contact = contactDrafts.get(pendingCompanyContactId)?.value;
-  if(!contact){ closeCompanySearchModal(); return; }
-  const name = document.getElementById("company-search-name").value.trim();
-  if(!name){ showToast("이미지 검색에서 확인한 회사명을 입력하세요."); return; }
-  if(contact.company && contact.company !== name && !confirm(`기존 회사명 "${contact.company}"을(를) "${name}"(으)로 변경할까요?`)) return;
-  contact.company = name;
-  contact.companyLookupAt = new Date().toISOString();
-  contact.companyLookupSource = "일반 이미지 검색 사용자 확인";
-  const log = `[회사명 이미지 검색 확인] ${name}`;
-  if(!String(contact.memo || "").includes(log)) contact.memo = (contact.memo ? contact.memo + "\n" : "") + log;
-  markDraft("contact",contactDrafts.get(contact.id));
-  if(selectedContactId === contact.id) renderContactDrawer(false);
-  closeCompanySearchModal();
-  setOcrStatus(`회사명 "${name}"을 입력에 적용했습니다. 연락처의 저장 버튼으로 반영하세요.`);
-  setTimeout(()=>setOcrStatus(""), 4500);
-}
-async function resolveCompanyFromImage(contact, dataUrl, rawText="", options={}){
-  if(!options.force && contact.company) return true;
-  if(!dataUrl){ showToast("검색할 명함 이미지가 없습니다."); return false; }
-  openCompanySearchModal(contact, rawText);
-  setOcrStatus("회사명이 인식되지 않았습니다. 일반 이미지 검색으로 로고를 확인한 뒤 회사명을 저장해 주세요.", "이미지 검색 열기", ()=>openCompanySearchModal(contact, rawText));
-  return false;
-}
-
-/* OCR 결과를 비어 있는 필드에만 채움 (사용자 입력 및 메모 보호) */
-async function applyOcrToContact(contact, dataUrl){
-  const draft=contactDrafts.get(contact.id);
-  if(!draft||draft.value!==contact)return false;
-  draft.processing=true;if(selectedContactId===contact.id)updateEditStatus("contact",draft);
-  let rawText = "";
-  let ocrSucceeded = false;
-  try{
-    const result = await ocrCardImage(dataUrl);
-    if(contactDrafts.get(contact.id)!==draft)return false;
-    rawText = result.text || "";
-    const p = result.parsed || parseCardText(rawText);
-    if(!contact.name) contact.name = p.name;
-    if(!contact.company) contact.company = p.company;
-    if(!contact.jobTitle) contact.jobTitle = p.jobTitle || splitLegacyRole(p.role).jobTitle;
-    if(!contact.department) contact.department = p.department || splitLegacyRole(p.role).department;
-    if(!contact.mobilePhone) contact.mobilePhone = p.mobilePhone || (/^01[016789]-/.test(p.phone || "") ? p.phone : "");
-    if(!contact.businessPhone) contact.businessPhone = p.businessPhone || (p.phone && !/^01[016789]-/.test(p.phone) ? p.phone : "");
-    if(!contact.fax) contact.fax = p.fax || "";
-    if(!contact.email) contact.email = p.email;
-    syncContactLegacyFields(contact);
-    /* OCR 원문은 내부 필드에만 보관하고 사용자 메모 칸에는 표시하지 않음 */
-    contact.ocrRaw = p.raw || rawText;
-    contact.ocrConfidence = result.confidence || 0;
-    contact.ocrUpdatedAt = new Date().toISOString();
-    ocrSucceeded = true;
-    if(selectedContactId === contact.id) renderContactDrawer(false);
-    /* 인식된 정보를 먼저 저장·표시한 뒤, 회사명 검색 등 사용자 작업은 버튼으로만 안내 (자동으로 화면을 가로막지 않음) */
-    const quality=result.confidence?` · 신뢰도 ${result.confidence}%`:"";
-    const saved=[];
-    if(contact.name)saved.push("이름");
-    if(contact.jobTitle||contact.department)saved.push("직책·부서");
-    if(contact.mobilePhone||contact.businessPhone)saved.push("전화번호");
-    if(contact.email)saved.push("이메일");
-    if(contact.company)saved.push("회사명");
-    const missing=[];
-    if(!contact.name)missing.push("이름");
-    if(!contact.mobilePhone&&!contact.businessPhone)missing.push("전화번호");
-    if(!contact.email)missing.push("이메일");
-    const savedText=saved.length?` · 인식: ${saved.join(", ")}`:"";
-    const missingText=missing.length?` · 미인식: ${missing.join(", ")}`:"";
-    if(!contact.company){
-      setOcrStatus(`명함 인식 완료${quality}${savedText}${missingText}. 회사명은 인식되지 않아 이미지 검색으로 확인할 수 있습니다.`,"회사명 이미지 검색",()=>openCompanySearchModal(contact, p.raw));
-    }else{
-      setOcrStatus(`명함 인식 완료${quality}${missingText}. 결과를 확인한 뒤 저장해 주세요.`,"결과 확인",()=>openContactDetail(contact));
-    }
-  }catch(e){
-    console.error("OCR failed", e);
-    if(contactDrafts.get(contact.id)!==draft)return false;
-    if(selectedContactId === contact.id) renderContactDrawer(false);
-    if(!contact.company){
-      /* 실패 시에도 화면을 가로막지 않고, 회사명 이미지 검색은 사용자가 버튼으로 열도록 안내만 함 */
-      setOcrStatus("문자 인식에 실패했습니다. 명함 이미지는 임시 보관 중입니다. 내용을 확인한 뒤 저장하세요. 회사명은 이미지 검색으로 확인할 수 있습니다.","회사명 이미지 검색",()=>openCompanySearchModal(contact, rawText));
-    }else{
-      setOcrStatus("자동 문자 인식에 실패했습니다. 내용을 직접 입력한 뒤 저장해 주세요.");
-      setTimeout(()=>setOcrStatus(""), 5000);
-    }
-  }
-  draft.processing=false;
-  if(contactDrafts.get(contact.id)===draft&&selectedContactId===contact.id)markDraft("contact",draft);
-  return ocrSucceeded;
-}
-
-/* 업로드·촬영된 이미지 처리: 신규 등록 또는 기존 연락처 명함 교체 */
-async function handlePickedImage(file, options={}){
-  if(!file) return;
-  let dataUrl;
-  try{
-    dataUrl = options.cameraFallback
-      ? await fileToCenteredCardDataUrl(file)
-      : await fileToResizedDataUrl(file, 2200, .94);
-  }
-  catch(e){ showToast("이미지를 읽지 못했습니다. 다른 사진으로 시도해 주세요."); return; }
-
-  const targetId=pendingImageTargetId;pendingImageTargetId=null;
-  await stageContactImage(dataUrl,targetId);
-}
-async function stageContactImage(dataUrl,targetId){
-  const ct=(targetId&&contactDrafts.get(targetId)?.value)||(targetId&&contactsData.find(c=>c.id===targetId))||normalizeContact({id:uid(),createdAt:todayStr()});
-  if(!openContactDetail(ct))return;
-  const draft=contactDrafts.get(ct.id);draft.pendingImage=true;draft.processing=true;
-  draft.value.cardImage=dataUrl;updateEditStatus("contact",draft);
-  const thumb=await makeCardThumb(dataUrl);
-  if(contactDrafts.get(ct.id)!==draft)return;
-  draft.value.cardThumb=thumb||"";renderContactDrawer(false);
-  await applyOcrToContact(draft.value,dataUrl);
-}
-
-/* ---- 카메라 스캐너: 명함 비율 가이드·실시간 품질 진단·고해상도 촬영 ---- */
-const BUSINESS_CARD_ASPECT=1.8; // 국내 표준 명함 90×50mm 기준
-let scanStream=null;
-let scanQualityTimer=null;
-let scanLastQuality={level:"warn",severe:false,message:"카메라를 준비하는 중..."};
-let scanTorchOn=false;
-let scanResizeObserver=null;
-let scanOpening=false;
-let scanQualityIssue="";
-let scanQualityIssueCount=0;
-
-function setScanStatus(level,message,note=""){
-  const box=document.getElementById("scan-status");
-  const text=document.getElementById("scan-status-text");
-  const frame=document.getElementById("scan-frame");
-  const quality=document.getElementById("scan-quality-note");
-  if(box){box.className="tn-scan-status "+(level||"");}
-  if(text)text.textContent=message||"";
-  if(frame)frame.className="tn-scan-frame "+(level==="good"?"good":level==="bad"?"bad":"");
-  if(quality)quality.textContent=note||message||"명함을 프레임에 맞춰 주세요";
-}
-
-function hideScanQualityPopup(){
-  const popup=document.getElementById("scan-quality-popup");
-  if(popup)popup.hidden=true;
-}
-
-function updateScanQualityPopup(issue,message,note){
-  if(!issue){scanQualityIssue="";scanQualityIssueCount=0;hideScanQualityPopup();return;}
-  if(scanQualityIssue===issue)scanQualityIssueCount+=1;
-  else{scanQualityIssue=issue;scanQualityIssueCount=1;hideScanQualityPopup();}
-  /* 순간적인 노출 변화는 무시하고 약 1초간 계속 감지된 경우에만 안내 */
-  if(scanQualityIssueCount<2)return;
-  const popup=document.getElementById("scan-quality-popup");
-  const title=document.getElementById("scan-quality-popup-title");
-  const detail=document.getElementById("scan-quality-popup-message");
-  if(title)title.textContent=message;
-  if(detail)detail.textContent=note;
-  if(popup)popup.hidden=false;
-}
-
-function updateScanFrameLayout(){
-  const wrap=document.getElementById("scan-videowrap");
-  const frame=document.getElementById("scan-frame");
-  if(!wrap||!frame)return;
-  const w=wrap.clientWidth,h=wrap.clientHeight;
-  if(!w||!h)return;
-  let fw=w*.90, fh=fw/BUSINESS_CARD_ASPECT;
-  const maxH=h*.72;
-  if(fh>maxH){fh=maxH;fw=fh*BUSINESS_CARD_ASPECT;}
-  frame.style.width=Math.round(fw)+"px";
-  frame.style.height=Math.round(fh)+"px";
-  frame.style.left=Math.round((w-fw)/2)+"px";
-  frame.style.top=Math.round((h-fh)/2)+"px";
-}
-
-/* object-fit:cover 미리보기에서 화면 프레임과 실제 카메라 픽셀을 정확히 대응 */
-function scannerSourceRect(sourceWidth,sourceHeight){
-  const wrap=document.getElementById("scan-videowrap");
-  const frame=document.getElementById("scan-frame");
-  const cw=wrap?.clientWidth||1,ch=wrap?.clientHeight||1;
-  const left=parseFloat(frame?.style.left)||frame?.offsetLeft||0;
-  const top=parseFloat(frame?.style.top)||frame?.offsetTop||0;
-  const fw=parseFloat(frame?.style.width)||frame?.offsetWidth||cw*.9;
-  const fh=parseFloat(frame?.style.height)||frame?.offsetHeight||fw/BUSINESS_CARD_ASPECT;
-  const scale=Math.max(cw/sourceWidth,ch/sourceHeight);
-  const renderedW=sourceWidth*scale,renderedH=sourceHeight*scale;
-  const offsetX=(renderedW-cw)/2,offsetY=(renderedH-ch)/2;
-  let sx=(left+offsetX)/scale,sy=(top+offsetY)/scale;
-  let sw=fw/scale,sh=fh/scale;
-  sx=Math.max(0,Math.min(sourceWidth-1,sx));
-  sy=Math.max(0,Math.min(sourceHeight-1,sy));
-  sw=Math.max(1,Math.min(sourceWidth-sx,sw));
-  sh=Math.max(1,Math.min(sourceHeight-sy,sh));
-  return {sx,sy,sw,sh};
-}
-
-function drawScannerCrop(source,sourceWidth,sourceHeight,maxW=2400){
-  const {sx,sy,sw,sh}=scannerSourceRect(sourceWidth,sourceHeight);
-  const scale=Math.min(1,maxW/sw);
-  const canvas=document.createElement("canvas");
-  canvas.width=Math.max(1,Math.round(sw*scale));
-  canvas.height=Math.max(1,Math.round(sh*scale));
-  const ctx=canvas.getContext("2d",{alpha:false});
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
-  ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(source,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-  return canvas;
-}
-
-function evaluateScannerQuality(){
-  const video=document.getElementById("scan-video");
-  if(!video||video.readyState<2||!video.videoWidth)return;
-  try{
-    const crop=drawScannerCrop(video,video.videoWidth,video.videoHeight,360);
-    const ctx=crop.getContext("2d",{willReadFrequently:true});
-    const {data}=ctx.getImageData(0,0,crop.width,crop.height);
-    const gray=new Uint8Array(crop.width*crop.height);
-    let sum=0,sumSq=0,glare=0,dark=0;
-    for(let p=0,i=0;i<data.length;i+=4,p++){
-      const v=data[i]*.299+data[i+1]*.587+data[i+2]*.114;
-      gray[p]=v;sum+=v;sumSq+=v*v;if(v>246)glare++;if(v<32)dark++;
-    }
-    const n=gray.length,mean=sum/n,contrast=Math.sqrt(Math.max(0,sumSq/n-mean*mean));
-    let edge=0,count=0;
-    for(let y=1;y<crop.height-1;y+=2){
-      for(let x=1;x<crop.width-1;x+=2){
-        const p=y*crop.width+x;
-        edge+=Math.abs(gray[p+1]-gray[p-1])+Math.abs(gray[p+crop.width]-gray[p-crop.width]);count+=2;
-      }
-    }
-    const edgeScore=edge/Math.max(1,count),glareRatio=glare/n,darkRatio=dark/n;
-    let level="good",message="촬영하기 좋은 상태입니다",note="선명함 · 밝기 적정",issue="";
-    let severe=false;
-    if(mean<48||darkRatio>.34){level="bad";message="조명이 부족합니다";note="조명을 켜거나 밝은 곳으로 이동하세요";issue="low-light";severe=true;}
-    else if(mean>232||glareRatio>.20){level="bad";message="빛 반사가 너무 강합니다";note="명함이나 휴대폰 각도를 조금 바꿔 주세요";issue="glare";severe=true;}
-    else if(edgeScore<6.5){level="bad";message="글자가 흐릿합니다";note="카메라를 고정하고 화면의 명함을 한 번 눌러 초점을 맞춰 주세요";issue="blur";severe=true;}
-    else if(edgeScore<10||contrast<24){level="warn";message="조금 더 선명하게 맞춰 주세요";note="명함을 가까이 두고 잠시 고정하세요";}
-    else if(glareRatio>.10){level="warn";message="일부 빛 반사가 감지됩니다";note="반사광이 글자를 가리지 않게 조정하세요";}
-    scanLastQuality={level,severe,message,note,issue,mean,contrast,edgeScore,glareRatio};
-    setScanStatus(level,message,note);
-    updateScanQualityPopup(issue,message,note);
-  }catch(e){/* 카메라 프레임 분석 실패 시 촬영 자체는 허용 */}
-}
-
-async function applyBestCameraSettings(track){
-  try{
-    const caps=track.getCapabilities?track.getCapabilities():{};
-    const advanced=[];
-    if(Array.isArray(caps.focusMode)&&caps.focusMode.includes("continuous"))advanced.push({focusMode:"continuous"});
-    if(Array.isArray(caps.exposureMode)&&caps.exposureMode.includes("continuous"))advanced.push({exposureMode:"continuous"});
-    if(Array.isArray(caps.whiteBalanceMode)&&caps.whiteBalanceMode.includes("continuous"))advanced.push({whiteBalanceMode:"continuous"});
-    if(advanced.length)await track.applyConstraints({advanced});
-    const torchBtn=document.getElementById("scan-torch");
-    if(torchBtn)torchBtn.hidden=!caps.torch;
-  }catch(e){console.debug("camera optimization unavailable",e);}
-}
-
-function reusableScannerStream(){
-  const track=scanStream?.getVideoTracks?.()[0];
-  return !!track&&track.readyState==="live";
-}
-
-function waitForScannerVideo(video,timeoutMs=6000){
-  if(video.videoWidth)return Promise.resolve();
-  return new Promise((resolve,reject)=>{
-    let settled=false;
-    const finish=(error)=>{
-      if(settled)return;settled=true;
-      clearTimeout(timer);
-      video.removeEventListener("loadedmetadata",onReady);
-      video.removeEventListener("canplay",onReady);
-      if(error)reject(error);else resolve();
-    };
-    const onReady=()=>{if(video.videoWidth)finish();};
-    const timer=setTimeout(()=>finish(new Error("카메라 영상 준비 시간이 초과되었습니다.")),timeoutMs);
-    video.addEventListener("loadedmetadata",onReady);
-    video.addEventListener("canplay",onReady);
-  });
-}
-
-function releaseScannerStream(){
-  clearInterval(scanQualityTimer);scanQualityTimer=null;
-  scanResizeObserver?.disconnect();scanResizeObserver=null;
-  if(scanStream)scanStream.getTracks().forEach(track=>track.stop());
-  scanStream=null;scanOpening=false;scanTorchOn=false;
-  const video=document.getElementById("scan-video");
-  if(video){video.pause();video.srcObject=null;}
-}
-
-async function openScanner(){
-  /* 카메라를 준비하고 명함을 맞추는 동안 OCR 엔진과 언어 데이터를 미리 내려받아 촬영 후 대기 시간을 줄임 */
-  getOcrWorkerPool().catch(()=>{});
-  /* 이전에 "명함 변경"을 취소한 흔적이 남아 새 촬영이 다른 연락처를 덮어쓰지 않게 초기화 */
-  pendingImageTargetId=null;
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    document.getElementById("contact-camera-input").click();return;
-  }
-  if(scanOpening)return;
-  scanOpening=true;
-  const overlay=document.getElementById("scan-modal-overlay");
-  const capture=document.getElementById("scan-capture");
-  overlay.hidden=false;capture.disabled=true;capture.textContent="카메라 준비 중";
-  scanQualityIssue="";scanQualityIssueCount=0;hideScanQualityPopup();
-  setScanStatus("warn","카메라를 준비하는 중...","후면 카메라를 불러오고 있습니다");
-  requestAnimationFrame(updateScanFrameLayout);
-  /* 준비 중 사용자가 취소해 모달이 닫혔으면 카메라를 켜 둔 채 방치하지 않음 */
-  const cancelledWhileOpening=()=>overlay.hidden;
-  try{
-    /* 같은 페이지 접속 중에는 최초 허용으로 얻은 스트림을 재사용해 권한 요청을 반복하지 않음 */
-    if(!reusableScannerStream()){
-      releaseScannerStream();
-      scanOpening=true;
-      scanStream=await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:"environment"},width:{ideal:4096,min:1280},height:{ideal:2160,min:720},aspectRatio:{ideal:16/9}},
-        audio:false
-      });
-      const liveTrack=scanStream.getVideoTracks()[0];
-      liveTrack?.addEventListener?.("ended",()=>{scanStream=null;},{once:true});
-    }
-    if(cancelledWhileOpening()){
-      scanStream.getTracks().forEach(track=>{track.enabled=false;});
-      return;
-    }
-    scanStream.getTracks().forEach(track=>{track.enabled=true;});
-    const video=document.getElementById("scan-video");
-    video.srcObject=scanStream;
-    await video.play().catch(()=>{});
-    await waitForScannerVideo(video);
-    if(cancelledWhileOpening()){
-      scanStream.getTracks().forEach(track=>{track.enabled=false;});
-      video.pause();video.srcObject=null;
-      return;
-    }
-    updateScanFrameLayout();
-    await applyBestCameraSettings(scanStream.getVideoTracks()[0]);
-    capture.disabled=false;capture.textContent="명함 촬영";
-    setScanStatus("warn","명함을 프레임에 맞춰 주세요","네 모서리를 주황색 모서리 선에 맞추세요");
-    clearInterval(scanQualityTimer);scanQualityTimer=setInterval(evaluateScannerQuality,550);
-    evaluateScannerQuality();
-    if(window.ResizeObserver){
-      scanResizeObserver?.disconnect();scanResizeObserver=new ResizeObserver(updateScanFrameLayout);
-      scanResizeObserver.observe(document.getElementById("scan-videowrap"));
-    }
-  }catch(e){
-    console.warn("camera unavailable, falling back to file capture",e);
-    releaseScannerStream();closeScanner();document.getElementById("contact-camera-input").click();
-  }finally{
-    scanOpening=false;
-  }
-}
-
-async function toggleScannerTorch(){
-  const track=scanStream?.getVideoTracks?.()[0];
-  if(!track)return;
-  try{
-    scanTorchOn=!scanTorchOn;
-    await track.applyConstraints({advanced:[{torch:scanTorchOn}]});
-    document.getElementById("scan-torch").textContent=scanTorchOn?"조명 끄기":"조명 켜기";
-  }catch(e){scanTorchOn=false;document.getElementById("scan-torch").hidden=true;}
-}
-
-async function refocusScanner(){
-  const track=scanStream?.getVideoTracks?.()[0];if(!track||track.readyState!=="live")return;
-  try{
-    const caps=track.getCapabilities?track.getCapabilities():{};
-    const modes=Array.isArray(caps.focusMode)?caps.focusMode:[];
-    const mode=modes.includes("single-shot")?"single-shot":modes.includes("continuous")?"continuous":"";
-    if(!mode)return;
-    setScanStatus("warn","초점을 다시 맞추는 중...","명함을 움직이지 말고 잠시 기다려 주세요");
-    await track.applyConstraints({advanced:[{focusMode:mode}]});
-    setTimeout(evaluateScannerQuality,320);
-  }catch(e){console.debug("camera refocus unavailable",e);}
-}
-
-function closeScanner(){
-  clearInterval(scanQualityTimer);scanQualityTimer=null;
-  scanResizeObserver?.disconnect();scanResizeObserver=null;
-  /* 재실행 시 권한창이 반복되지 않도록 스트림은 유지하고 영상만 일시 중지 */
-  if(scanStream)scanStream.getTracks().forEach(track=>{track.enabled=false;});
-  const video=document.getElementById("scan-video");if(video){video.pause();video.srcObject=null;}
-  scanTorchOn=false;
-  const torch=document.getElementById("scan-torch");if(torch){torch.hidden=true;torch.textContent="조명 켜기";}
-  scanQualityIssue="";scanQualityIssueCount=0;hideScanQualityPopup();
-  document.getElementById("scan-modal-overlay").hidden=true;
-}
-
-async function captureScan(){
-  const video=document.getElementById("scan-video");
-  if(!video.videoWidth||!scanStream)return;
-  const button=document.getElementById("scan-capture");
-  button.disabled=true;button.textContent="촬영 완료 · 인식 중";
-  try{
-    /* 클릭한 바로 그 프레임을 동기식으로 먼저 고정하여 셔터 지연 없이 촬영 */
-    const canvas=drawScannerCrop(video,video.videoWidth,video.videoHeight,2800);
-    navigator.vibrate?.(25);
-    closeScanner();
-    /* 화면을 먼저 닫아 사용자가 즉시 촬영되었음을 느끼게 한 뒤 JPEG 인코딩 */
-    await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
-    const dataUrl=canvas.toDataURL("image/jpeg",.96);
-    await stageContactImage(dataUrl);
-  }catch(e){
-    console.error("scan capture failed",e);
-    button.disabled=false;button.textContent="명함 촬영";
-    showToast("명함 촬영에 실패했습니다. 카메라를 다시 열거나 명함 업로드를 이용해 주세요.");
-  }
-}
-
-window.addEventListener("pagehide",releaseScannerStream);
-
-/* 연락처 → 영업 딜 전환 */
 async function convertContactToDeal(ct){
   const targetArea = AREAS.find(a=>a.key === "existing_accounts") || AREAS[0];
   if(!targetArea){ showToast("항목을 추가할 그룹이 없습니다."); return; }
@@ -4471,9 +4005,7 @@ async function deleteSelectedContacts(){
   setOcrStatus(`선택한 연락처 ${ids.length}명을 휴지통으로 이동했습니다.`);setTimeout(()=>setOcrStatus(""),3500);
 }
 
-function contactDisplayRole(ct){ return [ct.jobTitle, ct.department].filter(Boolean).join(" / ") || ct.role || ""; }
 function contactPrimaryPhone(ct){ return ct.mobilePhone || ct.businessPhone || ct.phone || ""; }
-function contactCategoryText(ct){ return [ct.group, ct.tags].filter(Boolean).join(", "); }
 function contactInitial(ct){ return (ct.name || ct.company || "-").trim().charAt(0).toUpperCase() || "-"; }
 function formatRememberDate(value){
   const v = String(value || "").trim();
@@ -4505,23 +4037,6 @@ function renderContactActivities(container,ct){
   const rows=contactRelatedDeals(ct).flatMap(d=>(d.item.activities||[]).map(a=>({a,d}))).sort((x,y)=>activityDateValue(y.a).localeCompare(activityDateValue(x.a))).slice(0,12);
   if(!rows.length){container.innerHTML='<div class="tn-empty-compact">연결된 영업 항목에 등록된 활동이 없습니다.</div>';return;}
   rows.forEach(({a,d})=>{const row=document.createElement("div");row.className="tn-activity";row.innerHTML=`<div class="tn-activity-head"><span class="tn-activity-type">${escapeHtml(a.type)}</span><span>${escapeHtml(a.date)}</span><span>${escapeHtml(d.item.title)}</span></div><div class="tn-activity-content">${escapeHtml(a.content)}</div>${a.result?`<div class="tn-activity-result">결과: ${escapeHtml(a.result)}</div>`:""}`;container.appendChild(row);});
-}
-async function syncLinkedDealsFromContact(ct){
-  for(const area of AREAS){
-    if(!(stageData[area.key]||[]).some(item=>(item.linkedContactIds||[]).includes(ct.id)))continue;
-    await enqueueEditSave("tinico:stage:"+area.key,async()=>{
-      const next=deepCopy(stageData[area.key]);
-      next.forEach(item=>{
-        if(!(item.linkedContactIds||[]).includes(ct.id))return;
-        item.contactName=linkedContactNamesOf(item);
-        if(linkedContactsOf(item)[0]?.id===ct.id)Object.assign(item,{contactRole:[ct.department,ct.jobTitle].filter(Boolean).join(" / "),contactPhone:contactPrimaryPhone(ct),contactEmail:ct.email||""});
-      });
-      if(sameStoredValue(next,stageData[area.key]))return;
-      await storageSet("tinico:stage:"+area.key,next);stageData[area.key]=next;
-      renderStageBody(area);
-    });
-  }
-  renderPipeline(true);
 }
 
 function renderDrawerQuick(container, ct){
@@ -4654,7 +4169,7 @@ function renderContactDrawer(scrollIntoView=false){
   body.querySelector("[data-change-card]").addEventListener("click",()=>{pendingImageTargetId=ct.id; document.getElementById("contact-file-input").click();});
   body.querySelector("[data-company-search]").addEventListener("click",async()=>{
     const image=await loadContactCardImage(ct);
-    resolveCompanyFromImage(ct,image,ct.ocrRaw||"",{force:true});
+    withHeavyFeatures(()=>resolveCompanyFromImage(ct,image,ct.ocrRaw||"",{force:true}));
   });
   body.querySelector("[data-reocr]").addEventListener("click",async(e)=>{
     if(!contactHasCardImage(ct))return;
@@ -4664,7 +4179,7 @@ function renderContactDrawer(scrollIntoView=false){
     try{
       const image=await loadContactCardImage(ct);
       if(!image){ showToast("명함 원본 이미지를 불러오지 못했습니다. 네트워크 확인 후 다시 시도해 주세요."); return; }
-      await applyOcrToContact(ct,image);
+      await withHeavyFeatures(()=>applyOcrToContact(ct,image));
     }finally{button.disabled=false;}
   });
   body.querySelector("[data-deal]").addEventListener("click",()=>{if(draftDirty(draft)){showToast("연락처를 먼저 저장해 주세요.");return;}convertContactToDeal(ct);});
@@ -4995,12 +4510,6 @@ function dealImportance(item, areaKey){
     amt, prob, probMissing:rawProb === "", stage, stageW, bucket, bucketW,
   };
 }
-function importanceReason(imp, area){
-  const bucket = bucketMetaByKey(imp.bucket);
-  const probText = imp.probMissing ? "미입력(30% 가정)" : `${imp.prob || 0}%`;
-  const base = `자동점수 ${Math.round((imp.score || 0) * 10) / 10} = 예상매출 ${imp.amt || 0}백만 × 확률 ${probText} × 단계가중치 ${imp.stageW || 1} × 분류가중치 ${imp.bucketW || 1} (${bucket.label})`;
-  return imp.manual ? `${base} / 수동 보정: ${IMPORTANCE_LABEL[imp.level]}` : base;
-}
 function compareImportanceDeals(a,b){
   const rank = {high:3, mid:2, low:1};
   return (rank[b.imp.level]-rank[a.imp.level]) || (b.imp.score - a.imp.score);
@@ -5008,25 +4517,12 @@ function compareImportanceDeals(a,b){
 
 
 /* ---------- 초보 안내 / 오늘 할 일 / 활동 기록 ---------- */
-function onboardingSteps(){
-  const deals=allDeals();
-  return [
-    {title:"연락처 등록",done:contactsData.length>0,action:"contact"},
-    {title:"영업 항목 확인",done:deals.some(d=>d.item.title && d.item.title!=="새 항목"),action:"deal"},
-    {title:"내부 담당자 지정",done:deals.some(d=>d.item.internalOwner),action:"pipeline"},
-    {title:"다음 액션 입력",done:deals.some(d=>d.item.action && d.item.nextAction),action:"pipeline"},
-    {title:"활동 기록",done:deals.some(d=>(d.item.activities||[]).length>0),action:"activity"},
-  ];
-}
-function renderOnboardingChecklist(){
-  const wrap=document.getElementById("tn-start-steps");if(!wrap)return;
-  const steps=onboardingSteps(),done=steps.filter(s=>s.done).length,pct=Math.round(done/steps.length*100);
-  document.getElementById("tn-start-progress-fill").style.width=pct+"%";
-  document.getElementById("tn-start-summary").textContent=`${done}/${steps.length} 완료 · 필수 흐름을 한 번씩 실행해 보세요.`;
-  wrap.innerHTML="";steps.forEach((s,idx)=>{const b=document.createElement("button");b.className="tn-start-step"+(s.done?" done":"");b.type="button";b.dataset.startAction=s.action;b.innerHTML=`<div class="tn-start-step-num">${s.done?"완료":idx+1}</div><div class="tn-start-step-title">${escapeHtml(s.title)}</div>`;wrap.appendChild(b);});
-}
 function openOnboarding(){ document.getElementById("onboarding-overlay").hidden=false; }
-async function closeOnboarding(){ document.getElementById("onboarding-overlay").hidden=true;appSettings.onboardingSeen=true;await saveAppSettings(); }
+async function closeOnboarding(){
+  document.getElementById("onboarding-overlay").hidden=true;
+  const previous=appSettings.onboardingSeen;appSettings.onboardingSeen=true;
+  await saveOrRollback(saveAppSettings,()=>{appSettings.onboardingSeen=previous;},"사용 안내 설정 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+}
 function handleStartAction(action){
   if(action==="contact"){showView("contacts");document.getElementById("contact-manual-btn").click();}
   else if(action==="deal"){showView("pipeline");pipeCreateDeal(STAGE_OPTIONS[0]||"리드");}
@@ -5039,8 +4535,17 @@ async function clearSeedDeals(){
   const seedIds=new Set(LEGACY_DEFAULT_AREAS.flatMap(a=>a.seed.map(x=>x.id)));const targets=allDeals().filter(d=>seedIds.has(d.item.id));
   if(!targets.length){showToast("정리할 기본 예시 항목이 없습니다.");return;}
   if(!confirm(`기본 예시 영업 항목 ${targets.length}건을 휴지통으로 이동할까요? 직접 추가한 항목은 유지됩니다.`))return;
-  for(const d of targets){await addTrash("deal",d.item.title,d.item,{areaKey:d.area.key});stageData[d.area.key]=stageData[d.area.key].filter(x=>x.id!==d.item.id);}
-  await saveAllStageData();AREAS.forEach(renderStageBody);renderPipeline(true);renderHome();renderSettings();
+  const previousStage=deepCopy(stageData);
+  try{
+    for(const d of targets){await addTrash("deal",d.item.title,d.item,{areaKey:d.area.key});stageData[d.area.key]=stageData[d.area.key].filter(x=>x.id!==d.item.id);}
+    await saveAllStageData();
+  }catch(error){
+    Object.keys(stageData).forEach(key=>{if(!Object.hasOwn(previousStage,key))delete stageData[key];});
+    Object.entries(previousStage).forEach(([key,value])=>{stageData[key]=value;});
+    console.error("clear seed deals failed",error);
+    showToast(error?.message||"기본 예시 항목 정리에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  }
+  AREAS.forEach(renderStageBody);renderPipeline(true);renderHome();renderSettings();
 }
 function collectTodayTasks(){
   const rows=[];
@@ -5081,10 +4586,10 @@ function renderTodayTasks(){
     const open=document.createElement("button");open.className="tn-btn small";open.textContent="열기";open.addEventListener("click",()=>t.kind==="support"?openRoadmapModal(t.task.id):openDealDrawer(t.area.key,t.item.id));actions.appendChild(open);
     if(t.kind==="support"){
       const done=document.createElement("button");done.className="tn-btn small";done.textContent="완료 처리";done.addEventListener("click",()=>quickChangeRoadmapStatus(t.task.id,"완료"));actions.appendChild(done);
-      const date=document.createElement("button");date.className="tn-btn small";date.textContent="일정 변경";date.addEventListener("click",async()=>{const v=prompt("변경할 마감일을 YYYY-MM-DD 형식으로 입력하세요.",t.task.dueDate||todayStr());if(v===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){showToast("YYYY-MM-DD 형식으로 입력하세요.");return;}t.task.dueDate=v;t.task.updatedAt=nowIso();await saveRoadmapData();renderRoadmap();renderHome();});actions.appendChild(date);
+      const date=document.createElement("button");date.className="tn-btn small";date.textContent="일정 변경";date.addEventListener("click",async()=>{const v=prompt("변경할 마감일을 YYYY-MM-DD 형식으로 입력하세요.",t.task.dueDate||todayStr());if(v===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){showToast("YYYY-MM-DD 형식으로 입력하세요.");return;}const previous=deepCopy(roadmapData);t.task.dueDate=v;t.task.updatedAt=nowIso();await saveOrRollback(saveRoadmapData,()=>roadmapData.splice(0,roadmapData.length,...previous),"마감일 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");renderRoadmap();renderHome();});actions.appendChild(date);
     }else{
       const contact=document.createElement("button");contact.className="tn-btn small";contact.textContent="연락 완료";contact.addEventListener("click",()=>openActivityModal(t.area.key,t.item.id,{type:"전화",content:"고객 연락 완료"}));actions.appendChild(contact);
-      const date=document.createElement("button");date.className="tn-btn small";date.textContent="일정 변경";date.addEventListener("click",async()=>{const v=prompt("변경할 다음 액션일을 YYYY-MM-DD 형식으로 입력하세요.",t.item.nextAction||todayStr());if(v===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){showToast("YYYY-MM-DD 형식으로 입력하세요.");return;}t.item.nextAction=v;await saveArea(t.area.key);renderStageBody(t.area);renderPipeline(true);renderHome();});actions.appendChild(date);
+      const date=document.createElement("button");date.className="tn-btn small";date.textContent="일정 변경";date.addEventListener("click",async()=>{const v=prompt("변경할 다음 액션일을 YYYY-MM-DD 형식으로 입력하세요.",t.item.nextAction||todayStr());if(v===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){showToast("YYYY-MM-DD 형식으로 입력하세요.");return;}const previousDate=t.item.nextAction;t.item.nextAction=v;await saveOrRollback(()=>saveArea(t.area.key),()=>{t.item.nextAction=previousDate;},"다음 연락일 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");renderStageBody(t.area);renderPipeline(true);renderHome();});actions.appendChild(date);
     }
     wrap.appendChild(row);
   });
@@ -5094,7 +4599,7 @@ function openActivityModal(areaKey,id,preset={}){
   const found=findDeal(areaKey,id);if(!found)return;
   const drawer=document.getElementById("deal-drawer"),backdrop=document.getElementById("deal-drawer-backdrop");
   const keepDrawerOpen=!!(selectedDealRef&&selectedDealRef.areaKey===areaKey&&selectedDealRef.id===id&&!drawer.hidden);
-  activityDealRef={areaKey,id,keepDrawerOpen};
+  activityDealRef={areaKey,id,keepDrawerOpen,activityId:uid(),createdAt:nowIso()};
   document.getElementById("activity-deal-label").textContent=`${found.item.title} · 활동과 후속 업무를 기록합니다.`;
   document.getElementById("activity-type").value=preset.type||"전화";
   document.getElementById("activity-date").value=preset.date||todayStr();
@@ -5107,22 +4612,24 @@ function openActivityModal(areaKey,id,preset={}){
   requestAnimationFrame(()=>document.getElementById("activity-content").focus());
 }
 function closeActivityModal(){
+  if(activityDealRef?.saving)return;
   const ref=activityDealRef,overlay=document.getElementById("activity-overlay");overlay.hidden=true;delete overlay.dataset.keepDrawerOpen;
   if(ref&&ref.keepDrawerOpen&&selectedDealRef&&selectedDealRef.areaKey===ref.areaKey&&selectedDealRef.id===ref.id){document.getElementById("deal-drawer").hidden=false;document.getElementById("deal-drawer-backdrop").hidden=false;}
   activityDealRef=null;
 }
 async function saveActivityModal(){
-  if(!activityDealRef)return;
+  if(!activityDealRef||activityDealRef.saving)return;
   const found=findDeal(activityDealRef.areaKey,activityDealRef.id);
   if(!found){closeActivityModal();return;}
   const content=document.getElementById("activity-content").value.trim();
   if(!content){showToast("활동 내용을 입력하세요.");return;}
-  const a=normalizeActivity({type:document.getElementById("activity-type").value,date:document.getElementById("activity-date").value||todayStr(),content,result:document.getElementById("activity-result").value.trim(),nextAction:document.getElementById("activity-next-action").value.trim(),nextDate:document.getElementById("activity-next-date").value});
+  const a=normalizeActivity({id:activityDealRef.activityId,createdAt:activityDealRef.createdAt,type:document.getElementById("activity-type").value,date:document.getElementById("activity-date").value||todayStr(),content,result:document.getElementById("activity-result").value.trim(),nextAction:document.getElementById("activity-next-action").value.trim(),nextDate:document.getElementById("activity-next-date").value});
   const previous={lastContact:found.item.lastContact,action:found.item.action,nextAction:found.item.nextAction};
   found.item.activities.unshift(a);
   found.item.lastContact=a.date;
   if(a.nextAction)found.item.action=a.nextAction;
   if(a.nextDate)found.item.nextAction=a.nextDate;
+  activityDealRef.saving=true;document.getElementById("activity-save").disabled=true;
   try{
     await saveArea(found.area.key);
   }catch(error){
@@ -5134,7 +4641,7 @@ async function saveActivityModal(){
     console.error("activity save failed", error);
     showToast(error?.message||"활동 기록 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
     return;
-  }
+  }finally{if(activityDealRef)activityDealRef.saving=false;document.getElementById("activity-save").disabled=false;}
   closeActivityModal();
   renderStageBody(found.area);
   renderPipeline(true);
@@ -5623,10 +5130,11 @@ function renderPersonaList(){
       del.className = "p-del"; del.textContent = "×";
       del.addEventListener("click", async ()=>{
         if(!confirm(`AI "${p.name}"을(를) 삭제할까요?`)) return;
+        const previousPersonas=deepCopy(aiPersonas),previousHistory=aiChatHistories[p.id],previousCurrent=currentPersonaId;
         aiPersonas = aiPersonas.filter(x=>x.id !== p.id);
         delete aiChatHistories[p.id];
         if(currentPersonaId === p.id) currentPersonaId = aiPersonas[0].id;
-        await savePersonas();
+        await saveOrRollback(savePersonas,()=>{aiPersonas=previousPersonas;if(previousHistory)aiChatHistories[p.id]=previousHistory;currentPersonaId=previousCurrent;},"AI 담당자 삭제 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
         renderPersonaSelect();
         renderPersonaList();
         renderChatHistory();
@@ -6069,9 +5577,13 @@ function updateCalendarEventSyncState(){
   else if(connected)box.textContent="Google Calendar가 연결되어 있습니다. 이 일정을 처음 저장하면 Google 기본 캘린더에 한 번 생성됩니다.";
   else box.textContent="현재 Google 연결이 해제되어 있어 CRM에만 저장됩니다. 연결 후 이 일정을 다시 저장하면 Google에 한 번 등록할 수 있습니다.";
 }
+let calendarEditorSeed=null,calendarEditorExpected=null;
 function openCalendarEventModal(id="",presetDate=""){
+  if(document.getElementById("calendar-event-save").disabled)return;
   editingCalendarEventId=id||"";
   const item=id?calendarEntries.find(x=>x.id===id):null;
+  calendarEditorSeed={id:item?.id||uid(),createdAt:item?.createdAt||nowIso()};
+  const base=storageSnapshots.get("tinico:calendar:events");calendarEditorExpected={id:calendarEditorSeed.id,version:base?.versions?.[calendarEditorSeed.id]??null,generation:base?.generation,original:deepCopy(item||{})};
   const date=presetDate||item?.date||calendarDateKey(new Date());
   document.getElementById("calendar-event-modal-title").textContent=item?"일정 수정":"새 일정";
   document.getElementById("calendar-event-title").value=item?.title||"";
@@ -6088,8 +5600,9 @@ function openCalendarEventModal(id="",presetDate=""){
   toggleCalendarEventTimeFields();updateCalendarEventSyncState();
   setTimeout(()=>document.getElementById("calendar-event-title").focus(),30);
 }
-function closeCalendarEventModal(){document.getElementById("calendar-event-overlay").hidden=true;editingCalendarEventId="";}
+function closeCalendarEventModal(force=false){if(!force&&document.getElementById("calendar-event-save").disabled)return;document.getElementById("calendar-event-overlay").hidden=true;editingCalendarEventId="";}
 async function saveCalendarEventModal(){
+  if(document.getElementById("calendar-event-save").disabled)return;
   const title=document.getElementById("calendar-event-title").value.trim(),date=document.getElementById("calendar-event-date").value;
   const allDay=document.getElementById("calendar-event-all-day").checked,startTime=document.getElementById("calendar-event-start-time").value,endTime=document.getElementById("calendar-event-end-time").value;
   if(!title){showToast("일정 제목을 입력해 주세요.");document.getElementById("calendar-event-title").focus();return;}
@@ -6099,16 +5612,18 @@ async function saveCalendarEventModal(){
   const previousEntries=deepCopy(calendarEntries),previousEditingId=editingCalendarEventId;
   try{
     let item=calendarEntries.find(x=>x.id===editingCalendarEventId);
-    if(!item){item=normalizeCalendarEntry({id:uid(),createdAt:nowIso()});calendarEntries.push(item);editingCalendarEventId=item.id;}
+    if(!item){item=normalizeCalendarEntry(calendarEditorSeed);calendarEntries.push(item);editingCalendarEventId=item.id;}
     Object.assign(item,{title,date,allDay,startTime:validCalendarTime(startTime,"09:00"),endTime:validCalendarTime(endTime,"10:00"),location:document.getElementById("calendar-event-location").value.trim(),description:document.getElementById("calendar-event-description").value.trim(),googleSyncPending:true,updatedAt:nowIso()});
     Object.assign(item,{owner:document.getElementById("calendar-event-owner").value.trim(),...readCalendarWorkSelection()});
     try{
-      await saveCalendarEntries();
+      await storageSet("tinico:calendar:events",calendarEntries,calendarEditorExpected);
     }catch(error){
       calendarEntries=previousEntries.map(normalizeCalendarEntry);editingCalendarEventId=previousEditingId;renderCalendar();updateCalendarEventSyncState();
       const message=`일정을 저장하지 못했습니다: ${error.message||error}`;setGoogleCalendarResult(message,true);showToast(message);return;
     }
-    closeCalendarEventModal();calendarCursor=new Date(Number(date.slice(0,4)),Number(date.slice(5,7))-1,1);renderCalendar();
+    item=calendarEntries.find(entry=>entry.id===item.id);
+    closeCalendarEventModal(true);if(!item)return;
+    calendarCursor=new Date(Number(date.slice(0,4)),Number(date.slice(5,7))-1,1);renderCalendar();
     try{
       if(googleCalendarTokenValid()&&!item.googleEventId){await syncManualCalendarEventToGoogle(item);await saveCalendarEntries();googleCalendarLoadedMonth="";setGoogleCalendarResult(`‘${item.title}’ 일정을 CRM에 저장하고 Google Calendar에 한 번 등록했습니다.`);}
       else if(item.googleEventId)setGoogleCalendarResult(`‘${item.title}’ 일정을 CRM에 저장했습니다. 이미 등록된 Google 일정은 자동 수정하지 않습니다.`);
@@ -6151,9 +5666,14 @@ async function copyGoogleCalendarOrigin(){
 async function saveGoogleCalendarClientId(){
   const value=document.getElementById("google-calendar-client-id").value.trim();
   if(value&&!/\.apps\.googleusercontent\.com$/.test(value)){setGoogleCalendarResult("클라이언트 ID 형식을 확인해 주세요. 일반적으로 .apps.googleusercontent.com으로 끝납니다.",true);return;}
+  const previousAppSettings=appSettings,previousCalendarEntries=calendarEntries;
   const changed=value!==googleCalendarClientId(),eventMap=(appSettings.googleCalendar&&appSettings.googleCalendar.eventMap)||{};appSettings.googleCalendar={...(appSettings.googleCalendar||{}),clientId:value,eventMap};
-  if(changed){Object.values(eventMap).forEach(saved=>{if(saved)saved.hash="";});calendarEntries.forEach(item=>{item.googleSyncPending=true;});await saveCalendarEntries();}
-  await saveAppSettings();googleCalendarAccessToken="";googleCalendarTokenExpiresAt=0;googleCalendarTokenClient=null;googleCalendarEvents=[];googleCalendarLoadedMonth="";updateGoogleCalendarUi();renderCalendar();setGoogleCalendarResult(value?"클라이언트 ID를 저장했습니다. Google 계정 연결을 눌러 주세요.":"클라이언트 ID를 삭제했습니다.");
+  const previousSettings=deepCopy(previousAppSettings),previousEntries=deepCopy(previousCalendarEntries);
+  if(changed){Object.values(eventMap).forEach(saved=>{if(saved)saved.hash="";});calendarEntries.forEach(item=>{item.googleSyncPending=true;});}
+  const entries=[{key:"tinico:app:settings",value:appSettings}];
+  if(changed)entries.push({key:"tinico:calendar:events",value:calendarEntries});
+  if(!await saveOrRollback(()=>storageTransaction(entries),()=>{appSettings=previousSettings;calendarEntries.splice(0,calendarEntries.length,...previousEntries);},"Google 클라이언트 ID 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.")){updateGoogleCalendarUi();renderCalendar();return;}
+  googleCalendarAccessToken="";googleCalendarTokenExpiresAt=0;googleCalendarTokenClient=null;googleCalendarEvents=[];googleCalendarLoadedMonth="";updateGoogleCalendarUi();renderCalendar();setGoogleCalendarResult(value?"클라이언트 ID를 저장했습니다. Google 계정 연결을 눌러 주세요.":"클라이언트 ID를 삭제했습니다.");
 }
 function initializeCalendarUi(){
   /* Google 설정 요소가 없어도 캘린더 핵심 기능(월 이동·일정 추가·저장)은 항상 초기화되게 분리 */
@@ -6396,6 +5916,7 @@ async function init(){
   document.getElementById("tn-today-chip").textContent = `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
 
   await ensureCloudConnection();
+  beginBootWrites();
   /* 서로 독립적인 데이터를 병렬로 불러와 부팅 시 서버 왕복 대기를 최소화
      (중요도 설정은 분류(버킷) 정의를 참조하므로 그 둘만 순서 유지) */
   const [loadedCalendarEntries, loadedAreas, loadedRoadmap, loadedManualSections, loadedContacts, loadedPersonas] = await Promise.all([
@@ -6419,13 +5940,15 @@ async function init(){
     .map(def => ({key:def.key, bucket:def.bucket, icon:def.icon, color:def.color, colorSoft:def.colorSoft, title:def.title, subtitle:def.subtitle}));
   if(missingDefaultAreas.length){
     AREAS = [...missingDefaultAreas, ...AREAS];
-    await saveAreas();
+    await queueBootWrite("tinico:areas", AREAS.map(storedAreaValue));
   }
 
   await Promise.all(AREAS.map(async area=>{
     stageData[area.key] = await loadStageItems(area.key);
   }));
   await cleanupLegacyDefaultPipelineItems();
+  /* 초기화 중 모아 둔 정규화·마이그레이션 저장을 한 번에 반영 */
+  await flushBootWrites();
   for(const area of AREAS){
     buildStageView(area);
     renderStageBody(area);
@@ -6459,9 +5982,15 @@ async function init(){
   document.getElementById("roadmap-modal-overlay").addEventListener("click",e=>{if(e.target.id==="roadmap-modal-overlay")closeRoadmapModal();});
 
   /* 파이프라인 도구·딜 드로어 이벤트 연결 */
-  document.getElementById("pipe-search").addEventListener("input", debounce(()=>renderPipeline(true), 200));
+  document.getElementById("pipe-search").addEventListener("input", debounce(()=>{pipePage=1;renderPipeline(true);}, 200));
+  document.getElementById("pipe-page-first").addEventListener("click", ()=>goToPipePage(1));
+  document.getElementById("pipe-page-prev").addEventListener("click", ()=>goToPipePage(pipePage - 1));
+  document.getElementById("pipe-page-next").addEventListener("click", ()=>goToPipePage(pipePage + 1));
+  document.getElementById("pipe-page-last").addEventListener("click", ()=>goToPipePage(pipePageCount(pipeDeals().length)));
+  document.getElementById("pipe-page-size").addEventListener("change", (e)=>setPipePageSize(e.target.value));
   ["pipe-bucket-filter","pipe-area-filter","pipe-owner-filter","pipe-stage-filter","pipe-sort"].forEach(id=>{
-    document.getElementById(id).addEventListener("change", ()=>renderPipeline(true));
+    /* 조건이 바뀌면 결과가 달라지므로 첫 페이지부터 본다 */
+    document.getElementById(id).addEventListener("change", ()=>{pipePage=1;renderPipeline(true);});
   });
   document.getElementById("pipe-view-board").addEventListener("click", ()=>{ pipeViewMode = "board"; renderPipeline(true); });
   document.getElementById("pipe-view-table").addEventListener("click", ()=>{ pipeViewMode = "table"; renderPipeline(true); });
@@ -6534,8 +6063,6 @@ async function init(){
   document.getElementById("activity-overlay").addEventListener("click",e=>{if(e.target.id==="activity-overlay")closeActivityModal();});
   document.getElementById("top-beginner-toggle").addEventListener("click",()=>setBeginnerMode(!appSettings.beginnerMode));
   document.getElementById("top-help-btn").addEventListener("click",openOnboarding);
-  document.getElementById("tn-start-guide-btn")?.addEventListener("click",openOnboarding);
-  document.getElementById("tn-start-steps")?.addEventListener("click",e=>{const b=e.target.closest("[data-start-action]");if(b)handleStartAction(b.dataset.startAction);});
   initDashboardReorder();
   document.getElementById("kpi-modal-close").addEventListener("click",closeKpiDetails);
   document.getElementById("kpi-overlay").addEventListener("click",event=>{if(event.target.id==="kpi-overlay")closeKpiDetails();});
@@ -6566,6 +6093,7 @@ async function init(){
   document.getElementById("settings-backup-export").addEventListener("click",exportFullBackup);
   document.getElementById("settings-backup-import").addEventListener("click",()=>document.getElementById("settings-backup-input").click());
   document.getElementById("settings-backup-input").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(f)await importFullBackup(f);});
+  document.getElementById("settings-trash-collapse").addEventListener("click",toggleTrashCollapsed);
   document.getElementById("settings-trash-empty").addEventListener("click",emptyTrash);
   document.getElementById("settings-trash-list").addEventListener("click",e=>{const r=e.target.closest("[data-restore-trash]");const d=e.target.closest("[data-delete-trash]");if(r)restoreTrashEntry(r.dataset.restoreTrash);if(d)permanentlyDeleteTrash(d.dataset.deleteTrash);});
 
@@ -6573,23 +6101,23 @@ async function init(){
   contactsData = loadedContacts;
   contactViewMode = "table";
   renderContacts();
-  document.getElementById("contact-scan-btn").addEventListener("click", openScanner);
+  document.getElementById("contact-scan-btn").addEventListener("click", ()=>withHeavyFeatures(()=>openScanner()));
   document.getElementById("contact-upload-btn").addEventListener("click", ()=>{
     pendingImageTargetId = null;
-    getOcrWorkerPool().catch(()=>{});
+    loadHeavyFeatures().then(()=>getOcrWorkerPool()).catch(()=>{});
     document.getElementById("contact-file-input").click();
   });
-  document.getElementById("company-search-google").addEventListener("click", ()=>openCompanySearchEngine("google"));
-  document.getElementById("company-search-naver").addEventListener("click", ()=>openCompanySearchEngine("naver"));
-  document.getElementById("company-search-lens").addEventListener("click", ()=>openCompanySearchEngine("lens"));
-  document.getElementById("company-search-download").addEventListener("click", downloadCompanySearchImage);
-  document.getElementById("company-search-cancel").addEventListener("click", closeCompanySearchModal);
-  document.getElementById("company-search-save").addEventListener("click", saveConfirmedCompanyName);
+  document.getElementById("company-search-google").addEventListener("click", ()=>withHeavyFeatures(()=>openCompanySearchEngine("google")));
+  document.getElementById("company-search-naver").addEventListener("click", ()=>withHeavyFeatures(()=>openCompanySearchEngine("naver")));
+  document.getElementById("company-search-lens").addEventListener("click", ()=>withHeavyFeatures(()=>openCompanySearchEngine("lens")));
+  document.getElementById("company-search-download").addEventListener("click", ()=>withHeavyFeatures(()=>downloadCompanySearchImage()));
+  document.getElementById("company-search-cancel").addEventListener("click", ()=>withHeavyFeatures(()=>closeCompanySearchModal()));
+  document.getElementById("company-search-save").addEventListener("click", ()=>withHeavyFeatures(()=>saveConfirmedCompanyName()));
   document.getElementById("company-search-name").addEventListener("keydown", (e)=>{
-    if(e.key === "Enter") saveConfirmedCompanyName();
+    if(e.key === "Enter") withHeavyFeatures(()=>saveConfirmedCompanyName());
   });
   document.getElementById("company-search-overlay").addEventListener("click", (e)=>{
-    if(e.target.id === "company-search-overlay") closeCompanySearchModal();
+    if(e.target.id === "company-search-overlay") withHeavyFeatures(()=>closeCompanySearchModal());
   });
   document.getElementById("contact-manual-btn").addEventListener("click", async ()=>{
     const ct = normalizeContact({id:uid(), createdAt: todayStr()});
@@ -6598,12 +6126,12 @@ async function init(){
   document.getElementById("contact-file-input").addEventListener("change", async (e)=>{
     const f = e.target.files[0];
     e.target.value = "";
-    if(f) await handlePickedImage(f);
+    if(f) await withHeavyFeatures(()=>handlePickedImage(f));
   });
   document.getElementById("contact-camera-input").addEventListener("change", async (e)=>{
     const f = e.target.files[0];
     e.target.value = "";
-    if(f) await handlePickedImage(f, {cameraFallback:true});
+    if(f) await withHeavyFeatures(()=>handlePickedImage(f, {cameraFallback:true}));
   });
   document.getElementById("contact-search").addEventListener("input", debounce(resetContactPage, 200));
   document.getElementById("contact-sort").addEventListener("change", resetContactPage);
@@ -6625,12 +6153,12 @@ async function init(){
   document.getElementById("contact-bulk-delete-btn").addEventListener("click", deleteSelectedContacts);
   document.getElementById("contact-drawer-close").addEventListener("click", closeContactDetail);
   document.getElementById("contact-drawer-backdrop").addEventListener("click", closeContactDetail);
-  document.getElementById("scan-cancel").addEventListener("click", closeScanner);
-  document.getElementById("scan-torch").addEventListener("click", toggleScannerTorch);
-  document.getElementById("scan-capture").addEventListener("click", captureScan);
-  document.getElementById("scan-videowrap").addEventListener("click", refocusScanner);
+  document.getElementById("scan-cancel").addEventListener("click", ()=>withHeavyFeatures(()=>closeScanner()));
+  document.getElementById("scan-torch").addEventListener("click", ()=>withHeavyFeatures(()=>toggleScannerTorch()));
+  document.getElementById("scan-capture").addEventListener("click", ()=>withHeavyFeatures(()=>captureScan()));
+  document.getElementById("scan-videowrap").addEventListener("click", ()=>withHeavyFeatures(()=>refocusScanner()));
   document.getElementById("scan-modal-overlay").addEventListener("click", (e)=>{
-    if(e.target.id === "scan-modal-overlay") closeScanner();
+    if(e.target.id === "scan-modal-overlay") withHeavyFeatures(()=>closeScanner());
   });
   document.getElementById("img-viewer-overlay").addEventListener("click", ()=>{
     document.getElementById("img-viewer-overlay").hidden = true;

@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260910i">
+<link rel="stylesheet" href="styles.css?v=20260911c">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F5F3F2;padding:22px 14px 40px;">
@@ -193,6 +193,21 @@
           <tbody id="pipe-tbody"></tbody>
         </table>
       </div>
+
+      <nav class="tn-pager" id="pipe-pager" aria-label="파이프라인 목록 페이지 이동" hidden>
+        <button class="tn-pager-btn" id="pipe-page-first" type="button" title="첫 페이지" aria-label="첫 페이지">&laquo;</button>
+        <button class="tn-pager-btn" id="pipe-page-prev" type="button" title="이전 페이지" aria-label="이전 페이지">&lsaquo;</button>
+        <div class="tn-pager-numbers" id="pipe-page-numbers"></div>
+        <button class="tn-pager-btn" id="pipe-page-next" type="button" title="다음 페이지" aria-label="다음 페이지">&rsaquo;</button>
+        <button class="tn-pager-btn" id="pipe-page-last" type="button" title="마지막 페이지" aria-label="마지막 페이지">&raquo;</button>
+        <select class="tn-pager-size" id="pipe-page-size" aria-label="한 페이지에 표시할 줄 수">
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+        </select>
+        <span class="tn-pager-range" id="pipe-page-range" aria-live="polite"></span>
+      </nav>
 
       <div class="tn-kanban-hint" id="pipe-hint"></div>
     </div>
@@ -391,7 +406,6 @@
             <button type="button" id="settings-mode-config" class="active">설정</button>
             <button type="button" id="settings-mode-manual">매뉴얼</button>
           </div>
-          <button class="tn-btn tn-admin-button" id="settings-admin-open" type="button" data-unlocked="false">관리자</button>
         </div>
       </div>
 
@@ -442,19 +456,25 @@
         </section>
 
         <section class="tn-settings-panel">
-          <div class="tn-settings-head"><div><div class="tn-settings-title">관리자 백업·복원</div><div class="tn-settings-sub" id="settings-backup-status">관리자 인증 후 전체 데이터와 변경 로그를 내려받을 수 있습니다.</div></div></div>
-          <div class="tn-admin-lock-note" id="settings-admin-lock-note"><span aria-hidden="true">🔒</span><span>설정 상단의 <b>관리자</b>를 누르고 관리자 코드를 확인해 주세요.</span></div>
+          <div class="tn-settings-head"><div>
+            <div class="tn-admin-title-row"><div class="tn-settings-title">관리자 백업·복원</div><button class="tn-btn primary small tn-admin-button" id="settings-admin-open" type="button" data-unlocked="false" aria-haspopup="dialog" aria-controls="settings-admin-overlay">활성화</button></div>
+            <div class="tn-settings-sub" id="settings-backup-status">관리자 인증 후 전체 데이터와 변경 로그를 내려받을 수 있습니다.</div>
+          </div></div>
+          <div class="tn-admin-lock-note" id="settings-admin-lock-note"><span aria-hidden="true">🔒</span><span>제목 옆 <b>활성화</b>를 누르고 관리자 코드를 입력해 주세요.</span></div>
           <div class="tn-data-actions tn-admin-actions" id="settings-admin-actions" hidden>
             <button class="tn-btn primary small" id="settings-backup-export" type="button">내려받기</button>
             <button class="tn-btn small" id="settings-backup-import" type="button">복원하기</button>
           </div>
-          <input type="file" id="settings-backup-input" accept=".json,application/json" hidden>
+          <input type="file" id="settings-backup-input" accept=".xlsx,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/json" hidden>
         </section>
 
         <section class="tn-settings-panel">
           <div class="tn-settings-head">
             <div><div class="tn-settings-title">휴지통</div><div class="tn-settings-sub">삭제한 영업 항목·연락처·그룹·영업지원 실행과제를 복구합니다.</div></div>
-            <button class="tn-btn small danger" id="settings-trash-empty" type="button">휴지통 비우기</button>
+            <div class="tn-settings-head-actions">
+              <button class="tn-btn small" id="settings-trash-collapse" type="button" aria-expanded="true" aria-controls="settings-trash-list">접기</button>
+              <button class="tn-btn small danger" id="settings-trash-empty" type="button">휴지통 비우기</button>
+            </div>
           </div>
           <div class="tn-trash-list" id="settings-trash-list"></div>
         </section>
@@ -784,7 +804,7 @@
 
         <div class="tn-simple-form-grid">
           <div><label>상태</label><select id="roadmap-modal-status"></select></div>
-          <div><label>담당자</label><input type="text" id="roadmap-modal-owner" placeholder="예: 강지훈"></div>
+          <div><label>담당자</label><input type="text" id="roadmap-modal-owner" placeholder="예: 홍길동"></div>
           <div><label>마감일</label><input type="date" id="roadmap-modal-due"></div>
         </div>
       </section>
@@ -969,6 +989,6 @@
 
 </div>
 
-<script src="app.js?v=20260910i"></script>
+<script src="app.js?v=20260911c"></script>
 </body>
 </html>
