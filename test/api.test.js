@@ -352,7 +352,7 @@ test("storage writes require a value and malformed JSON is a client error", asyn
 test("static CRM routes and security headers are configured", async () => {
   const response = await fetch(baseUrl + "/pipeline");
   assert.equal(response.status, 200);
-  assert.match(await response.text(), /<title>HLB-현장지원팀 CRM 간편 모드<\/title>/);
+  assert.match(await response.text(), /<title>HLB-현장지원팀 CRM<\/title>/);
   assert.equal(response.headers.get("x-powered-by"), null);
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin-allow-popups");
