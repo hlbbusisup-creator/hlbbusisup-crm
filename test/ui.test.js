@@ -1271,3 +1271,96 @@ test("Remember CSV uploads into the same fields and exports back in Remember's l
   assert.equal(column(exportedFirst, "Last Name"), "");
   assert.deepEqual(runtimeErrors.map((error) => error.message), []);
 });
+
+const comboContacts = [
+  { id: "ct-gaon", name: "김가온", company: "가온테크", department: "영업팀", jobTitle: "과장", mobilePhone: "010-1111-2222", email: "gaon@example.com", createdAt: "2026-07-16" },
+  { id: "ct-narae", name: "김나래", company: "나래바이오", department: "연구소", jobTitle: "책임", mobilePhone: "010-3333-4444", email: "narae@example.com", createdAt: "2026-07-16" },
+  { id: "ct-haneul", name: "이하늘", company: "하늘상사", department: "", jobTitle: "대표", mobilePhone: "010-5555-6666", email: "haneul@example.com", createdAt: "2026-07-16" }
+];
+
+test("customer contact field is one combobox that filters as you type and keeps free text", async (t) => {
+  const { dom, api, runtimeErrors } = await createBrowser({ "tinico:contacts": comboContacts });
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+  const storedDeals = () => [...api.records.entries()]
+    .filter(([key]) => key.startsWith("tinico:stage:") && key !== "tinico:stage:roadmap")
+    .flatMap(([, deals]) => Array.isArray(deals) ? deals : []);
+  const deal = () => storedDeals().find((item) => item.title === "콤보 검증 영업 건");
+
+  document.getElementById("pipe-new-deal").click();
+  await waitFor(() => !document.getElementById("deal-drawer").hidden, "deal drawer");
+  input(dom.window, document.querySelector('#deal-drawer-body [data-f="title"]'), "콤보 검증 영업 건");
+  await waitFor(() => deal(), "deal created");
+
+  /* 두 칸이던 담당자 입력이 하나로 합쳐졌는지 */
+  assert.equal(document.querySelectorAll("#deal-drawer-body [data-contact-links]").length, 0, "the separate select must be gone");
+  assert.equal(document.querySelectorAll("#deal-drawer-body [data-contact-combo]").length, 1);
+  assert.equal(document.querySelectorAll('#deal-drawer-body [data-f="contactName"]').length, 1);
+  assert.equal(document.querySelector('#deal-drawer-body label[for="deal-contact-name"]').textContent, "고객 담당자 입력");
+
+  const combo = document.querySelector("#deal-drawer-body [data-contact-combo]");
+  const comboInput = combo.querySelector(".tn-combo-input");
+  const comboList = combo.querySelector(".tn-combo-list");
+  const options = () => [...comboList.querySelectorAll(".tn-combo-option")].map((el) => el.querySelector("b").textContent);
+
+  /* 비어 있을 때 열면 등록된 연락처를 모두 보여 준다 */
+  assert.equal(comboList.hidden, true);
+  comboInput.focus();
+  assert.equal(comboList.hidden, false);
+  assert.equal(comboInput.getAttribute("aria-expanded"), "true");
+  assert.deepEqual(options().sort(), ["김가온", "김나래", "이하늘"]);
+
+  /* 입력한 글자와 일치하는 항목만 남는다 */
+  input(dom.window, comboInput, "김");
+  assert.deepEqual(options(), ["김가온", "김나래"]);
+  input(dom.window, comboInput, "가온");
+  assert.deepEqual(options(), ["김가온"]);
+  /* 회사·직함으로도 찾을 수 있다 */
+  input(dom.window, comboInput, "나래바이오");
+  assert.deepEqual(options(), ["김나래"]);
+
+  /* 고르면 텍스트 박스가 완성되고 직함·연락처·이메일까지 채워진다 */
+  input(dom.window, comboInput, "가온");
+  comboList.querySelector(".tn-combo-option").dispatchEvent(new dom.window.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  assert.equal(comboInput.value, "김가온");
+  assert.equal(comboList.hidden, true);
+  assert.equal(document.querySelector('#deal-drawer-body [data-f="contactPhone"]').value, "010-1111-2222");
+  assert.match(combo.querySelector("[data-contact-link-note]").textContent, /연락처 연결됨/);
+  await waitFor(() => deal()?.contactName === "김가온", "selected contact name saved");
+  assert.deepEqual(deal().linkedContactIds, ["ct-gaon"]);
+  assert.equal(deal().contactPhone, "010-1111-2222");
+  assert.equal(deal().contactEmail, "gaon@example.com");
+  assert.equal(deal().contactRole, "영업팀 / 과장");
+
+  /* 목록에 없는 이름은 입력한 그대로 저장하고 연결은 풀린다 */
+  input(dom.window, comboInput, "등록되지 않은 담당자");
+  assert.deepEqual(options(), []);
+  assert.equal(comboList.querySelector(".tn-combo-empty").textContent.includes("입력한 이름 그대로 저장됩니다"), true);
+  assert.equal(combo.querySelector("[data-contact-link-note]").textContent, "");
+  await waitFor(() => deal()?.contactName === "등록되지 않은 담당자", "free text saved as typed");
+  assert.deepEqual(deal().linkedContactIds, [], "free text must not stay linked to a contact");
+  /* 고르지 않고 Enter를 눌러도 입력한 값이 그대로 남는다 */
+  comboInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.equal(comboInput.value, "등록되지 않은 담당자");
+
+  /* 키보드로도 고를 수 있다 */
+  input(dom.window, comboInput, "김나");
+  assert.deepEqual(options(), ["김나래"]);
+  comboInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
+  assert.equal(comboList.querySelector(".tn-combo-option").getAttribute("aria-selected"), "true");
+  comboInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.equal(comboInput.value, "김나래");
+  await waitFor(() => deal()?.contactName === "김나래", "keyboard selection saved");
+  assert.deepEqual(deal().linkedContactIds, ["ct-narae"]);
+  assert.equal(deal().contactPhone, "010-3333-4444");
+
+  /* 매뉴얼에서도 없어진 두 칸 안내를 지우고 합쳐진 입력 방식을 설명해야 한다 */
+  const manual = api.records.get("tinico:manual:sections") || [];
+  const contactManual = manual.find((section) => section.id === "manual_contacts");
+  assert.match(contactManual.content, /‘고객 담당자 입력’은 직접 입력과/);
+  manual.forEach((section) => {
+    assert.equal(/고객 담당자 직접 입력/.test(section.content), false, section.id + " must not describe the removed field");
+  });
+
+  assert.deepEqual(runtimeErrors.map((error) => error.message), []);
+});
