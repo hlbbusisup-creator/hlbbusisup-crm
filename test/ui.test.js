@@ -168,6 +168,12 @@ function lastNotice(document) {
   return [...document.querySelectorAll(".tn-notice")].at(-1)?.textContent || "";
 }
 
+async function saveEditor(window,kind){
+  const button=window.document.getElementById(kind+"-drawer-save");
+  assert.equal(button.disabled,false,kind+" save is available");button.click();
+  await waitFor(()=>window.document.getElementById(kind+"-save-status").textContent==="저장됨"&&button.textContent==="저장",kind+" explicitly saved");
+}
+
 async function waitFor(predicate, message, timeoutMs = 10_000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
@@ -269,7 +275,7 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   const { document } = dom.window;
   const refreshedManual = await dom.window.eval("loadManualSections()");
   const migratedManual = refreshedManual.find((section) => section.id === "manual_troubleshooting");
-  assert.match(migratedManual.content, /자동 저장/);
+  assert.match(migratedManual.content, /상단 ‘저장’을 눌러야 반영/);
   assert.match(
     refreshedManual.find((section) => section.id === "manual_cloud_db")?.content || "",
     /CRM_ACCESS_KEY는 필수/
@@ -300,15 +306,17 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   document.getElementById("contact-manual-btn").click();
   await waitFor(() => !document.getElementById("contact-drawer").hidden, "contact drawer");
   input(dom.window, document.querySelector('#contact-drawer-body [data-field="name"]'), "테스트 담당자");
+  await saveEditor(dom.window,"contact");
   document.getElementById("contact-drawer-close").click();
   await waitFor(
     () => (api.records.get("tinico:contacts") || []).some((contact) => contact.name === "테스트 담당자"),
-    "contact autosave"
+    "contact explicit save"
   );
 
   const contactIdsBeforeDeleteTest = new Set((api.records.get("tinico:contacts") || []).map((contact) => contact.id));
   document.getElementById("contact-manual-btn").click();
   await waitFor(() => !document.getElementById("contact-drawer").hidden, "second contact drawer");
+  await saveEditor(dom.window,"contact");
   const deletingContact = await waitFor(
     () => (api.records.get("tinico:contacts") || []).find((contact) => !contactIdsBeforeDeleteTest.has(contact.id)),
     "new contact persistence"
@@ -317,19 +325,20 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   document.querySelector("#contact-drawer-body [data-delete]").click();
   await waitFor(
     () => !(api.records.get("tinico:contacts") || []).some((contact) => contact.id === deletingContact.id),
-    "contact deletion during autosave"
+    "contact deletion with an unsaved draft"
   );
   await new Promise((resolve) => setTimeout(resolve, 550));
 
   document.getElementById("pipe-new-deal").click();
   await waitFor(() => !document.getElementById("deal-drawer").hidden, "deal drawer");
-  input(dom.window, document.querySelector('#deal-drawer-body [data-f="title"]'), "자동저장 검증 영업 건");
+  input(dom.window, document.querySelector('#deal-drawer-body [data-f="title"]'), "명시적 저장 검증 영업 건");
+  await saveEditor(dom.window,"deal");
   document.getElementById("deal-drawer-close").click();
   await waitFor(
     () => [...api.records.entries()]
       .filter(([key]) => key.startsWith("tinico:stage:") && key !== "tinico:stage:roadmap")
-      .some(([, deals]) => Array.isArray(deals) && deals.some((deal) => deal.title === "자동저장 검증 영업 건")),
-    "deal autosave after closing the drawer"
+      .some(([, deals]) => Array.isArray(deals) && deals.some((deal) => deal.title === "명시적 저장 검증 영업 건")),
+    "deal explicit save before closing"
   );
 
   const dealIdsBeforeDeleteTest = new Set(
@@ -339,6 +348,7 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   );
   document.getElementById("pipe-new-deal").click();
   await waitFor(() => !document.getElementById("deal-drawer").hidden, "second deal drawer");
+  await saveEditor(dom.window,"deal");
   const deletingDeal = await waitFor(
     () => [...api.records.entries()]
       .filter(([key]) => key.startsWith("tinico:stage:") && key !== "tinico:stage:roadmap")
@@ -352,7 +362,7 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
     () => ![...api.records.entries()]
       .filter(([key]) => key.startsWith("tinico:stage:") && key !== "tinico:stage:roadmap")
       .some(([, deals]) => Array.isArray(deals) && deals.some((deal) => deal.id === deletingDeal.id)),
-    "deal deletion during autosave"
+    "deal deletion with an unsaved draft"
   );
   await new Promise((resolve) => setTimeout(resolve, 550));
 
@@ -382,7 +392,7 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   );
   const snapshot = JSON.parse(state);
   assert.ok(snapshot.contactsData.some((contact) => contact.name === "테스트 담당자"));
-  assert.ok(Object.values(snapshot.stageData).flat().some((deal) => deal.title === "자동저장 검증 영업 건"));
+  assert.ok(Object.values(snapshot.stageData).flat().some((deal) => deal.title === "명시적 저장 검증 영업 건"));
   assert.ok(snapshot.calendarEntries.some((event) => event.title === "수정된 기능 테스트 일정"));
 
   const updatedButton = await waitFor(
@@ -704,8 +714,10 @@ test("contact, pipeline activity, and support-task CRUD buttons persist and reco
   input(dom.window, document.querySelector('#contact-drawer-body [data-field="name"]'), "CRUD 검증 담당자");
   input(dom.window, document.querySelector('#contact-drawer-body [data-field="company"]'), "티니코 테스트");
   input(dom.window, document.querySelector('#contact-drawer-body [data-field="email"]'), "crud@example.com");
+  await saveEditor(dom.window,"contact");
   await waitFor(() => (api.records.get("tinico:contacts") || []).some((contact) => contact.email === "crud@example.com"), "contact create and update");
   document.querySelector("#contact-drawer-body [data-fav]").click();
+  await saveEditor(dom.window,"contact");
   await waitFor(() => api.records.get("tinico:contacts")?.[0]?.fav === true, "contact favorite update");
   document.getElementById("contact-export-btn").click();
   await waitFor(() => downloads.some((download) => /^remember_outlook_contacts_.*\.csv$/.test(download.filename)), "contact CSV export");
@@ -726,6 +738,7 @@ test("contact, pipeline activity, and support-task CRUD buttons persist and reco
   assert.equal(document.querySelectorAll('#deal-drawer-body [data-f="contactPhone"]').length,1,"customer contact phone must have one visible storage field");
   input(dom.window, document.querySelector('#deal-drawer-body [data-f="contactName"]'), "고객 직접 담당자");
   input(dom.window, document.querySelector('#deal-drawer-body [data-f="contactPhone"]'), "010-9876-5432");
+  await saveEditor(dom.window,"deal");
   await waitFor(() => storedDeals().some((deal) => deal.title === "CRUD 검증 영업 건" && deal.internalOwner === "검증 담당" && deal.contactName === "고객 직접 담당자" && deal.contactPhone === "010-9876-5432"), "pipeline create, owner, and direct customer phone update");
 
   document.querySelector("#deal-drawer-body [data-add-activity]").click();
@@ -929,7 +942,8 @@ test("camera permission is reused, quality warnings appear, and capture is immed
   assert.equal(camera.confirms, 0, "a quality warning must not delay capture with a confirm dialog");
   await capturePromise;
   assert.equal(alerts.length, 0);
-  assert.equal(dom.window.eval("contactsData.length"), 1, "captured contact is added immediately");
+  assert.equal(dom.window.eval("contactsData.length"), 0, "capture stays a draft until Save");
+  assert.equal(document.getElementById("contact-drawer").hidden,false);
   assert.equal(track.enabled, false);
   assert.equal(camera.stops, 0, "closing the scanner keeps the session stream reusable");
 
@@ -1290,6 +1304,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   document.getElementById("pipe-new-deal").click();
   await waitFor(() => !document.getElementById("deal-drawer").hidden, "deal drawer");
   input(dom.window, document.querySelector('#deal-drawer-body [data-f="title"]'), "콤보 검증 영업 건");
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal(), "deal created");
 
   /* 두 칸이던 담당자 입력이 하나로 합쳐졌는지 */
@@ -1331,6 +1346,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   assert.equal(comboInput.value, "", "고른 뒤에는 다음 사람을 이어서 찾을 수 있게 비워야 한다");
   assert.deepEqual(picked(), [{ name: "김가온", sub: "가온테크 · 영업팀 / 과장", phone: "010-1111-2222", lead: true }]);
   assert.equal(document.querySelector('#deal-drawer-body [data-f="contactPhone"]').value, "010-1111-2222");
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "김가온", "first contact saved");
   assert.deepEqual(deal().linkedContactIds, ["ct-gaon"]);
   assert.equal(deal().contactRole, "영업팀 / 과장");
@@ -1344,6 +1360,7 @@ test("customer contact combobox filters as you type, takes several people, and k
     { name: "김가온", sub: "가온테크 · 영업팀 / 과장", phone: "010-1111-2222", lead: true },
     { name: "김나래", sub: "나래바이오 · 연구소 / 책임", phone: "010-3333-4444", lead: false }
   ]);
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "김가온, 김나래", "both names saved");
   assert.deepEqual(deal().linkedContactIds, ["ct-gaon", "ct-narae"]);
   assert.equal(deal().contactPhone, "010-1111-2222", "대표 담당자의 연락처는 그대로 유지");
@@ -1351,6 +1368,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   /* 대표를 해제하면 다음 사람이 대표가 되고 연락처도 함께 옮겨진다 */
   linkedWrap.querySelector('[data-remove-contact="ct-gaon"]').click();
   assert.deepEqual(picked(), [{ name: "김나래", sub: "나래바이오 · 연구소 / 책임", phone: "010-3333-4444", lead: true }]);
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "김나래", "remaining name saved");
   assert.deepEqual(deal().linkedContactIds, ["ct-narae"]);
   assert.equal(deal().contactPhone, "010-3333-4444");
@@ -1359,6 +1377,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   /* 모두 해제하면 직접 입력 칸으로 되돌아간다 */
   linkedWrap.querySelector('[data-remove-contact="ct-narae"]').click();
   assert.match(linkedWrap.textContent, /선택한 담당자가 없습니다/);
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "", "clearing every pick empties the name");
   assert.deepEqual(deal().linkedContactIds, []);
 
@@ -1366,6 +1385,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   input(dom.window, comboInput, "등록되지 않은 담당자");
   assert.deepEqual(options(), []);
   assert.match(comboList.querySelector(".tn-combo-empty").textContent, /입력한 이름 그대로 저장됩니다/);
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "등록되지 않은 담당자", "free text saved as typed");
   assert.deepEqual(deal().linkedContactIds, [], "free text must not link a contact");
   comboInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
@@ -1378,6 +1398,7 @@ test("customer contact combobox filters as you type, takes several people, and k
   assert.equal(comboList.querySelector(".tn-combo-option").getAttribute("aria-selected"), "true");
   comboInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
   assert.deepEqual(picked().map((row) => row.name), ["이하늘"]);
+  await saveEditor(dom.window,"deal");
   await waitFor(() => deal()?.contactName === "이하늘", "keyboard selection saved");
   assert.deepEqual(deal().linkedContactIds, ["ct-haneul"]);
   assert.equal(deal().contactPhone, "010-5555-6666");
@@ -1405,6 +1426,7 @@ test("a chosen primary contact survives reload and removal; manual phone edits a
   t.after(() => first.dom.window.close());
   first.dom.window.openDealDrawer("existing_accounts", "primary-deal");
   first.dom.window.document.querySelector('[data-primary-contact="ct-narae"]').click();
+  await saveEditor(first.dom.window,"deal");
   await waitFor(() => first.api.records.get(key)?.[0]?.linkedContactIds[0] === "ct-narae", "chosen primary saved");
   const saved = first.api.records.get(key)[0];
   assert.deepEqual(saved.linkedContactIds, ["ct-narae", "ct-gaon"]);
@@ -1418,6 +1440,7 @@ test("a chosen primary contact survives reload and removal; manual phone edits a
   const doc = repeat.dom.window.document;
   assert.match(doc.querySelector('.tn-linked-contact-badge').parentElement.textContent, /김나래/);
   doc.querySelector('[data-remove-contact="ct-narae"]').click();
+  await saveEditor(repeat.dom.window,"deal");
   await waitFor(() => repeat.api.records.get(key)[0].linkedContactIds.length === 1, "primary removal saved");
   assert.equal(repeat.api.records.get(key)[0].contactPhone, "010-1111-2222");
 
@@ -1426,6 +1449,7 @@ test("a chosen primary contact survives reload and removal; manual phone edits a
   doc.querySelector('[data-contact-id="ct-narae"]').dispatchEvent(new repeat.dom.window.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
   input(repeat.dom.window, doc.querySelector('#deal-drawer-body [data-f="contactPhone"]'), "02-1234-5678");
   doc.querySelector('[data-primary-contact="ct-narae"]').click();
+  await saveEditor(repeat.dom.window,"deal");
   await waitFor(() => repeat.api.records.get(key)[0].linkedContactIds[0] === "ct-narae", "primary with override saved");
   assert.equal(repeat.api.records.get(key)[0].contactPhone, "02-1234-5678");
   assert.deepEqual(first.runtimeErrors.concat(repeat.runtimeErrors).map(error => error.message), []);
@@ -1435,6 +1459,160 @@ const calendarWorkRecords = {
   "tinico:stage:existing_accounts": [{ id: "calendar-deal", title: "샘플 공급 협의", stage: "제안", internalOwner: "영업 담당", nextAction: "2026-09-15", action: "견적 전달" }],
   "tinico:stage:roadmap": [{ id: "calendar-task", title: "샘플 자료 준비", status: "진행중", owner: "지원 담당", dueDate: "2026-09-14", nextAction: "자료 확인" }]
 };
+
+test("pipeline analysis KPIs list their calculation sources and navigate to matching details", async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,runtimeErrors}=await createBrowser({
+    [key]:[
+      {id:"kpi-won",title:"수주 고객",stage:"수주",nextAction:"2000-01-01"},
+      {id:"kpi-lost",title:"실주 고객",stage:"실주"},
+      {id:"kpi-hold",title:"보류 고객",stage:"보류"},
+      {id:"kpi-late",title:"<img src=x onerror=alert(1)>",stage:"제안",nextAction:"2000-01-01",internalOwner:"영업 담당",action:"견적 확인"},
+      {id:"kpi-active",title:"진행 고객",stage:"상담",nextAction:"2099-01-01"}
+    ],
+    "tinico:stage:roadmap":[{id:"kpi-done",title:"완료한 자료",status:"완료"},{id:"kpi-task",title:"작성할 자료",status:"진행중"}]
+  });t.after(()=>dom.window.close());
+  const doc=dom.window.document,rows=()=>[...doc.querySelectorAll("#kpi-modal-list button")];
+  const open=kind=>doc.querySelector(`[data-kpi="${kind}"]`).click();
+  open("win");assert.equal(rows().length,3);assert.match(doc.getElementById("kpi-modal-summary").textContent,/수주 1건 \/ 종료 항목 3건/);
+  rows()[0].click();assert.equal(doc.getElementById("kpi-overlay").hidden,true);
+  assert.equal(doc.querySelector('#deal-drawer-body [data-f="title"]').value,"수주 고객");
+  assert.equal(doc.getElementById("deal-drawer-save").disabled,true,"merely opening an older item must not create edits");
+  assert.ok(doc.getElementById("view-pipeline").classList.contains("active"));doc.getElementById("deal-drawer-close").click();
+  open("active");assert.equal(rows().length,2);
+  assert.equal(doc.querySelectorAll("#kpi-modal-list img").length,0);
+  open("overdue");assert.equal(rows().length,1);assert.match(rows()[0].textContent,/영업 담당.*2000-01-01/);
+  const close=doc.getElementById("kpi-modal-close");close.focus();
+  close.dispatchEvent(new dom.window.KeyboardEvent("keydown",{key:"Tab",shiftKey:true,bubbles:true,cancelable:true}));
+  assert.equal(doc.activeElement,rows().at(-1));
+  rows()[0].dispatchEvent(new dom.window.KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
+  assert.equal(doc.getElementById("kpi-overlay").hidden,true);assert.equal(doc.activeElement,doc.querySelector('[data-kpi="overdue"]'));
+  open("tasks");assert.equal(rows().length,2);assert.match(doc.getElementById("kpi-modal-summary").textContent,/완료 1건 \/ 전체 2건/);
+  rows()[0].click();assert.equal(doc.getElementById("roadmap-modal-name").value,"완료한 자료");
+  assert.ok(doc.getElementById("view-roadmap").classList.contains("active"));
+  dom.window.eval('stageData.existing_accounts=[];roadmapData=[];renderHome();');
+  open("overdue");assert.equal(rows().length,0);assert.match(doc.getElementById("kpi-modal-list").textContent,/해당하는 항목이 없습니다/);
+  doc.getElementById("kpi-overlay").click();assert.equal(doc.getElementById("kpi-overlay").hidden,true);
+  assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
+
+test("new pipeline and contact inputs stay unsaved, support cancel, retry, and survive reload only after Save",async t=>{
+  const {dom,api,runtimeErrors}=await createBrowser();t.after(()=>dom.window.close());
+  const win=dom.window,doc=win.document;
+  const before=api.allRequests.filter(r=>r.method==="PUT").length;
+  doc.getElementById("pipe-new-deal").click();input(win,doc.querySelector('[data-f="title"]'),"저장할 영업");
+  doc.getElementById("contact-manual-btn").click();input(win,doc.querySelector('[data-field="name"]'),"저장할 담당자");
+  await new Promise(r=>setTimeout(r,650));
+  assert.equal(api.allRequests.filter(r=>r.method==="PUT").length,before,"typing must not trigger any save request");
+  assert.equal(win.eval('allDeals().some(d=>d.item.title==="저장할 영업")'),false);
+  assert.equal(win.eval('contactsData.some(c=>c.name==="저장할 담당자")'),false);
+  win.confirm=()=>false;doc.getElementById("contact-drawer-cancel").click();assert.equal(doc.getElementById("contact-drawer").hidden,false);
+  win.confirm=()=>true;doc.getElementById("contact-drawer-cancel").click();assert.equal(doc.getElementById("contact-drawer").hidden,true);
+  assert.equal((api.records.get("tinico:contacts")||[]).length,0);
+  const ref=JSON.parse(win.eval('JSON.stringify(selectedDealRef)')),key="tinico:stage:"+ref.areaKey;
+  api.failNextPut(key);doc.getElementById("deal-drawer-save").click();
+  await waitFor(()=>/저장 실패/.test(doc.getElementById("deal-save-status").textContent),"deal save failure");
+  assert.equal(doc.querySelector('[data-f="title"]').value,"저장할 영업");
+  assert.equal(win.eval('allDeals().some(d=>d.item.title==="저장할 영업")'),false);
+  await saveEditor(win,"deal");doc.getElementById("deal-drawer-close").click();
+  doc.getElementById("contact-manual-btn").click();input(win,doc.querySelector('[data-field="name"]'),"저장할 담당자");
+  api.failNextPut("tinico:contacts");doc.getElementById("contact-drawer-save").click();
+  await waitFor(()=>/저장 실패/.test(doc.getElementById("contact-save-status").textContent),"contact save failure");
+  assert.equal(win.eval("contactsData.length"),0);assert.equal(doc.querySelector('[data-field="name"]').value,"저장할 담당자");
+  await saveEditor(win,"contact");
+  const repeat=await createBrowser(Object.fromEntries(api.records));t.after(()=>repeat.dom.window.close());
+  assert.equal(repeat.dom.window.eval('allDeals().some(d=>d.item.title==="저장할 영업")'),true);
+  assert.equal(repeat.dom.window.eval('contactsData.some(c=>c.name==="저장할 담당자")'),true);
+  assert.deepEqual(runtimeErrors.concat(repeat.runtimeErrors).map(e=>e.message),[]);
+});
+
+test("pipeline row saves isolate other drafts and kanban changes require confirmation through Save",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api,runtimeErrors}=await createBrowser({[key]:[{id:"row-a",title:"A 고객",stage:"상담",amount:"10"},{id:"row-b",title:"B 고객",stage:"제안",amount:"20"}]});
+  t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  win.showView("pipeline");
+  const row=id=>doc.querySelector(`[data-row-save="${id}"]`).closest("tr");
+  input(win,row("row-a").querySelector('input[type="number"]'),"100");input(win,row("row-b").querySelector('input[type="number"]'),"200");
+  doc.querySelector('[data-row-save="row-a"]').click();
+  await waitFor(()=>api.records.get(key).find(i=>i.id==="row-a").amount==="100","row A saved");
+  assert.equal(api.records.get(key).find(i=>i.id==="row-b").amount,"20");
+  assert.equal(win.eval('findDeal("existing_accounts","row-b").item.amount'),"20");
+  assert.equal(row("row-b").querySelector('input[type="number"]').value,"200");
+  win.openDealDrawer("existing_accounts","row-b");assert.equal(doc.querySelector('[data-f="amount"]').value,"200");
+  doc.getElementById("deal-drawer-cancel").click();assert.equal(row("row-b").querySelector('input[type="number"]').value,"20");
+  doc.getElementById("pipe-view-board").click();
+  const drop=new win.Event("drop",{bubbles:true,cancelable:true});Object.defineProperty(drop,"dataTransfer",{value:{getData:()=>JSON.stringify({areaKey:"existing_accounts",id:"row-a"})}});
+  doc.querySelector('.tn-kcol[data-stage="수주"]').dispatchEvent(drop);
+  assert.equal(doc.querySelector('#deal-drawer-body [data-stage]').value,"수주");assert.equal(api.records.get(key)[0].stage,"상담");
+  await saveEditor(win,"deal");assert.equal(api.records.get(key)[0].stage,"수주");assert.equal(Number(api.records.get(key)[0].prob),100);
+  assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
+
+test("saved contact mirrors update only after Save and linked-deal failures are retryable without losing drafts",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api,runtimeErrors}=await createBrowser({"tinico:contacts":comboContacts,[key]:[{id:"mirror",title:"연결 영업",stage:"제안",linkedContactIds:["ct-gaon"],contactName:"김가온",contactPhone:"010-1111-2222"}]});
+  t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  win.openDealDrawer("existing_accounts","mirror");input(win,doc.querySelector('[data-f="title"]'),"아직 저장 안 한 제목");
+  win.openContactDetail(win.eval('contactsData.find(c=>c.id==="ct-gaon")'));
+  input(win,doc.querySelector('[data-field="mobilePhone"]'),"010-9999-0000");
+  assert.equal(win.eval('findDeal("existing_accounts","mirror").item.contactPhone'),"010-1111-2222");
+  api.failNextPut(key);doc.getElementById("contact-drawer-save").click();
+  await waitFor(()=>/영업 연결 재시도/.test(doc.getElementById("contact-save-status").textContent),"mirror failure");
+  assert.equal(api.records.get("tinico:contacts")[0].mobilePhone,"010-9999-0000");assert.equal(api.records.get(key)[0].contactPhone,"010-1111-2222");
+  assert.equal(win.eval('findDeal("existing_accounts","mirror").item.contactPhone'),"010-1111-2222");
+  await saveEditor(win,"contact");assert.equal(api.records.get(key)[0].contactPhone,"010-9999-0000");
+  assert.equal(api.records.get(key)[0].title,"연결 영업","contact save must not leak the open deal draft");
+  doc.getElementById("contact-drawer-close").click();
+  await saveEditor(win,"deal");assert.equal(api.records.get(key)[0].title,"아직 저장 안 한 제목");assert.equal(api.records.get(key)[0].contactPhone,"010-9999-0000");
+  assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
+
+test("in-flight saves block closing and serialize row writes without overwriting another item",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api,runtimeErrors}=await createBrowser({[key]:[{id:"pending-a",title:"A",stage:"제안",amount:"10"},{id:"pending-b",title:"B",stage:"상담",amount:"20"}]});
+  t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  const realFetch=win.fetch;let release;
+  win.fetch=(url,options)=>{
+    if(options?.method==="PUT"&&decodeURIComponent(String(url)).endsWith(key)&&!release){
+      return new Promise(resolve=>{release=()=>resolve(realFetch(url,options));});
+    }
+    return realFetch(url,options);
+  };
+  win.showView("pipeline");win.openDealDrawer("existing_accounts","pending-a");
+  input(win,doc.querySelector('[data-f="amount"]'),"110");doc.getElementById("deal-drawer-save").click();
+  await waitFor(()=>release,"delayed PUT");
+  doc.getElementById("deal-drawer-close").click();assert.equal(doc.getElementById("deal-drawer").hidden,false);
+  assert.equal(doc.getElementById("deal-drawer-save").disabled,true);
+  assert.equal(win.eval('findDeal("existing_accounts","pending-a").item.amount'),"10","canonical data stays unchanged while the network request is pending");
+  const second=doc.querySelector('[data-row-save="pending-b"]').closest("tr");input(win,second.querySelector('input[type="number"]'),"220");second.querySelector('[data-row-save]').click();
+  release();await waitFor(()=>api.records.get(key).every(i=>i.amount===(i.id==="pending-a"?"110":"220")),"both serialized writes");
+  assert.equal(win.eval('findDeal("existing_accounts","pending-a").item.amount'),"110");
+  assert.equal(win.eval('findDeal("existing_accounts","pending-b").item.amount'),"220");
+  doc.getElementById("deal-drawer-close").click();assert.equal(doc.getElementById("deal-drawer").hidden,true);
+  assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
+
+test("OCR and uploaded card images remain drafts and failed record saves restore the prior image",async t=>{
+  const {dom,api,runtimeErrors}=await createBrowser();t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  win.eval('makeCardThumb=async image=>image;ocrCardImage=async()=>({text:"명함",parsed:{name:"명함 담당",company:"회사",mobilePhone:"010-1234-1234",email:"card@example.com"}});');
+  await win.stageContactImage("data:image/jpeg;base64,b2xk");
+  assert.equal((api.records.get("tinico:contacts")||[]).length,0);assert.equal(win.eval("contactsData.length"),0);
+  assert.equal(doc.querySelector('[data-field="name"]').value,"명함 담당");await saveEditor(win,"contact");
+  const id=api.records.get("tinico:contacts")[0].id,imageKey=win.contactImageKey(id);assert.equal(api.records.get(imageKey),"data:image/jpeg;base64,b2xk");
+  win.openCompanySearchModal(win.eval('contactDrafts.get(selectedContactId).value'));
+  input(win,doc.getElementById("company-search-name"),"확인한 회사명");doc.getElementById("company-search-save").click();
+  await waitFor(()=>doc.getElementById("company-search-overlay").hidden,"apply company name to draft");
+  assert.equal(doc.querySelector('[data-field="company"]').value,"확인한 회사명");
+  assert.equal(win.eval('contactsData[0].company'),"회사");assert.equal(api.records.get("tinico:contacts")[0].company,"회사");
+  await saveEditor(win,"contact");assert.equal(api.records.get("tinico:contacts")[0].company,"확인한 회사명");
+  await win.stageContactImage("data:image/jpeg;base64,bmV3",id);assert.equal(api.records.get(imageKey),"data:image/jpeg;base64,b2xk");
+  api.failNextPut("tinico:contacts");doc.getElementById("contact-drawer-save").click();
+  await waitFor(()=>/저장 실패/.test(doc.getElementById("contact-save-status").textContent),"image-linked record save failure");
+  assert.equal(api.records.get(imageKey),"data:image/jpeg;base64,b2xk");
+  await saveEditor(win,"contact");assert.equal(api.records.get(imageKey),"data:image/jpeg;base64,bmV3");
+  assert.equal(api.records.get("tinico:contacts")[0].cardThumb,"data:image/jpeg;base64,bmV3");
+  assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
 
 test("calendar owner and both work links persist, reload, and recover from a failed save", async (t) => {
   const first = await createBrowser(calendarWorkRecords);
