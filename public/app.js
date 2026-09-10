@@ -181,7 +181,7 @@ const DEFAULT_MANUAL_SECTIONS = [
     "category": "파이프라인",
     "title": "파이프라인 화면과 영업 항목 관리",
     "format": "list",
-    "content": "파이프라인은 실제 고객사 또는 구체적인 영업 기회만 등록합니다. 같은 고객·제품·목적의 중복 항목과 제목·담당자·다음 할 일이 없는 빈 항목은 만들지 않습니다.\n목록 보기의 각 행은 하나의 영업 건입니다. 왼쪽 색상선은 그룹, 둥근 배지는 그룹·매출 분류·중요도·담당자를 뜻합니다. 단계, 예상 매출, 다음 연락일과 다음 할 일은 목록에서 바로 수정할 수 있습니다.\n보드 보기는 영업 단계를 열로 나눕니다. 카드를 다른 열로 끌어 놓으면 단계와 자동 성사 확률이 함께 변경됩니다.\n상단 검색창은 고객사·제품·이슈·담당자를 검색하며 내부 담당자와 단계 필터로 범위를 좁힙니다. ‘목록/보드’ 버튼으로 보기를 바꿉니다.\n‘+ 새 항목’을 누른 뒤 제목, 그룹과 기본 단계부터 입력합니다. 상세 화면의 필수 입력 막대가 채워지도록 내부 담당자, 고객 담당자, 예상 매출, 다음 연락일과 다음 할 일을 입력합니다. ‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 직함·연락처·이메일까지 함께 채워집니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.\n입력 중에는 ‘자동 저장 중…’, 완료되면 ‘저장됨’이 표시됩니다. ‘저장 실패’가 보이면 상세 화면을 닫지 말고 네트워크와 외부 DB 상태를 확인한 뒤 해당 값을 다시 수정하여 저장을 재시도합니다.\n상세 화면의 X 버튼이나 바깥 영역으로 닫을 수 있습니다. 진행 중인 저장은 완료된 뒤 닫히므로 ‘저장됨’을 확인하면 안전합니다.\n전화·이메일·미팅 후에는 ‘활동 추가’를 눌러 결과를 남깁니다. 활동 팝업은 상세 화면보다 위에서 활성화되며 입력·취소·저장 중에도 상세 화면은 닫히지 않습니다. 저장하면 활동 목록과 다음 할 일·다음 연락일이 갱신됩니다.\n자료 제작·제도 확인·내부 검토처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다."
+    "content": "파이프라인은 실제 고객사 또는 구체적인 영업 기회만 등록합니다. 같은 고객·제품·목적의 중복 항목과 제목·담당자·다음 할 일이 없는 빈 항목은 만들지 않습니다.\n목록 보기의 각 행은 하나의 영업 건입니다. 왼쪽 색상선은 그룹, 둥근 배지는 그룹·매출 분류·중요도·담당자를 뜻합니다. 단계, 예상 매출, 다음 연락일과 다음 할 일은 목록에서 바로 수정할 수 있습니다.\n보드 보기는 영업 단계를 열로 나눕니다. 카드를 다른 열로 끌어 놓으면 단계와 자동 성사 확률이 함께 변경됩니다.\n상단 검색창은 고객사·제품·이슈·담당자를 검색하며 내부 담당자와 단계 필터로 범위를 좁힙니다. ‘목록/보드’ 버튼으로 보기를 바꿉니다.\n‘+ 새 항목’을 누른 뒤 제목, 그룹과 기본 단계부터 입력합니다. 상세 화면의 필수 입력 막대가 채워지도록 내부 담당자, 고객 담당자, 예상 매출, 다음 연락일과 다음 할 일을 입력합니다. ‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 ‘선택한 담당자’에 이름과 연락처가 쌓입니다. 여러 명을 고를 수 있고 맨 위 대표 담당자의 직함·연락처·이메일이 입력칸에 반영됩니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.\n입력 중에는 ‘자동 저장 중…’, 완료되면 ‘저장됨’이 표시됩니다. ‘저장 실패’가 보이면 상세 화면을 닫지 말고 네트워크와 외부 DB 상태를 확인한 뒤 해당 값을 다시 수정하여 저장을 재시도합니다.\n상세 화면의 X 버튼이나 바깥 영역으로 닫을 수 있습니다. 진행 중인 저장은 완료된 뒤 닫히므로 ‘저장됨’을 확인하면 안전합니다.\n전화·이메일·미팅 후에는 ‘활동 추가’를 눌러 결과를 남깁니다. 활동 팝업은 상세 화면보다 위에서 활성화되며 입력·취소·저장 중에도 상세 화면은 닫히지 않습니다. 저장하면 활동 목록과 다음 할 일·다음 연락일이 갱신됩니다.\n자료 제작·제도 확인·내부 검토처럼 고객과 직접 진행하지 않는 일은 지원 업무에 등록합니다."
   },
   {
     "id": "manual_stages",
@@ -735,6 +735,14 @@ async function saveTrash(){
 }
 function activityDateValue(a){ return a && (a.date || a.createdAt || ""); }
 function normalizeActivity(a){ return {id:uid(), type:"기타", date:todayStr(), content:"", result:"", nextAction:"", nextDate:"", createdAt:nowIso(), ...a}; }
+/* 영업 항목에 연결된 등록 연락처 (연락처가 삭제됐으면 자동으로 빠진다) */
+function linkedContactsOf(item){
+  return ((item && item.linkedContactIds) || []).map(id=>contactsData.find(c=>c.id === id)).filter(Boolean);
+}
+/* 선택한 담당자 이름을 한 줄로 (contactName에 그대로 저장되어 목록·검색·AI에서 함께 쓰인다) */
+function linkedContactNamesOf(item){
+  return linkedContactsOf(item).map(c=>String(c.name || "").trim()).filter(Boolean).join(", ");
+}
 function dealCompletion(item){
   const checks = [
     ["고객사/영업 건", String(item.title || "").trim() && item.title !== "새 항목"],
@@ -1491,7 +1499,8 @@ const MANUAL_MIGRATION_KEYS = [
   "tinico:manual:migration:ui_reliability_202608_v1",
   "tinico:manual:migration:calendar_fold_contact_activity_202608_v1",
   "tinico:manual:migration:contact_paging_csv_202609_v1",
-  "tinico:manual:migration:deal_contact_combo_202609_v1"
+  "tinico:manual:migration:deal_contact_combo_202609_v1",
+  "tinico:manual:migration:deal_contact_multi_202609_v1"
 ];
 async function loadManualSections(){
   const [stored, ...migrationFlagValues] = await Promise.all([
@@ -1644,7 +1653,7 @@ async function loadManualSections(){
        사용자가 고친 다른 문장은 남기고 없어진 두 칸을 설명하던 문장만 교체한다 */
     const staleLine=/파이프라인 상세에서는 등록된 연락처를 선택하거나[^\n]*\n?/g;
     const staleSentence=/등록된 연락처를 선택하거나[^.\n]*직접 기록할 수 있습니다\./g;
-    const inlineGuide="‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 직함·연락처·이메일까지 함께 채워집니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.";
+    const inlineGuide="‘고객 담당자 입력’에 이름을 입력하면 등록된 연락처 중 일치하는 사람이 목록에 나타나고, 목록에서 고르면 ‘선택한 담당자’에 이름과 연락처가 쌓입니다. 여러 명을 고를 수 있고 맨 위 대표 담당자의 직함·연락처·이메일이 입력칸에 반영됩니다. 등록되지 않은 담당자는 이름과 바로 아래 ‘고객 담당자 연락처’를 직접 기록합니다.";
     const comboGuide="파이프라인 항목 상세의 ‘고객 담당자 입력’은 직접 입력과 등록된 연락처 선택을 겸합니다. 이름을 입력하면 이름·회사·직함·연락처·이메일이 일치하는 등록 연락처만 아래 목록에 나타나고, 목록에서 고르면 이름이 자동으로 완성되면서 직함·연락처·이메일이 함께 채워집니다. 목록에서 고르지 않으면 입력한 이름 그대로 저장됩니다.";
     ["manual_contacts","manual_pipeline"].forEach(id=>{
       const section=data.find(entry=>entry.id===id);
@@ -1653,6 +1662,16 @@ async function loadManualSections(){
       if(!section.content.includes("‘고객 담당자 입력’은 직접 입력과")) section.content=section.content.replace(/\s*$/,"")+"\n"+comboGuide;
     });
     pendingMigrationWrites.push([dealContactComboMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]}]);
+  }
+  const dealContactMultiMigrationKey="tinico:manual:migration:deal_contact_multi_202609_v1";
+  if(!migrationFlags.get(dealContactMultiMigrationKey)){
+    /* 고객 담당자를 여러 명 고를 수 있게 되면서 '선택한 담당자' 목록이 생긴 내용을 반영 */
+    const multiGuide="목록에서 고른 담당자는 ‘고객 담당자 연락처’ 아래 ‘선택한 담당자’에 이름·소속·직함과 연락처로 쌓이며, 여러 명을 넣을 수 있습니다. 각 줄 오른쪽 ×로 선택을 해제하고, 맨 위 ‘대표’ 담당자의 직함·연락처·이메일이 위 입력칸에 반영됩니다. 한 명도 고르지 않으면 입력한 이름 그대로 저장됩니다.";
+    ["manual_contacts","manual_pipeline"].forEach(id=>{
+      const section=data.find(entry=>entry.id===id);
+      if(section && !section.content.includes("‘선택한 담당자’에 이름·소속·직함과 연락처로 쌓이며")) section.content=section.content.replace(/\s*$/,"")+"\n"+multiGuide;
+    });
+    pendingMigrationWrites.push([dealContactMultiMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]}]);
   }
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
@@ -1868,16 +1887,16 @@ function renderDealDrawer(resetScroll){
         <div class="tn-drawer-field">
           <label for="deal-contact-name">고객 담당자 입력</label>
           <div class="tn-combo" data-contact-combo>
-            <input id="deal-contact-name" class="tn-combo-input" data-f="contactName" type="text" role="combobox" aria-expanded="false" aria-controls="deal-contact-options" aria-autocomplete="list" autocomplete="off" placeholder="이름을 입력하세요" value="${escapeHtml(item.contactName)}">
+            <input id="deal-contact-name" class="tn-combo-input" type="text" role="combobox" aria-expanded="false" aria-controls="deal-contact-options" aria-autocomplete="list" autocomplete="off" placeholder="이름을 입력하세요. 목록에서 고르면 여러 명까지 추가됩니다" value="${escapeHtml((item.linkedContactIds||[]).length ? "" : item.contactName)}">
             <button class="tn-combo-toggle" type="button" data-contact-toggle tabindex="-1" aria-label="등록된 연락처 목록 열기">▾</button>
             <div class="tn-combo-list" id="deal-contact-options" role="listbox" aria-label="등록된 고객 담당자" hidden></div>
-            <div class="tn-combo-note" data-contact-link-note></div>
           </div>
         </div>
         <div class="tn-drawer-field"><label>고객 담당자 연락처</label><input data-f="contactPhone" type="tel" inputmode="tel" placeholder="예: 010-0000-0000" value="${escapeHtml(item.contactPhone)}"></div>
+        <div class="tn-drawer-field"><label>선택한 담당자</label><div class="tn-linked-contacts" data-linked-contacts></div></div>
         <div class="tn-drawer-field"><label>예상 매출</label><div class="tn-input-with-unit"><input data-f="amount" type="number" min="0" placeholder="0" value="${escapeHtml(item.amount)}"><span>백만원</span></div></div>
       </div>
-      <div class="tn-drawer-group-hint">이름을 입력하면 등록된 연락처 중 일치하는 사람만 아래 목록에 나타납니다. 목록에서 고르면 직함·연락처·이메일이 함께 채워지고, 고르지 않으면 입력한 이름 그대로 저장합니다.</div>
+      <div class="tn-drawer-group-hint">이름을 입력하면 등록된 연락처 중 일치하는 사람만 아래 목록에 나타납니다. 목록에서 고르면 ‘선택한 담당자’에 이름과 연락처가 쌓이며 여러 명을 넣을 수 있습니다. 한 명도 고르지 않으면 입력한 이름 그대로 저장합니다.</div>
     </section>
 
     <section class="tn-drawer-section tn-simple-next-section">
@@ -1901,7 +1920,7 @@ function renderDealDrawer(resetScroll){
     <div class="tn-simple-hidden-fields" hidden>
       <select data-area></select><select data-bucket-select></select><select data-importance></select><span data-imp></span>
       <input data-f="tag" value="${escapeHtml(item.tag)}"><input data-f="prob" value="${escapeHtml(item.prob)}"><input data-f="lastContact" value="${escapeHtml(item.lastContact)}"><input data-f="collaborators" value="${escapeHtml(item.collaborators)}">
-      <input data-f="contactRole" value="${escapeHtml(item.contactRole)}"><input data-f="contactEmail" value="${escapeHtml(item.contactEmail)}">
+      <input data-f="contactName" value="${escapeHtml(item.contactName)}"><input data-f="contactRole" value="${escapeHtml(item.contactRole)}"><input data-f="contactEmail" value="${escapeHtml(item.contactEmail)}">
       <input data-f="desc" value="${escapeHtml(item.desc)}"><input data-f="goal" value="${escapeHtml(item.goal)}"><input data-f="internalNote" value="${escapeHtml(item.internalNote)}">
       <input data-f="closeDate" value="${escapeHtml(item.closeDate)}"><input data-f="closeAmount" value="${escapeHtml(item.closeAmount)}"><input data-f="deliveryDate" value="${escapeHtml(item.deliveryDate)}"><input data-f="reopenDate" value="${escapeHtml(item.reopenDate)}"><input data-f="competitor" value="${escapeHtml(item.competitor)}"><input data-f="closeReason" value="${escapeHtml(item.closeReason)}"><textarea data-f="note">${escapeHtml(item.note)}</textarea>
       <section data-close-section hidden><i data-close-won></i><i data-close-hold></i><i data-close-lost></i></section>
@@ -1950,30 +1969,66 @@ function renderDealDrawer(resetScroll){
   bucketSel.addEventListener("change",persist);importanceSel.addEventListener("change",persist);
 
   /* ---- 고객 담당자 입력: 직접 입력과 등록된 연락처 선택을 하나로 합친 콤보박스 ----
-     입력한 글자와 일치하는 등록 연락처만 목록에 보여 주고, 고르면 이름·직함·연락처·이메일을 채운다.
-     아무것도 고르지 않으면 입력한 글자를 그대로 저장한다. */
+     입력한 글자와 일치하는 등록 연락처만 목록에 보여 주고, 고르면 '선택한 담당자'에 여러 명까지 쌓인다.
+     한 명도 고르지 않으면 입력한 글자를 그대로 contactName에 저장한다.
+     한 명 이상 고르면 contactName은 선택한 담당자 이름을 모은 값이 되고, 대표(첫 번째) 담당자의
+     직함·연락처·이메일이 아래 입력칸에 반영된다. */
   const contactInput=body.querySelector("[data-contact-combo] .tn-combo-input");
   const contactToggle=body.querySelector("[data-contact-toggle]");
   const contactList=body.querySelector("[data-contact-combo] .tn-combo-list");
-  const contactNote=body.querySelector("[data-contact-link-note]");
+  const linkedWrap=body.querySelector("[data-linked-contacts]");
+  const hiddenContactName=body.querySelector('.tn-simple-hidden-fields [data-f="contactName"]');
   let contactMatches=[];
   let contactActiveIndex=-1;
 
-  function contactComboLabel(ct){
-    return [ct.name||"이름 없는 연락처",ct.company,ct.jobTitle||ct.department].filter(Boolean).join(" · ");
+  function linkedContacts(){ return linkedContactsOf(item); }
+  function contactMirror(ct){
+    return {
+      contactRole:ct?[ct.department,ct.jobTitle].filter(Boolean).join(" / "):"",
+      contactPhone:ct?contactPrimaryPhone(ct):"",
+      contactEmail:ct?ct.email||"":""
+    };
   }
-  function linkedContact(){
-    return contactsData.find(c=>c.id===(item.linkedContactIds||[])[0]) || null;
+  /* 대표 담당자가 바뀌면 직함·연락처·이메일을 새 담당자 값으로 옮긴다.
+     사용자가 직접 고쳐 둔 값은 건드리지 않고, 이전 대표에서 자동으로 채워졌던 값만 바꾼다. */
+  function applyLinkedContactMirror(previousFirst){
+    const before=contactMirror(previousFirst),after=contactMirror(linkedContacts()[0]||null);
+    ["contactRole","contactPhone","contactEmail"].forEach(field=>{
+      if(!String(item[field]||"").trim() || item[field]===before[field]) item[field]=after[field];
+    });
+    if(linkedContacts().length) item.contactName=linkedContactNamesOf(item);
+    else if(previousFirst) item.contactName="";
   }
-  function updateContactLinkNote(){
-    const linked=linkedContact();
-    contactNote.textContent=linked?`연락처 연결됨 · ${contactComboLabel(linked)}`:"";
-    contactNote.classList.toggle("linked",!!linked);
+  /* persist()가 숨은 입력칸에서 값을 다시 읽으므로 화면 값과 항상 맞춰 둔다 */
+  function syncContactFields(){
+    if(hiddenContactName) hiddenContactName.value=item.contactName||"";
+    const phoneInput=body.querySelector('[data-f="contactPhone"]'); if(phoneInput)phoneInput.value=item.contactPhone||"";
+    const roleInput=body.querySelector('[data-f="contactRole"]'); if(roleInput)roleInput.value=item.contactRole||"";
+    const emailInput=body.querySelector('[data-f="contactEmail"]'); if(emailInput)emailInput.value=item.contactEmail||"";
+  }
+  function renderLinkedContacts(){
+    const linked=linkedContacts();
+    linkedWrap.innerHTML="";
+    if(!linked.length){
+      linkedWrap.innerHTML='<div class="tn-linked-empty">선택한 담당자가 없습니다. 위 칸에 이름을 입력해 목록에서 고르세요.</div>';
+      return;
+    }
+    linked.forEach((ct,index)=>{
+      const row=document.createElement("div");
+      row.className="tn-linked-contact";
+      const phone=contactPrimaryPhone(ct);
+      const detail=[ct.company,[ct.department,ct.jobTitle].filter(Boolean).join(" / ")].filter(Boolean).join(" · ");
+      row.innerHTML=`<div class="tn-linked-contact-main"><div class="tn-linked-contact-name">${escapeHtml(ct.name||"이름 없는 연락처")}${index===0?'<span class="tn-linked-contact-badge" title="대표 담당자의 직함·연락처·이메일이 위 입력칸에 반영됩니다">대표</span>':""}</div><div class="tn-linked-contact-sub">${escapeHtml(detail||"소속 정보 없음")}</div></div><div class="tn-linked-contact-phone${phone?"":" missing"}">${escapeHtml(phone||"연락처 미입력")}</div><button class="tn-linked-contact-remove" type="button" data-remove-contact="${escapeHtml(ct.id)}" title="선택 해제" aria-label="${escapeHtml((ct.name||"담당자")+" 선택 해제")}">×</button>`;
+      row.querySelector("[data-remove-contact]").addEventListener("click",()=>removeLinkedContact(ct.id));
+      linkedWrap.appendChild(row);
+    });
   }
   function matchingContacts(query){
     const q=String(query||"").trim().toLowerCase();
-    const matched=contactsData.filter(ct=>!q || [ct.name,ct.company,ct.jobTitle,ct.department,ct.email,contactPrimaryPhone(ct)]
-      .some(value=>String(value||"").toLowerCase().includes(q)));
+    const chosen=new Set(item.linkedContactIds||[]);
+    /* 이미 고른 사람은 아래 '선택한 담당자'에 있으므로 목록에서 뺀다 */
+    const matched=contactsData.filter(ct=>!chosen.has(ct.id) && (!q || [ct.name,ct.company,ct.jobTitle,ct.department,ct.email,contactPrimaryPhone(ct)]
+      .some(value=>String(value||"").toLowerCase().includes(q))));
     /* 입력한 글자로 이름이 시작하는 사람을 먼저 보여 준다 */
     return matched
       .map((ct,index)=>({ct,index,starts:q && String(ct.name||"").toLowerCase().startsWith(q)?0:1}))
@@ -1989,12 +2044,13 @@ function renderDealDrawer(resetScroll){
   }
   function highlightContactOption(index){
     contactActiveIndex=index;
-    [...contactList.querySelectorAll(".tn-combo-option")].forEach((el,i)=>{
+    const options=[...contactList.querySelectorAll(".tn-combo-option")];
+    options.forEach((el,i)=>{
       const on=i===index;
       el.classList.toggle("active",on);
       el.setAttribute("aria-selected",on?"true":"false");
     });
-    const active=index>=0?contactList.querySelectorAll(".tn-combo-option")[index]:null;
+    const active=index>=0?options[index]:null;
     if(active){
       contactInput.setAttribute("aria-activedescendant",active.id);
       active.scrollIntoView({block:"nearest"});
@@ -2006,9 +2062,11 @@ function renderDealDrawer(resetScroll){
     if(!contactMatches.length){
       const empty=document.createElement("div");
       empty.className="tn-combo-empty";
-      empty.textContent=contactsData.length
-        ? "일치하는 등록 연락처가 없습니다. 입력한 이름 그대로 저장됩니다."
-        : "등록된 연락처가 없습니다. 입력한 이름 그대로 저장됩니다.";
+      empty.textContent=!contactsData.length
+        ? "등록된 연락처가 없습니다. 입력한 이름 그대로 저장됩니다."
+        : (item.linkedContactIds||[]).length && !String(query||"").trim()
+          ? "등록된 연락처를 모두 골랐습니다."
+          : "일치하는 등록 연락처가 없습니다. 입력한 이름 그대로 저장됩니다.";
       contactList.appendChild(empty);
     }else{
       contactMatches.forEach((ct,index)=>{
@@ -2021,8 +2079,8 @@ function renderDealDrawer(resetScroll){
         option.innerHTML=`<b>${escapeHtml(ct.name||"이름 없는 연락처")}</b><span>${escapeHtml([ct.company,ct.jobTitle||ct.department,contactPrimaryPhone(ct)].filter(Boolean).join(" · ")||"추가 정보 없음")}</span>`;
         /* mousedown으로 처리해야 입력창이 포커스를 잃어 목록이 닫히기 전에 선택된다.
            mousedown이 없는 환경을 위해 click도 받되, 이미 처리돼 목록이 닫혔으면 무시한다 */
-        option.addEventListener("mousedown",event=>{event.preventDefault();chooseContact(ct);});
-        option.addEventListener("click",()=>{ if(!contactList.hidden) chooseContact(ct); });
+        option.addEventListener("mousedown",event=>{event.preventDefault();addLinkedContact(ct);});
+        option.addEventListener("click",()=>{ if(!contactList.hidden) addLinkedContact(ct); });
         contactList.appendChild(option);
       });
     }
@@ -2030,28 +2088,37 @@ function renderDealDrawer(resetScroll){
     contactInput.setAttribute("aria-expanded","true");
     highlightContactOption(-1);
   }
-  function chooseContact(ct){
-    item.linkedContactIds=[ct.id];
-    item.contactName=ct.name||item.contactName;
-    item.contactRole=[ct.department,ct.jobTitle].filter(Boolean).join(" / ")||item.contactRole;
-    item.contactPhone=contactPrimaryPhone(ct)||item.contactPhone;
-    item.contactEmail=ct.email||item.contactEmail;
-    contactInput.value=item.contactName;
-    const roleInput=body.querySelector('[data-f="contactRole"]'); if(roleInput)roleInput.value=item.contactRole;
-    const emailInput=body.querySelector('[data-f="contactEmail"]'); if(emailInput)emailInput.value=item.contactEmail;
-    const phoneInput=body.querySelector('[data-f="contactPhone"]'); if(phoneInput)phoneInput.value=item.contactPhone;
-    closeContactCombo();
-    updateContactLinkNote();
+  function addLinkedContact(ct){
+    if((item.linkedContactIds||[]).includes(ct.id)) return;
+    const previousFirst=linkedContacts()[0]||null;
+    item.linkedContactIds=[...(item.linkedContactIds||[]),ct.id];
+    applyLinkedContactMirror(previousFirst);
+    /* 다음 담당자를 이어서 찾을 수 있게 검색어를 비운다 */
+    contactInput.value="";
+    syncContactFields();
+    renderLinkedContacts();
     persist();
     contactInput.focus();
+    openContactCombo("");
   }
-  updateContactLinkNote();
+  function removeLinkedContact(id){
+    const previousFirst=linkedContacts()[0]||null;
+    item.linkedContactIds=(item.linkedContactIds||[]).filter(value=>value!==id);
+    applyLinkedContactMirror(previousFirst);
+    if(!linkedContacts().length) contactInput.value=item.contactName||"";
+    syncContactFields();
+    renderLinkedContacts();
+    closeContactCombo();
+    persist();
+  }
+  renderLinkedContacts();
   contactInput.addEventListener("input",()=>{
-    /* 입력한 이름이 연결된 연락처와 달라지면 연결을 풀고 입력한 글자를 그대로 쓴다 */
-    const linked=linkedContact();
-    if(linked && contactInput.value.trim()!==String(linked.name||"").trim()){
-      item.linkedContactIds=[];
-      updateContactLinkNote();
+    /* 아무도 고르지 않았을 때만 입력한 글자가 곧 고객 담당자 이름이다.
+       한 명이라도 골랐으면 이 칸은 검색용이므로 저장값을 건드리지 않는다 */
+    if(!linkedContacts().length){
+      item.contactName=contactInput.value;
+      syncContactFields();
+      persist();
     }
     openContactCombo(contactInput.value);
   });
@@ -2067,10 +2134,10 @@ function renderDealDrawer(resetScroll){
       if(next<0)next=last; else if(next>last)next=0;
       highlightContactOption(next);
     }else if(event.key==="Enter"){
-      /* 목록에서 고른 항목이 있을 때만 채워 넣고, 아니면 입력한 값을 그대로 둔다 */
+      /* 목록에서 고른 항목이 있을 때만 추가하고, 아니면 입력한 값을 그대로 둔다 */
       if(!contactList.hidden && contactMatches[contactActiveIndex]){
         event.preventDefault();
-        chooseContact(contactMatches[contactActiveIndex]);
+        addLinkedContact(contactMatches[contactActiveIndex]);
       }else closeContactCombo();
     }else if(event.key==="Escape"){
       if(!contactList.hidden){event.stopPropagation();closeContactCombo();}
@@ -4374,8 +4441,16 @@ function renderContactActivities(container,ct){
 async function syncLinkedDealsFromContact(ct){
   const touched=new Set();
   allDeals().forEach(({area,item})=>{
-    if((item.linkedContactIds||[])[0]!==ct.id)return;
-    item.contactName=ct.name||"";item.contactRole=[ct.department,ct.jobTitle].filter(Boolean).join(" / ");item.contactPhone=contactPrimaryPhone(ct);item.contactEmail=ct.email||"";touched.add(area.key);
+    if(!(item.linkedContactIds||[]).includes(ct.id))return;
+    /* 고객 담당자 이름은 선택한 담당자 전체를 반영하고, 직함·연락처·이메일은 대표(첫 번째)만 반영 */
+    let changed=false;
+    const names=linkedContactNamesOf(item);
+    if(item.contactName!==names){item.contactName=names;changed=true;}
+    if(linkedContactsOf(item)[0]?.id===ct.id){
+      const next={contactRole:[ct.department,ct.jobTitle].filter(Boolean).join(" / "),contactPhone:contactPrimaryPhone(ct),contactEmail:ct.email||""};
+      Object.entries(next).forEach(([field,value])=>{ if(item[field]!==value){item[field]=value;changed=true;} });
+    }
+    if(changed)touched.add(area.key);
   });
   for(const key of touched)await saveArea(key);
 }
