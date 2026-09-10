@@ -7,6 +7,16 @@ function ids() {
   return () => "audit-" + ++index;
 }
 
+test("calendar audit records owner and related work changes with readable labels", () => {
+  const before={id:"calendar-audit",title:"고객 미팅",owner:"이전 담당",relatedAreaKey:"",relatedDealId:"",relatedTaskId:""};
+  const after={...before,owner:"새 담당",relatedAreaKey:"sales",relatedDealId:"deal-a",relatedTaskId:"task-a"};
+  const [entry]=buildAuditEntries({storageKey:"tinico:calendar:events",beforeValue:[before],afterValue:[after]});
+  assert.equal(entry.screen,"캘린더");
+  assert.deepEqual(new Set(entry.changedFields.map(field=>field.label)),new Set(["담당자","연관 파이프라인 그룹","연관 파이프라인","연관 지원 업무"]));
+  assert.equal(entry.beforeValue.owner,"이전 담당");
+  assert.equal(entry.afterValue.relatedTaskId,"task-a");
+});
+
 test("audit log identifies contact input, update, and delete with changed fields", () => {
   const eventIdFactory = ids();
   const created = buildAuditEntries({

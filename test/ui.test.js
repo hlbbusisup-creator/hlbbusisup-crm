@@ -1393,3 +1393,124 @@ test("customer contact combobox filters as you type, takes several people, and k
 
   assert.deepEqual(runtimeErrors.map((error) => error.message), []);
 });
+
+test("a chosen primary contact survives reload and removal; manual phone edits are preserved", async (t) => {
+  const key = "tinico:stage:existing_accounts";
+  const first = await createBrowser({
+    "tinico:contacts": comboContacts,
+    [key]: [{ id: "primary-deal", title: "대표 지정 검증", stage: "제안",
+      linkedContactIds: ["ct-gaon", "ct-narae"], contactName: "김가온, 김나래",
+      contactPhone: "010-1111-2222", contactEmail: "gaon@example.com", contactRole: "영업팀 / 과장" }]
+  });
+  t.after(() => first.dom.window.close());
+  first.dom.window.openDealDrawer("existing_accounts", "primary-deal");
+  first.dom.window.document.querySelector('[data-primary-contact="ct-narae"]').click();
+  await waitFor(() => first.api.records.get(key)?.[0]?.linkedContactIds[0] === "ct-narae", "chosen primary saved");
+  const saved = first.api.records.get(key)[0];
+  assert.deepEqual(saved.linkedContactIds, ["ct-narae", "ct-gaon"]);
+  assert.equal(saved.contactPhone, "010-3333-4444");
+  assert.equal(saved.contactEmail, "narae@example.com");
+  assert.equal(saved.contactRole, "연구소 / 책임");
+
+  const repeat = await createBrowser(Object.fromEntries(first.api.records));
+  t.after(() => repeat.dom.window.close());
+  repeat.dom.window.openDealDrawer("existing_accounts", "primary-deal");
+  const doc = repeat.dom.window.document;
+  assert.match(doc.querySelector('.tn-linked-contact-badge').parentElement.textContent, /김나래/);
+  doc.querySelector('[data-remove-contact="ct-narae"]').click();
+  await waitFor(() => repeat.api.records.get(key)[0].linkedContactIds.length === 1, "primary removal saved");
+  assert.equal(repeat.api.records.get(key)[0].contactPhone, "010-1111-2222");
+
+  const search = doc.querySelector('[data-contact-combo] input');
+  input(repeat.dom.window, search, "나래");
+  doc.querySelector('[data-contact-id="ct-narae"]').dispatchEvent(new repeat.dom.window.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  input(repeat.dom.window, doc.querySelector('#deal-drawer-body [data-f="contactPhone"]'), "02-1234-5678");
+  doc.querySelector('[data-primary-contact="ct-narae"]').click();
+  await waitFor(() => repeat.api.records.get(key)[0].linkedContactIds[0] === "ct-narae", "primary with override saved");
+  assert.equal(repeat.api.records.get(key)[0].contactPhone, "02-1234-5678");
+  assert.deepEqual(first.runtimeErrors.concat(repeat.runtimeErrors).map(error => error.message), []);
+});
+
+const calendarWorkRecords = {
+  "tinico:stage:existing_accounts": [{ id: "calendar-deal", title: "샘플 공급 협의", stage: "제안", internalOwner: "영업 담당", nextAction: "2026-09-15", action: "견적 전달" }],
+  "tinico:stage:roadmap": [{ id: "calendar-task", title: "샘플 자료 준비", status: "진행중", owner: "지원 담당", dueDate: "2026-09-14", nextAction: "자료 확인" }]
+};
+
+test("calendar owner and both work links persist, reload, and recover from a failed save", async (t) => {
+  const first = await createBrowser(calendarWorkRecords);
+  t.after(() => first.dom.window.close());
+  const { document: doc } = first.dom.window;
+  const change = (dom, id, value) => {
+    const el = dom.window.document.getElementById(id);
+    el.value = value;
+    el.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+  };
+  first.dom.window.openCalendarEventModal();
+  assert.equal(doc.getElementById("calendar-event-owner").value, "");
+  assert.equal(doc.getElementById("calendar-event-deal").value, "");
+  assert.ok([...doc.querySelectorAll('#calendar-event-owner-options option')].some(option => option.value === "영업 담당"));
+  input(first.dom.window, doc.getElementById("calendar-event-title"), "연관 업무 일정 검증");
+  input(first.dom.window, doc.getElementById("calendar-event-owner"), "새 일정 담당자");
+  change(first.dom, "calendar-event-deal", JSON.stringify(["existing_accounts", "calendar-deal"]));
+  change(first.dom, "calendar-event-task", "calendar-task");
+  assert.match(doc.getElementById("calendar-event-deal-preview").textContent, /제안[\s\S]*영업 담당[\s\S]*견적 전달/);
+  assert.match(doc.getElementById("calendar-event-task-preview").textContent, /진행중[\s\S]*지원 담당[\s\S]*자료 확인/);
+  assert.equal(doc.getElementById("calendar-event-owner").value, "새 일정 담당자", "choosing work must not overwrite an entered owner");
+  doc.getElementById("calendar-event-save").click();
+  const key = "tinico:calendar:events";
+  await waitFor(() => doc.getElementById("calendar-event-overlay").hidden, "event saved");
+  const saved = first.api.records.get(key)[0];
+  assert.equal(saved.owner, "새 일정 담당자");
+  assert.equal(saved.relatedAreaKey, "existing_accounts");
+  assert.equal(saved.relatedDealId, "calendar-deal");
+  assert.equal(saved.relatedTaskId, "calendar-task");
+  assert.match(doc.getElementById("calendar-upcoming-list").textContent, /새 일정 담당자[\s\S]*샘플 공급 협의[\s\S]*샘플 자료 준비/);
+
+  const repeat = await createBrowser(Object.fromEntries(first.api.records));
+  t.after(() => repeat.dom.window.close());
+  repeat.dom.window.openCalendarEventModal(saved.id);
+  const editDoc = repeat.dom.window.document;
+  assert.equal(editDoc.getElementById("calendar-event-owner").value, saved.owner);
+  assert.equal(editDoc.getElementById("calendar-event-deal").value, JSON.stringify([saved.relatedAreaKey, saved.relatedDealId]));
+  assert.equal(editDoc.getElementById("calendar-event-task").value, saved.relatedTaskId);
+  input(repeat.dom.window, editDoc.getElementById("calendar-event-owner"), "수정 담당자");
+  change(repeat.dom, "calendar-event-deal", "");
+  change(repeat.dom, "calendar-event-task", "");
+  repeat.api.failNextPut(key);
+  editDoc.getElementById("calendar-event-save").click();
+  await waitFor(() => !editDoc.getElementById("calendar-event-save").disabled, "failed save recovery");
+  assert.equal(editDoc.getElementById("calendar-event-overlay").hidden, false);
+  assert.equal(repeat.api.records.get(key)[0].owner, saved.owner);
+  assert.equal(repeat.api.records.get(key)[0].relatedTaskId, saved.relatedTaskId);
+  assert.equal(repeat.dom.window.eval("calendarEntries[0].relatedDealId"), saved.relatedDealId);
+  assert.equal(editDoc.getElementById("calendar-event-owner").value, "수정 담당자", "failed input retained for retry");
+  editDoc.getElementById("calendar-event-save").click();
+  await waitFor(() => editDoc.getElementById("calendar-event-overlay").hidden, "retry saved");
+  assert.equal(repeat.api.records.get(key)[0].owner, "수정 담당자");
+  assert.equal(repeat.api.records.get(key)[0].relatedAreaKey, "");
+  assert.equal(repeat.api.records.get(key)[0].relatedDealId, "");
+  assert.equal(repeat.api.records.get(key)[0].relatedTaskId, "");
+  repeat.dom.window.openCalendarEventModal();
+  assert.equal(editDoc.getElementById("calendar-event-owner").value, "", "new event does not inherit last edited fields");
+  assert.deepEqual(first.runtimeErrors.map(error => error.message), []);
+});
+
+test("calendar preserves missing work references and safely previews a moved deal", async (t) => {
+  const { dom, api, runtimeErrors } = await createBrowser({
+    "tinico:stage:sample_validation": [{ id: "moved-deal", title: '<img id="work-xss" src=x onerror=alert(1)>', stage: "제안" }],
+    "tinico:calendar:events": [{ id: "linked-event", title: "참고 일정", owner: "담당자", relatedAreaKey: "existing_accounts", relatedDealId: "moved-deal", relatedTaskId: "missing-task" }]
+  });
+  t.after(() => dom.window.close());
+  dom.window.openCalendarEventModal("linked-event");
+  const doc = dom.window.document;
+  assert.equal(doc.getElementById("calendar-event-deal").value, JSON.stringify(["sample_validation", "moved-deal"]));
+  assert.match(doc.getElementById("calendar-event-deal-preview").textContent, /<img/);
+  assert.equal(doc.getElementById("work-xss"), null);
+  assert.equal(doc.getElementById("calendar-event-task").value, "missing-task");
+  assert.match(doc.getElementById("calendar-event-task-preview").textContent, /찾을 수 없습니다/);
+  doc.getElementById("calendar-event-save").click();
+  await waitFor(() => doc.getElementById("calendar-event-overlay").hidden, "missing reference preserved");
+  assert.equal(api.records.get("tinico:calendar:events")[0].relatedTaskId, "missing-task");
+  assert.equal(api.records.get("tinico:calendar:events")[0].relatedAreaKey, "sample_validation");
+  assert.deepEqual(runtimeErrors.map(error => error.message), []);
+});
