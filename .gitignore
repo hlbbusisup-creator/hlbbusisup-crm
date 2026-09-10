@@ -5,3 +5,8 @@ node_modules/
 npm-debug.log*
 .DS_Store
 coverage/
+
+# 접속키·관리자 코드 메모는 저장소에 올리지 않습니다 (render.txt에 평문 연결키가 들어 있었습니다)
+render.txt
+*.secret
+*.key
