@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM 간편 모드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260805a">
+<link rel="stylesheet" href="styles.css?v=20260910b">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F3F4F6;padding:22px 14px 40px;">
@@ -247,6 +247,21 @@
           <tbody id="contact-tbody"></tbody>
         </table>
       </div>
+
+      <nav class="tn-pager" id="contact-pager" aria-label="연락처 목록 페이지 이동">
+        <button class="tn-pager-btn" id="contact-page-first" type="button" title="첫 페이지" aria-label="첫 페이지">&laquo;</button>
+        <button class="tn-pager-btn" id="contact-page-prev" type="button" title="이전 페이지" aria-label="이전 페이지">&lsaquo;</button>
+        <div class="tn-pager-numbers" id="contact-page-numbers"></div>
+        <button class="tn-pager-btn" id="contact-page-next" type="button" title="다음 페이지" aria-label="다음 페이지">&rsaquo;</button>
+        <button class="tn-pager-btn" id="contact-page-last" type="button" title="마지막 페이지" aria-label="마지막 페이지">&raquo;</button>
+        <select class="tn-pager-size" id="contact-page-size" aria-label="한 페이지에 표시할 줄 수">
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+        </select>
+        <span class="tn-pager-range" id="contact-page-range" aria-live="polite"></span>
+      </nav>
 
       <input type="file" id="contact-file-input" accept="image/*" hidden>
       <input type="file" id="contact-camera-input" accept="image/*" capture="environment" hidden>
@@ -930,6 +945,6 @@
 
 </div>
 
-<script src="app.js?v=20260805a"></script>
+<script src="app.js?v=20260910b"></script>
 </body>
 </html>

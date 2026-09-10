@@ -296,6 +296,23 @@
 #tn-root input.tn-contact-search{flex:1; min-width:220px; border:1px solid var(--line-200); border-radius:7px; padding:8px 12px; font-size:12.5px; font-family:inherit; background:#fff; color:var(--ink-900);}
 #tn-root input.tn-contact-search:focus{outline:none; border-color:var(--ink-900);}
 #tn-root select.tn-contact-sort{border:1px solid var(--line-200); border-radius:7px; padding:8px 10px; font-size:12px; font-weight:600; color:var(--ink-700); background:#fff; cursor:pointer; font-family:inherit;}
+/* ---------- 목록 페이지 이동(페이지네이션) ---------- */
+#tn-root .tn-pager{display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:14px;}
+#tn-root .tn-pager[hidden]{display:none;}
+#tn-root .tn-pager-numbers{display:flex; align-items:center; gap:4px;}
+#tn-root .tn-pager-btn{appearance:none; min-width:30px; height:30px; padding:0 7px; border:1px solid var(--line-200); border-radius:5px; background:#fff; color:var(--ink-700); font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; line-height:1; display:inline-flex; align-items:center; justify-content:center;}
+#tn-root .tn-pager-btn:hover:not(:disabled):not(.active){border-color:var(--accent); color:var(--accent);}
+#tn-root .tn-pager-btn.active{border-color:var(--accent); color:var(--accent); background:var(--accent-soft); cursor:default;}
+#tn-root .tn-pager-btn:disabled{color:var(--ink-300); cursor:not-allowed; background:var(--line-100);}
+#tn-root .tn-pager-gap{min-width:22px; text-align:center; color:var(--ink-300); font-size:12.5px; user-select:none;}
+#tn-root select.tn-pager-size{margin-left:6px; height:30px; border:1px solid var(--line-200); border-radius:5px; padding:0 6px; font-size:12.5px; font-weight:600; color:var(--ink-700); background:#fff; cursor:pointer; font-family:inherit;}
+#tn-root .tn-pager-range{margin-left:8px; font-size:12px; color:var(--ink-500);}
+@media (max-width:640px){
+  #tn-root .tn-pager{gap:3px;}
+  #tn-root .tn-pager-btn{min-width:34px; height:34px; font-size:13px;}
+  #tn-root select.tn-pager-size{height:34px;}
+  #tn-root .tn-pager-range{width:100%; margin:4px 0 0;}
+}
 #tn-root .tn-ocr-status{margin-bottom:12px; padding:10px 14px; border-radius:7px; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 #tn-root .tn-ocr-status[hidden]{display:none;}
 #tn-root .tn-ocr-status .tn-status-text{flex:1; min-width:180px;}

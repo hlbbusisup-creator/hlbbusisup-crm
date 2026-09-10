@@ -15,8 +15,8 @@ function normalizeStage(s){
 const MODULES = [
   {key:"home",     label:"대시보드"},
   {key:"pipeline", label:"파이프라인"},
-  {key:"contacts", label:"연락처"},
   {key:"roadmap",  label:"지원 업무"},
+  {key:"contacts", label:"연락처"},
   {key:"calendar", label:"캘린더"},
   {key:"settings", label:"설정"},
 ];
@@ -694,7 +694,7 @@ async function adminApiRequest(path,options={}){
   return payload;
 }
 
-const DEFAULT_APP_SETTINGS = {beginnerMode:true, onboardingSeen:false, lastBackupAt:"", dashboardCollapse:{today:false,groups:false}, dashboardOrder:["analytics","summary","today","ai","groups"], googleCalendar:{clientId:"",eventMap:{},collapsed:false}};
+const DEFAULT_APP_SETTINGS = {beginnerMode:true, onboardingSeen:false, lastBackupAt:"", dashboardCollapse:{today:false,groups:false}, dashboardOrder:["analytics","summary","today","ai","groups"], contactPageSize:20, googleCalendar:{clientId:"",eventMap:{},collapsed:false}};
 let appSettings = {...DEFAULT_APP_SETTINGS};
 let trashData = [];
 let undoTrashId = "";
@@ -733,7 +733,6 @@ async function saveTrash(){
   if(trashData.length>200) trashData.length=200;
   await storageSet("tinico:trash", trashData);
 }
-function helpButton(text){ return `<button class="tn-help" type="button" title="${escapeHtml(text)}" aria-label="도움말">?</button>`; }
 function activityDateValue(a){ return a && (a.date || a.createdAt || ""); }
 function normalizeActivity(a){ return {id:uid(), type:"기타", date:todayStr(), content:"", result:"", nextAction:"", nextDate:"", createdAt:nowIso(), ...a}; }
 function dealCompletion(item){
@@ -924,12 +923,6 @@ async function setBeginnerMode(on){
     showToast(error?.message||"모드 설정 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
   }
 }
-function backupObject(){
-  return {
-    tinikoCRMBackupVersion:2, exportedAt:nowIso(),
-    data:{appSettings, stages:STAGE_OPTIONS.map((label,idx)=>({key:label,label,color:STAGE_COLORS[label] || PALETTE[idx%PALETTE.length].color})), buckets:BUCKET_ORDER.map(key=>({...REVENUE_BUCKETS[key],weight:importanceConfig.bucketWeights[key] ?? REVENUE_BUCKETS[key].weight})), importanceConfig, areas:AREAS, stageData, roadmapData, manualSections, contactsData:stripContactImages(contactsData), calendarEntries, trashData}
-  };
-}
 async function exportFullBackup(){
   const button=document.getElementById("settings-backup-export");
   if(button){button.disabled=true;button.textContent="준비 중…";}
@@ -1021,9 +1014,7 @@ function bucketChipForKey(key, extraClass=""){
   return `<span class="tn-bucket-chip ${cls}${extraClass ? " " + extraClass : ""}" title="${escapeHtml(meta.desc)}">${escapeHtml(meta.label)}</span>`;
 }
 function bucketChipHtml(area, extraClass=""){
-  const key = areaBucketKey(area);
-  const meta = REVENUE_BUCKETS[key] || REVENUE_BUCKETS.future;
-  return bucketChipForKey(key, extraClass);
+  return bucketChipForKey(areaBucketKey(area), extraClass);
 }
 function cloneImportanceConfig(config){
   const base = JSON.parse(JSON.stringify(DEFAULT_IMPORTANCE_CONFIG));
@@ -1040,6 +1031,18 @@ function cloneImportanceConfig(config){
   });
   base.stageWeights = {...base.stageWeights, ...(src.stageWeights || {})};
   return base;
+}
+/* dealImportance()는 항목 하나하나, 그리고 렌더링할 때마다 호출된다. 그때마다 기본 설정을
+   통째로 깊은 복사하면 목록이 커질수록 렌더링이 눈에 띄게 느려지므로 정규화 결과를 캐시한다.
+   importanceConfig를 새 객체로 교체하면 자동으로, 직접 수정했다면 invalidateImportanceCache()로 무효화한다. */
+let importanceConfigCache = null;
+let importanceConfigCacheSource = null;
+function invalidateImportanceCache(){ importanceConfigCache = null; importanceConfigCacheSource = null; }
+function effectiveImportanceConfig(){
+  if(importanceConfigCache && importanceConfigCacheSource === importanceConfig) return importanceConfigCache;
+  importanceConfigCache = cloneImportanceConfig(importanceConfig);
+  importanceConfigCacheSource = importanceConfig;
+  return importanceConfigCache;
 }
 async function loadImportanceConfig(){
   importanceConfig = cloneImportanceConfig(await storageGet("tinico:importance:config"));
@@ -1107,6 +1110,7 @@ async function loadBucketSettings(){
       importanceConfig.bucketWeights[key] = REVENUE_BUCKETS[key].weight ?? 1;
     }
   });
+  invalidateImportanceCache();
 }
 async function saveBucketSettings(){
   await storageSet("tinico:settings:buckets", BUCKET_ORDER.map(key=>({
@@ -1315,6 +1319,23 @@ function showToast(message, type="warn", duration=6000){
   while(toastStackEl.children.length>3) toastStackEl.firstElementChild.remove();
   setTimeout(()=>item.remove(), duration);
 }
+/* PostgreSQL jsonb는 객체 키 순서를 보존하지 않으므로, 서버에서 읽어온 값과 정규화 결과를
+   단순 JSON.stringify로 비교하면 항상 다르다고 판정된다. 키를 정렬한 표준형으로 비교해
+   실제 내용이 같으면 불필요한 저장(왕복)을 건너뛴다. */
+function canonicalJson(value){
+  if(value === undefined) return "null";
+  if(Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+  if(value !== null && typeof value === "object"){
+    return "{" + Object.keys(value)
+      .filter(key=>value[key] !== undefined)
+      .sort()
+      .map(key=>JSON.stringify(key) + ":" + canonicalJson(value[key]))
+      .join(",") + "}";
+  }
+  return JSON.stringify(value ?? null);
+}
+function sameStoredValue(left, right){ return canonicalJson(left) === canonicalJson(right); }
+
 /* 타이핑마다 무거운 목록을 다시 그리지 않도록 검색 입력을 짧게 모아서 처리 */
 function debounce(fn, wait=200){
   let timer=null;
@@ -1326,12 +1347,11 @@ function debounce(fn, wait=200){
 
 /* ---------- 그룹 / 딜 데이터 ---------- */
 async function loadAreas(){
-  let areas = await storageGet("tinico:areas");
-  if(!areas){
-    areas = DEFAULT_AREAS.map(({seed, ...rest})=>rest);
-  }
-  areas = areas.map(normalizeArea);
-  await storageSet("tinico:areas", areas);
+  const stored = await storageGet("tinico:areas");
+  const source = stored || DEFAULT_AREAS.map(({seed, ...rest})=>rest);
+  const areas = source.map(normalizeArea);
+  /* 정규화 결과가 저장본과 같으면 접속할 때마다 같은 값을 다시 올리지 않는다 */
+  if(!sameStoredValue(stored, areas)) await storageSet("tinico:areas", areas);
   return areas;
 }
 async function saveAreas(){
@@ -1398,6 +1418,7 @@ async function cleanupLegacyDefaultPipelineItems(){
 
 async function loadStageItems(areaKey){
   let data = await storageGet("tinico:stage:" + areaKey);
+  const stored = data;
   if(!data){
     const defaultDef = DEFAULT_AREAS.find(a=>a.key === areaKey);
     data = [];
@@ -1414,7 +1435,7 @@ async function loadStageItems(areaKey){
     if(!validBucketKey(item.bucket)) item.bucket = areaBucketKey(area);
     return item;
   });
-  await storageSet("tinico:stage:" + areaKey, data);
+  if(!sameStoredValue(stored, data)) await storageSet("tinico:stage:" + areaKey, data);
   return data;
 }
 function normalizeSupportTask(raw){
@@ -1441,6 +1462,7 @@ function isSupportTaskDone(item){ return normalizeSupportTask(item).status === "
 async function saveRoadmapData(){ await storageSet("tinico:stage:roadmap", roadmapData); }
 async function loadRoadmap(){
   let data = await storageGet("tinico:stage:roadmap");
+  const stored = data;
   if(!Array.isArray(data)){
     data = [];
     for(const seedItem of ROADMAP_SEED){
@@ -1449,19 +1471,39 @@ async function loadRoadmap(){
     }
   }
   data = data.map(normalizeSupportTask);
-  await storageSet("tinico:stage:roadmap", data);
+  if(!sameStoredValue(stored, data)) await storageSet("tinico:stage:roadmap", data);
   return data;
 }
 function normalizeManualSection(raw, idx=0){
   const item = raw && typeof raw === "object" ? raw : {};
   return {id:item.id || uid(), category:item.category || "기타", title:item.title || "새 매뉴얼", format:item.format === "paragraph" ? "paragraph" : "list", content:String(item.content || ""), order:Number.isFinite(Number(item.order)) ? Number(item.order) : idx, updatedAt:item.updatedAt || nowIso()};
 }
+/* 매뉴얼 마이그레이션 표시 키 — 접속마다 하나씩 순차 조회하면 왕복이 그만큼 쌓이므로
+   한 번에 병렬로 읽고, 새로 기록할 표시도 마지막에 모아서 한 번에 저장한다. */
+const MANUAL_MIGRATION_KEYS = [
+  "tinico:manual:migration:calendar_v1",
+  "tinico:manual:migration:simple_ui_v4",
+  "tinico:manual:migration:calendar_crud_v1",
+  "tinico:manual:migration:illustrated_guide_202608_v1",
+  "tinico:manual:migration:admin_backup_audit_202608_v1",
+  "tinico:manual:migration:camera_ocr_202608_v1",
+  "tinico:manual:migration:google_light_sync_202608_v1",
+  "tinico:manual:migration:ui_reliability_202608_v1",
+  "tinico:manual:migration:calendar_fold_contact_activity_202608_v1",
+  "tinico:manual:migration:contact_paging_csv_202609_v1"
+];
 async function loadManualSections(){
-  let data = await storageGet("tinico:manual:sections");
+  const [stored, ...migrationFlagValues] = await Promise.all([
+    storageGet("tinico:manual:sections"),
+    ...MANUAL_MIGRATION_KEYS.map(key=>storageGet(key))
+  ]);
+  const migrationFlags = new Map(MANUAL_MIGRATION_KEYS.map((key, idx)=>[key, migrationFlagValues[idx]]));
+  const pendingMigrationWrites = [];
+  let data = stored;
   if(!Array.isArray(data) || !data.length) data = deepCopy(DEFAULT_MANUAL_SECTIONS);
   data = data.map(normalizeManualSection).sort((a,b)=>a.order-b.order);
   const migrationKey = "tinico:manual:migration:calendar_v1";
-  const migrated = await storageGet(migrationKey);
+  const migrated = migrationFlags.get(migrationKey);
   if(!migrated){
     ["manual_stages","manual_ai_knowledge","manual_calendar"].forEach(id=>{const def=DEFAULT_MANUAL_SECTIONS.find(x=>x.id===id);if(def&&!data.some(x=>x.id===id))data.push(normalizeManualSection(deepCopy(def),data.length));});
     const flow = data.find(x=>x.id === "manual_flow");
@@ -1470,10 +1512,10 @@ async function loadManualSections(){
     if(contacts && !/가로형 명함의 네 모서리/.test(contacts.content)) contacts.content = "카메라 스캔에서는 가로형 명함의 네 모서리를 프레임에 맞추고 카메라를 명함과 평행하게 유지합니다.\n반사광과 그림자를 줄이고 글자가 선명해진 상태에서 촬영해야 OCR 정확도가 높아집니다.\n" + contacts.content;
     const settings = data.find(x=>x.id === "manual_settings");
     if(settings && !/AI 봇은 현재 저장된 매뉴얼/.test(settings.content)) settings.content += "\nAI 봇은 현재 저장된 매뉴얼의 제목·분류·내용을 검색하므로 운영 기준을 변경하면 매뉴얼도 함께 수정합니다.";
-    await storageSet(migrationKey,{appliedAt:nowIso()});
+    pendingMigrationWrites.push([migrationKey,{appliedAt:nowIso()}]);
   }
   const uiManualMigrationKey = "tinico:manual:migration:simple_ui_v4";
-  const uiManualMigrated = await storageGet(uiManualMigrationKey);
+  const uiManualMigrated = migrationFlags.get(uiManualMigrationKey);
   if(!uiManualMigrated){
     const updatedIds = [];
     DEFAULT_MANUAL_SECTIONS.forEach(def=>{
@@ -1485,10 +1527,10 @@ async function loadManualSections(){
       }
       updatedIds.push(def.id);
     });
-    await storageSet(uiManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([uiManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
   }
   const calendarCrudManualMigrationKey = "tinico:manual:migration:calendar_crud_v1";
-  const calendarCrudManualMigrated = await storageGet(calendarCrudManualMigrationKey);
+  const calendarCrudManualMigrated = migrationFlags.get(calendarCrudManualMigrationKey);
   if(!calendarCrudManualMigrated){
     const updatedIds=[];
     ["manual_settings","manual_calendar"].forEach(id=>{
@@ -1498,10 +1540,10 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    await storageSet(calendarCrudManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([calendarCrudManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
   }
   const illustratedGuideManualMigrationKey = "tinico:manual:migration:illustrated_guide_202608_v1";
-  const illustratedGuideManualMigrated = await storageGet(illustratedGuideManualMigrationKey);
+  const illustratedGuideManualMigrated = migrationFlags.get(illustratedGuideManualMigrationKey);
   if(!illustratedGuideManualMigrated){
     const updatedIds=[];
     DEFAULT_MANUAL_SECTIONS.forEach(def=>{
@@ -1513,10 +1555,10 @@ async function loadManualSections(){
       }
       updatedIds.push(def.id);
     });
-    await storageSet(illustratedGuideManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([illustratedGuideManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
   }
   const adminBackupManualMigrationKey="tinico:manual:migration:admin_backup_audit_202608_v1";
-  const adminBackupManualMigrated=await storageGet(adminBackupManualMigrationKey);
+  const adminBackupManualMigrated=migrationFlags.get(adminBackupManualMigrationKey);
   if(!adminBackupManualMigrated){
     const updatedIds=[];
     ["manual_flow","manual_cloud_db","manual_settings","manual_operation","manual_troubleshooting"].forEach(id=>{
@@ -1526,10 +1568,10 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    await storageSet(adminBackupManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([adminBackupManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
   }
   const cameraOcrManualMigrationKey="tinico:manual:migration:camera_ocr_202608_v1";
-  const cameraOcrManualMigrated=await storageGet(cameraOcrManualMigrationKey);
+  const cameraOcrManualMigrated=migrationFlags.get(cameraOcrManualMigrationKey);
   if(!cameraOcrManualMigrated){
     const additions={
       manual_contacts:"[카메라 스캔 개선 안내]\n카메라를 처음 열 때 허용하면 같은 페이지를 열어 둔 동안 승인받은 스트림을 재사용합니다. 새로고침·브라우저 종료 뒤에도 계속 허용하려면 브라우저의 이 사이트 카메라 권한을 ‘허용’으로 설정합니다.\n조명 부족·강한 반사·흐림이 약 1초간 계속되면 화면 위쪽 팝업에서 원인과 조치 방법을 안내합니다. 흐릴 때는 명함 화면을 한 번 눌러 다시 초점을 맞춥니다.\n‘명함 촬영’을 누르면 그 순간의 프레임이 즉시 저장되고 화면이 닫힌 뒤 OCR이 이어집니다. OCR 결과는 원본 명함과 비교하여 확인합니다.",
@@ -1540,10 +1582,10 @@ async function loadManualSections(){
       if(existing){if(!existing.content.includes(content.split("\n")[0]))existing.content += "\n\n"+content;}
       else{const def=DEFAULT_MANUAL_SECTIONS.find(item=>item.id===id);if(def)data.push(normalizeManualSection(deepCopy(def),data.length));}
     });
-    await storageSet(cameraOcrManualMigrationKey,{appliedAt:nowIso(),updatedIds:Object.keys(additions)});
+    pendingMigrationWrites.push([cameraOcrManualMigrationKey,{appliedAt:nowIso(),updatedIds:Object.keys(additions)}]);
   }
   const googleLightSyncManualMigrationKey="tinico:manual:migration:google_light_sync_202608_v1";
-  const googleLightSyncManualMigrated=await storageGet(googleLightSyncManualMigrationKey);
+  const googleLightSyncManualMigrated=migrationFlags.get(googleLightSyncManualMigrationKey);
   if(!googleLightSyncManualMigrated){
     const updatedIds=[];
     ["manual_flow","manual_calendar","manual_troubleshooting"].forEach(id=>{
@@ -1553,10 +1595,10 @@ async function loadManualSections(){
       else data.push(normalizeManualSection(deepCopy(def),data.length));
       updatedIds.push(id);
     });
-    await storageSet(googleLightSyncManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([googleLightSyncManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
   }
   const uiReliabilityManualMigrationKey="tinico:manual:migration:ui_reliability_202608_v1";
-  const uiReliabilityManualMigrated=await storageGet(uiReliabilityManualMigrationKey);
+  const uiReliabilityManualMigrated=migrationFlags.get(uiReliabilityManualMigrationKey);
   if(!uiReliabilityManualMigrated){
     const id="manual_troubleshooting",def=DEFAULT_MANUAL_SECTIONS.find(item=>item.id===id);
     if(def){
@@ -1566,10 +1608,10 @@ async function loadManualSections(){
     }
     const reliability=data.find(item=>item.id===id);
     if(reliability&&!/저장 키 접두사/.test(reliability.content))reliability.content += "\n초기화 오류의 과거 원인 중 하나였던 카메라·Google 매뉴얼 저장 키 오타를 수정했습니다. 현재 버전은 모든 저장 키가 서버 승인 tinico: 접두사를 사용하는지 자동 테스트합니다.";
-    await storageSet(uiReliabilityManualMigrationKey,{appliedAt:nowIso(),updatedIds:[id]});
+    pendingMigrationWrites.push([uiReliabilityManualMigrationKey,{appliedAt:nowIso(),updatedIds:[id]}]);
   }
   const workflowUiManualMigrationKey="tinico:manual:migration:calendar_fold_contact_activity_202608_v1";
-  const workflowUiManualMigrated=await storageGet(workflowUiManualMigrationKey);
+  const workflowUiManualMigrated=migrationFlags.get(workflowUiManualMigrationKey);
   if(!workflowUiManualMigrated){
     const updatedIds=[];
     ["manual_flow","manual_pipeline"].forEach(id=>{
@@ -1585,14 +1627,24 @@ async function loadManualSections(){
     const contactsManual=data.find(item=>item.id==="manual_contacts");
     if(contactsManual&&!contactsManual.content.includes("고객 담당자 연락처 직접 입력"))contactsManual.content += "\n파이프라인 상세에서는 등록된 연락처를 선택하거나 ‘고객 담당자 직접 입력’과 ‘고객 담당자 연락처 직접 입력’에 이름과 전화번호를 직접 기록할 수 있습니다.";
     if(contactsManual)updatedIds.push("manual_contacts");
-    await storageSet(workflowUiManualMigrationKey,{appliedAt:nowIso(),updatedIds});
+    pendingMigrationWrites.push([workflowUiManualMigrationKey,{appliedAt:nowIso(),updatedIds}]);
+  }
+  const contactPagingManualMigrationKey="tinico:manual:migration:contact_paging_csv_202609_v1";
+  if(!migrationFlags.get(contactPagingManualMigrationKey)){
+    const addition="[목록 페이지와 리멤버 CSV 안내]\n연락처 목록은 한 화면에 20줄씩 보여 주고, 표 아래 페이지 번호로 이동합니다. « 첫 페이지, ‹ 이전, › 다음, » 마지막 페이지이며 오른쪽 드롭다운에서 20·30·40·50줄 중에 고를 수 있습니다. 고른 줄 수는 외부 DB에 저장되어 다음 접속에도 유지됩니다.\n표 머리글의 전체 선택은 지금 보고 있는 페이지의 연락처만 선택합니다. 다른 페이지까지 함께 선택하려면 페이지를 옮겨 다시 선택합니다.\n‘CSV 내보내기’는 리멤버의 Outlook CSV와 같은 열 구성으로 저장하므로 리멤버에 그대로 올릴 수 있습니다. 선택한 연락처가 있으면 그 연락처만, 없으면 전체를 내보냅니다.\n‘CSV 업로드’는 리멤버에서 내려받은 파일을 그대로 읽습니다. 이름·회사·부서·직함·휴대전화·이메일·등록일이 같은 칸으로 들어가며, 이메일이나 전화가 같은 연락처는 새로 만들지 않고 비어 있는 값만 채웁니다.";
+    const contactsManual=data.find(item=>item.id==="manual_contacts");
+    if(contactsManual){ if(!contactsManual.content.includes("[목록 페이지와 리멤버 CSV 안내]")) contactsManual.content += "\n\n"+addition; }
+    else{ const def=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_contacts"); if(def) data.push(normalizeManualSection(deepCopy(def),data.length)); }
+    pendingMigrationWrites.push([contactPagingManualMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts"]}]);
   }
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
     data.push(normalizeManualSection(deepCopy(cloudManualDef),data.length));
   }
   data.forEach((x,idx)=>x.order=idx);
-  await storageSet("tinico:manual:sections", data);
+  const writes = pendingMigrationWrites.map(([key,value])=>storageSet(key,value));
+  if(!sameStoredValue(stored, data)) writes.push(storageSet("tinico:manual:sections", data));
+  if(writes.length) await Promise.all(writes);
   return data;
 }
 async function saveManualSections(){
@@ -1995,7 +2047,7 @@ function pipeFilterState(){
   };
 }
 function pipeDeals(){
-  const {q, bucket, areaKey, owner, stage} = pipeFilterState();
+  const {q, bucket, areaKey, owner, stage, sort} = pipeFilterState();
   const list = [];
   AREAS.forEach(area=>{
     if(areaKey && area.key !== areaKey) return;
@@ -2008,7 +2060,6 @@ function pipeDeals(){
       list.push({area, item, stage: st, imp: dealImportance(item, area.key)});
     });
   });
-  const {sort} = pipeFilterState();
   if(sort === "importance") list.sort(compareImportanceDeals);
   else if(sort === "amount") list.sort((a,b)=>(parseFloat(b.item.amount)||0) - (parseFloat(a.item.amount)||0));
   else if(sort === "next") list.sort((a,b)=>(a.item.nextAction || "9999-12-31").localeCompare(b.item.nextAction || "9999-12-31"));
@@ -2377,7 +2428,8 @@ async function saveImportanceModal(){
 }
 
 async function saveAllStageData(){
-  for(const area of AREAS) await saveArea(area.key);
+  /* 그룹마다 저장 키가 달라 순차 대기할 이유가 없다 — 한 번에 올려 대기 시간을 줄인다 */
+  await Promise.all(AREAS.map(area=>saveArea(area.key)));
 }
 function refreshConfiguredViews(){
   AREAS.forEach(area=>{
@@ -2688,6 +2740,7 @@ async function saveBucketModal(){
     REVENUE_BUCKETS[key] = {...REVENUE_BUCKETS[key], label, desc, weight};
     importanceConfig.bucketWeights[key] = weight;
   }
+  invalidateImportanceCache();
   await saveBucketSettings();
   await saveImportanceConfig();
   closeBucketModal();
@@ -2705,6 +2758,7 @@ async function deleteBucketFromSettings(key){
   BUCKET_ORDER = BUCKET_ORDER.filter(k=>k !== key);
   delete REVENUE_BUCKETS[key];
   delete importanceConfig.bucketWeights[key];
+  invalidateImportanceCache();
   await saveAreas();
   await saveAllStageData();
   await saveBucketSettings();
@@ -3008,8 +3062,10 @@ async function deleteContactCardImageKey(id){
 async function loadContacts(){
   const data = (await storageGet("tinico:contacts")) || [];
   const contacts = data.map(c=>migrateSystemTextOutOfMemo(normalizeContact(c)));
-  /* 이전 버전에서 메모 칸에 자동 삽입된 OCR 원문을 별도 필드로 이동 */
-  const memoMigrated = JSON.stringify(contacts) !== JSON.stringify(data);
+  /* 이전 버전에서 메모 칸에 자동 삽입된 OCR 원문을 별도 필드로 이동.
+     jsonb는 객체 키 순서를 보존하지 않고 저장본에는 명함 원본이 빠져 있으므로,
+     저장 형태(썸네일까지)로 맞춘 뒤 키 정렬 표준형으로 비교해야 실제 변경만 감지된다. */
+  const memoMigrated = !sameStoredValue(stripContactImages(contacts), stripContactImages(data));
   /* 연락처 배열 안에 저장돼 있던 명함 원본을 연락처별 키로 분리 (최초 1회, 실패 시 다음 접속에서 재시도) */
   const legacyImages = contacts.filter(c=>typeof c.cardImage === "string" && c.cardImage.startsWith("data:"));
   if(legacyImages.length){
@@ -4316,7 +4372,7 @@ function renderContactDrawer(scrollIntoView=false){
         await saveContacts();
         if(contactsData.some(contact=>contact.id===ct.id))await syncLinkedDealsFromContact(ct);
         if(hint.isConnected){hint.textContent="저장됨";setTimeout(()=>{if(hint.isConnected)hint.textContent="";},1000);}
-        renderContactStats();renderContactTable(filteredContacts());renderHome();
+        renderContacts();renderHome();
       }catch(error){
         console.error("연락처 자동저장 실패",error);
         if(hint.isConnected)hint.textContent="저장 실패 · 다시 입력해 주세요";
@@ -4349,8 +4405,103 @@ function renderContactDrawer(scrollIntoView=false){
   if(scrollIntoView) drawer.querySelector(".tn-drawer-scroll").scrollTop=0;
 }
 function openContactDetail(ct){ selectedContactId=ct.id; renderContacts(); renderContactDrawer(true); }
-function closeContactDetail(){ selectedContactId=null; document.getElementById("contact-drawer").hidden=true; document.getElementById("contact-drawer-backdrop").hidden=true; document.getElementById("contact-drawer-body").innerHTML=""; renderContactTable(filteredContacts()); }
+function closeContactDetail(){ selectedContactId=null; document.getElementById("contact-drawer").hidden=true; document.getElementById("contact-drawer-backdrop").hidden=true; document.getElementById("contact-drawer-body").innerHTML=""; renderContacts(); }
 
+/* ---------- 연락처 목록 페이지 이동 ---------- */
+const CONTACT_PAGE_SIZES = [20, 30, 40, 50];
+let contactPage = 1;
+function contactPageSize(){
+  const saved = Number(appSettings.contactPageSize);
+  return CONTACT_PAGE_SIZES.includes(saved) ? saved : CONTACT_PAGE_SIZES[0];
+}
+function contactPageCount(total){ return Math.max(1, Math.ceil(total / contactPageSize())); }
+/* 현재 페이지에 보일 항목만 잘라 낸다. 검색·삭제로 목록이 줄면 마지막 페이지로 당겨 빈 화면을 막는다. */
+function contactPageItems(list){
+  const size = contactPageSize();
+  contactPage = Math.max(1, Math.min(contactPage, contactPageCount(list.length)));
+  const start = (contactPage - 1) * size;
+  return list.slice(start, start + size);
+}
+/* 첫·마지막 페이지는 항상 보여 주고 현재 페이지 주변을 최대 10개까지 나열, 끊긴 구간은 … 로 표시 */
+function contactPagerNumbers(current, pages){
+  const maxButtons = 10;
+  if(pages <= maxButtons) return Array.from({length: pages}, (_, index)=>index + 1);
+  const start = Math.max(1, Math.min(current - 4, pages - maxButtons + 1));
+  const end = Math.min(pages, start + maxButtons - 1);
+  const shown = new Set([1, pages]);
+  for(let page = start; page <= end; page++) shown.add(page);
+  const sorted = [...shown].sort((a, b)=>a - b);
+  const items = [];
+  sorted.forEach((page, index)=>{
+    if(index && page - sorted[index - 1] > 1) items.push("gap");
+    items.push(page);
+  });
+  return items;
+}
+function goToContactPage(page){
+  const next = Math.max(1, Math.min(contactPageCount(filteredContacts().length), Number(page) || 1));
+  if(next === contactPage) return;
+  contactPage = next;
+  renderContacts();
+  document.getElementById("contact-table-wrap")?.scrollIntoView({block:"start", behavior:"smooth"});
+}
+async function setContactPageSize(value){
+  const size = CONTACT_PAGE_SIZES.includes(Number(value)) ? Number(value) : CONTACT_PAGE_SIZES[0];
+  if(size === contactPageSize()) return;
+  const previous = appSettings.contactPageSize;
+  /* 저장 실패와 무관하게 화면을 먼저 반영하고, 실패하면 되돌린다 */
+  appSettings.contactPageSize = size;
+  contactPage = 1;
+  renderContacts();
+  try{
+    await saveAppSettings();
+  }catch(error){
+    appSettings.contactPageSize = previous;
+    renderContacts();
+    console.error("contact page size save failed", error);
+    showToast(error?.message || "표시 줄 수 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+  }
+}
+function renderContactPager(total){
+  const pager = document.getElementById("contact-pager");
+  if(!pager) return;
+  const size = contactPageSize();
+  const pages = contactPageCount(total);
+  const numbers = document.getElementById("contact-page-numbers");
+  numbers.innerHTML = "";
+  contactPagerNumbers(contactPage, pages).forEach(entry=>{
+    if(entry === "gap"){
+      const gap = document.createElement("span");
+      gap.className = "tn-pager-gap";
+      gap.textContent = "…";
+      gap.setAttribute("aria-hidden", "true");
+      numbers.appendChild(gap);
+      return;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "tn-pager-btn" + (entry === contactPage ? " active" : "");
+    button.dataset.page = String(entry);
+    button.textContent = String(entry);
+    if(entry === contactPage) button.setAttribute("aria-current", "page");
+    button.addEventListener("click", ()=>goToContactPage(entry));
+    numbers.appendChild(button);
+  });
+  document.getElementById("contact-page-first").disabled = contactPage <= 1;
+  document.getElementById("contact-page-prev").disabled = contactPage <= 1;
+  document.getElementById("contact-page-next").disabled = contactPage >= pages;
+  document.getElementById("contact-page-last").disabled = contactPage >= pages;
+  const sizeSelect = document.getElementById("contact-page-size");
+  if(sizeSelect && Number(sizeSelect.value) !== size) sizeSelect.value = String(size);
+  const range = document.getElementById("contact-page-range");
+  if(range){
+    const from = total ? (contactPage - 1) * size + 1 : 0;
+    const to = Math.min(total, contactPage * size);
+    range.textContent = total ? `${from}–${to} / 전체 ${total}명` : "표시할 연락처가 없습니다.";
+  }
+}
+/* 검색어·정렬을 바꾸면 결과가 완전히 달라지므로 첫 페이지부터 다시 본다 */
+function resetContactPage(){ contactPage = 1; renderContacts(); }
 function filteredContacts(){
   const q=(document.getElementById("contact-search").value||"").trim().toLowerCase();
   const sort=document.getElementById("contact-sort").value;
@@ -4371,11 +4522,16 @@ function renderContactStats(){
   el.innerHTML=`<span>전체 <b>${contactsData.length}</b>명</span><span>즐겨찾기 <b>${favs}</b></span><span>명함 보유 <b>${withCard}</b></span><span>회사 <b>${companies}</b>곳</span>${selected?`<span>선택 <b>${selected}</b>명</span>`:""}`;
   updateContactBulkDeleteButton();
 }
+/* 표 전체를 다시 그리지 않고 "모두 선택" 상태만 갱신 */
+function updateContactSelectAll(list){
+  const selectAll=document.getElementById("contact-select-all"); if(!selectAll) return;
+  const selectedVisible=list.filter(c=>selectedContactIds.has(c.id)).length;
+  selectAll.checked=list.length>0&&selectedVisible===list.length;
+  selectAll.indeterminate=selectedVisible>0&&selectedVisible<list.length;
+}
 function renderContactTable(list){
   const tbody=document.getElementById("contact-tbody"); tbody.innerHTML="";
-  const selectAll=document.getElementById("contact-select-all");
-  const selectedVisible=list.filter(c=>selectedContactIds.has(c.id)).length;
-  selectAll.checked=list.length>0&&selectedVisible===list.length; selectAll.indeterminate=selectedVisible>0&&selectedVisible<list.length;
+  updateContactSelectAll(list);
   if(!list.length){ const tr=document.createElement("tr"); tr.innerHTML=`<td colspan="7" style="text-align:center;color:var(--ink-300);padding:30px 10px;">연락처가 없습니다. 명함을 스캔하거나 CSV를 업로드해 보세요.</td>`; tbody.appendChild(tr); return; }
   const recent=document.getElementById("contact-sort").value==="recent";
   let lastDate=null;
@@ -4393,13 +4549,20 @@ function renderContactTable(list){
       <td><div class="tn-remember-main">${escapeHtml(ct.email)||"-"}</div></td>
       <td><div class="tn-row-actions"><button class="tn-fav-btn ${ct.fav?"on":""}" data-fav>★</button><button class="tn-row-del" data-del>×</button></div></td>`;
     tr.addEventListener("click",e=>{if(e.target.closest("[data-check],[data-fav],[data-del]"))return; openContactDetail(ct);});
-    tr.querySelector("[data-check]").addEventListener("change",e=>{e.stopPropagation(); if(e.target.checked)selectedContactIds.add(ct.id);else selectedContactIds.delete(ct.id); renderContactStats(); renderContactTable(filteredContacts());});
+    /* 체크 하나 때문에 목록 전체를 다시 만들지 않고 요약과 "모두 선택"만 갱신 */
+    tr.querySelector("[data-check]").addEventListener("change",e=>{e.stopPropagation(); if(e.target.checked)selectedContactIds.add(ct.id);else selectedContactIds.delete(ct.id); renderContactStats(); updateContactSelectAll(list);});
     tr.querySelector("[data-fav]").addEventListener("click",async e=>{e.stopPropagation();ct.fav=!ct.fav;await saveContacts();renderContacts();});
     tr.querySelector("[data-del]").addEventListener("click",async e=>{e.stopPropagation();if(!confirm("이 연락처를 휴지통으로 이동할까요?"))return;await moveContactsToTrash([ct.id]);});
     tbody.appendChild(tr);
   });
 }
-function renderContacts(){ renderContactStats(); renderContactTable(filteredContacts()); if(selectedContactId)renderContactDrawer(false); }
+function renderContacts(){
+  const list = filteredContacts();
+  renderContactStats();
+  renderContactTable(contactPageItems(list));
+  renderContactPager(list.length);
+  if(selectedContactId) renderContactDrawer(false);
+}
 
 function csvEscape(value){
   let v=String(value??"");
@@ -4504,7 +4667,11 @@ async function importContactsCsv(file){
       const obj={};headers.forEach((h,i)=>obj[h]=values[i]??""); const incoming=contactFromCsvObject(obj);
       if(!incoming.name&&!incoming.company&&!incoming.email&&!contactPrimaryPhone(incoming)){skipped++;continue;}
       const emailKey=normalizedIdentity(incoming.email), phoneKey=normalizedIdentity(contactPrimaryPhone(incoming));
-      const duplicate=contactsData.find(c=>(emailKey&&normalizedIdentity(c.email)===emailKey)||(phoneKey&&normalizedIdentity(contactPrimaryPhone(c))===phoneKey));
+      /* 메일·전화가 모두 없는 행(이름과 회사만 있는 명함)도 같은 파일을 다시 올렸을 때 중복되지 않게 이름+회사로 대조 */
+      const nameKey=!emailKey&&!phoneKey?normalizedIdentity(incoming.name)+"|"+normalizedIdentity(incoming.company):"";
+      const duplicate=contactsData.find(c=>(emailKey&&normalizedIdentity(c.email)===emailKey)
+        ||(phoneKey&&normalizedIdentity(contactPrimaryPhone(c))===phoneKey)
+        ||(nameKey&&nameKey!=="|"&&!normalizedIdentity(c.email)&&!normalizedIdentity(contactPrimaryPhone(c))&&normalizedIdentity(c.name)+"|"+normalizedIdentity(c.company)===nameKey));
       if(duplicate){if(mergeImportedContact(duplicate,incoming))updated++;else skipped++;}else{contactsData.push(incoming);added++;}
     }
     await saveContacts();renderContacts();renderHome();setOcrStatus(`CSV 업로드 완료: 신규 ${added}명, 기존 보완 ${updated}명, 건너뜀 ${skipped}명.`);setTimeout(()=>setOcrStatus(""),7000);
@@ -4533,7 +4700,7 @@ function dealImportance(item, areaKey){
   const stage = normalizeStage(item.stage);
   const area = findAreaByKey(areaKey);
   const bucket = itemBucketKey(item, area);
-  const cfg = cloneImportanceConfig(importanceConfig);
+  const cfg = effectiveImportanceConfig();
   const stageW = cfg.stageWeights[stage] || 1;
   const bucketW = cfg.bucketWeights[bucket] ?? 1;
   const score = amt * probFactor * stageW * bucketW;
@@ -6004,12 +6171,18 @@ async function init(){
     e.target.value = "";
     if(f) await handlePickedImage(f, {cameraFallback:true});
   });
-  document.getElementById("contact-search").addEventListener("input", debounce(renderContacts, 200));
-  document.getElementById("contact-sort").addEventListener("change", renderContacts);
+  document.getElementById("contact-search").addEventListener("input", debounce(resetContactPage, 200));
+  document.getElementById("contact-sort").addEventListener("change", resetContactPage);
+  /* "모두 선택"은 지금 보이는 페이지의 연락처만 대상으로 한다 */
   document.getElementById("contact-select-all").addEventListener("change", (e)=>{
-    filteredContacts().forEach(c=>{ if(e.target.checked) selectedContactIds.add(c.id); else selectedContactIds.delete(c.id); });
+    contactPageItems(filteredContacts()).forEach(c=>{ if(e.target.checked) selectedContactIds.add(c.id); else selectedContactIds.delete(c.id); });
     renderContacts();
   });
+  document.getElementById("contact-page-first").addEventListener("click", ()=>goToContactPage(1));
+  document.getElementById("contact-page-prev").addEventListener("click", ()=>goToContactPage(contactPage - 1));
+  document.getElementById("contact-page-next").addEventListener("click", ()=>goToContactPage(contactPage + 1));
+  document.getElementById("contact-page-last").addEventListener("click", ()=>goToContactPage(contactPageCount(filteredContacts().length)));
+  document.getElementById("contact-page-size").addEventListener("change", (e)=>setContactPageSize(e.target.value));
   document.getElementById("contact-csv-upload-btn").addEventListener("click", ()=>document.getElementById("contact-csv-input").click());
   document.getElementById("contact-csv-input").addEventListener("change", async (e)=>{
     const file=e.target.files[0]; e.target.value=""; if(file) await importContactsCsv(file);
