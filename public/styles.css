@@ -381,6 +381,25 @@
 #tn-root .tn-drawer-field input:hover,#tn-root .tn-drawer-field textarea:hover{background:var(--paper-0);}
 #tn-root .tn-drawer-field input:focus,#tn-root .tn-drawer-field textarea:focus{outline:none; border-color:var(--line-200); background:#fff;}
 #tn-root .tn-drawer-field textarea{min-height:84px; resize:vertical;}
+/* 고객 담당자 입력 콤보박스: 직접 입력 + 등록 연락처 자동 완성 */
+#tn-root .tn-combo{position:relative; min-width:0;}
+#tn-root .tn-drawer-field .tn-combo-input{padding-right:26px;}
+#tn-root .tn-combo-toggle{position:absolute; top:3px; right:3px; width:20px; height:22px; display:flex; align-items:center; justify-content:center; appearance:none; border:0; background:transparent; color:var(--ink-300); font-size:11px; line-height:1; cursor:pointer; border-radius:4px; font-family:inherit;}
+#tn-root .tn-combo-toggle:hover{color:var(--ink-700); background:var(--line-100);}
+#tn-root .tn-combo-list{position:absolute; z-index:40; top:calc(100% + 2px); left:0; right:0; max-height:236px; overflow-y:auto; padding:4px; background:#fff; border:1px solid var(--line-200); border-radius:7px; box-shadow:0 10px 24px rgba(17,24,39,.14);}
+#tn-root .tn-combo-list[hidden]{display:none;}
+#tn-root .tn-combo-option{display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:5px; cursor:pointer;}
+#tn-root .tn-combo-option b{font-size:12.5px; font-weight:700; color:var(--ink-900);}
+#tn-root .tn-combo-option span{font-size:11px; color:var(--ink-500);}
+#tn-root .tn-combo-option:hover,#tn-root .tn-combo-option.active{background:var(--accent-soft);}
+#tn-root .tn-combo-option.active b{color:var(--accent);}
+#tn-root .tn-combo-empty{padding:8px; font-size:11.5px; color:var(--ink-500);}
+#tn-root .tn-combo-note{margin-top:3px; min-height:14px; font-size:10.5px; color:var(--ink-300);}
+#tn-root .tn-combo-note.linked{color:var(--accent); font-weight:600;}
+@media (max-width:640px){
+  #tn-root .tn-combo-option{padding:9px 10px;}
+  #tn-root .tn-combo-toggle{width:26px; height:26px; font-size:13px;}
+}
 #tn-root .tn-drawer-group-input{width:100%; border:1px solid var(--line-200); border-radius:7px; padding:8px 10px; font-size:12.5px; font-family:inherit;}
 #tn-root .tn-drawer-group-hint{font-size:10.5px; color:var(--ink-300); margin-top:5px;}
 #tn-root .tn-drawer-footer{display:flex; gap:7px; flex-wrap:wrap; margin-top:18px;}
@@ -752,7 +771,6 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
 #tn-root .tn-activity-result{font-size:10.8px;color:var(--ink-500);margin-top:3px;}
 #tn-root .tn-activity-del{position:absolute;right:0;top:0;border:none;background:transparent;color:var(--ink-300);cursor:pointer;border-radius:4px;}
 #tn-root .tn-activity-del:hover{background:var(--danger-100);color:var(--danger-500);}
-#tn-root .tn-linked-select{min-height:92px!important;}
 #tn-root .tn-linked-deals{display:flex;flex-direction:column;gap:6px;}
 #tn-root .tn-linked-deal{display:flex;align-items:center;gap:8px;border:1px solid var(--line-100);border-radius:7px;padding:8px 9px;}
 #tn-root .tn-linked-deal-main{flex:1;min-width:0;}
@@ -985,7 +1003,6 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
 #tn-root .tn-drawer-fields{gap:14px;}
 #tn-root .tn-drawer-field{grid-template-columns:145px minmax(0,1fr);gap:14px;align-items:center;}
 #tn-root .tn-drawer-field label{font-size:15px;margin:0;}
-#tn-root .tn-linked-select{min-height:112px;}
 #tn-root .tn-guide-box{font-size:14px;padding:12px 14px;}
 #tn-root .tn-drawer-group-hint{font-size:13px;}
 #tn-root .tn-activity{padding:15px;border-radius:10px;}
