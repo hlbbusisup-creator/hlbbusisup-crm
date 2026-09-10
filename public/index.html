@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM 간편 모드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260910d">
+<link rel="stylesheet" href="styles.css?v=20260910e">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F3F4F6;padding:22px 14px 40px;">
@@ -538,6 +538,18 @@
       </div>
       <label>장소</label>
       <input type="text" id="calendar-event-location" placeholder="예: HLB-현장지원팀 회의실 또는 온라인">
+      <label for="calendar-event-owner">담당자</label>
+      <input type="text" id="calendar-event-owner" list="calendar-event-owner-options" placeholder="담당자 이름을 입력하거나 선택하세요" autocomplete="off">
+      <datalist id="calendar-event-owner-options"></datalist>
+      <fieldset class="tn-calendar-relations">
+        <legend>연관 업무 <span>선택 사항</span></legend>
+        <label for="calendar-event-deal">파이프라인</label>
+        <select id="calendar-event-deal" aria-describedby="calendar-event-deal-preview"></select>
+        <div class="tn-calendar-work-preview" id="calendar-event-deal-preview" aria-live="polite" hidden></div>
+        <label for="calendar-event-task">지원 업무</label>
+        <select id="calendar-event-task" aria-describedby="calendar-event-task-preview"></select>
+        <div class="tn-calendar-work-preview" id="calendar-event-task-preview" aria-live="polite" hidden></div>
+      </fieldset>
       <label>상세 내용</label>
       <textarea id="calendar-event-description" placeholder="준비사항, 참석자, 안건 등을 입력하세요."></textarea>
       <div class="tn-calendar-sync-state" id="calendar-event-sync-state"></div>
@@ -945,6 +957,6 @@
 
 </div>
 
-<script src="app.js?v=20260910d"></script>
+<script src="app.js?v=20260910e"></script>
 </body>
 </html>

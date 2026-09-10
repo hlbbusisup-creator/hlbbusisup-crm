@@ -1673,6 +1673,15 @@ async function loadManualSections(){
     });
     pendingMigrationWrites.push([dealContactMultiMigrationKey,{appliedAt:nowIso(),updatedIds:["manual_contacts","manual_pipeline"]}]);
   }
+  const featureGuides={
+    manual_contacts:"[대표 담당자 지정] 선택한 담당자 중 ‘대표로 지정’을 누르면 그 사람이 맨 위로 이동하고 대표로 저장됩니다. 자동으로 채워진 직함·연락처·이메일도 새 대표 기준으로 바뀌며, 직접 수정한 값은 유지됩니다. 대표를 해제하면 다음 담당자가 대표가 됩니다.",
+    manual_pipeline:"[대표 담당자 지정] ‘선택한 담당자’의 ‘대표로 지정’ 버튼으로 대표를 변경합니다. 지정한 담당자는 맨 위로 이동하며 다시 접속해도 유지됩니다.",
+    manual_calendar:"[일정 담당자와 연관 업무] 새 일정 또는 일정 수정에서 담당자를 직접 입력하거나 기존 업무 담당자 목록에서 선택합니다. 연관 업무의 파이프라인과 지원 업무를 각각 선택하면 상태·담당자·연락일 또는 마감일·다음 할 일을 참고할 수 있습니다. 두 업무를 함께 연결하거나 ‘연결 안 함’을 선택할 수 있습니다. 일정의 담당자는 업무 선택으로 바뀌지 않습니다. 원본 업무가 이동되면 유일한 ID로 찾아 표시하고, 삭제된 업무는 찾을 수 없다는 안내와 함께 연결을 유지합니다. 이 정보는 CRM 일정에 저장됩니다."
+  };
+  Object.entries(featureGuides).forEach(([id,guide])=>{
+    const section=data.find(item=>item.id===id);
+    if(section&&!section.content.includes(guide))section.content+="\n"+guide;
+  });
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
     data.push(normalizeManualSection(deepCopy(cloudManualDef),data.length));
@@ -2006,6 +2015,17 @@ function renderDealDrawer(resetScroll){
     const roleInput=body.querySelector('[data-f="contactRole"]'); if(roleInput)roleInput.value=item.contactRole||"";
     const emailInput=body.querySelector('[data-f="contactEmail"]'); if(emailInput)emailInput.value=item.contactEmail||"";
   }
+  function setPrimaryContact(id){
+    const previousFirst=linkedContacts()[0]||null;
+    if(previousFirst?.id===id || !linkedContacts().some(ct=>ct.id===id))return;
+    // 기존 첫 번째 ID를 대표로 읽는 저장·동기화 경로와 동일한 순서를 유지한다.
+    item.linkedContactIds=[id,...item.linkedContactIds.filter(value=>value!==id)];
+    applyLinkedContactMirror(previousFirst);
+    syncContactFields();
+    renderLinkedContacts();
+    closeContactCombo();
+    persist();
+  }
   function renderLinkedContacts(){
     const linked=linkedContacts();
     linkedWrap.innerHTML="";
@@ -2020,6 +2040,16 @@ function renderDealDrawer(resetScroll){
       const detail=[ct.company,[ct.department,ct.jobTitle].filter(Boolean).join(" / ")].filter(Boolean).join(" · ");
       row.innerHTML=`<div class="tn-linked-contact-main"><div class="tn-linked-contact-name">${escapeHtml(ct.name||"이름 없는 연락처")}${index===0?'<span class="tn-linked-contact-badge" title="대표 담당자의 직함·연락처·이메일이 위 입력칸에 반영됩니다">대표</span>':""}</div><div class="tn-linked-contact-sub">${escapeHtml(detail||"소속 정보 없음")}</div></div><div class="tn-linked-contact-phone${phone?"":" missing"}">${escapeHtml(phone||"연락처 미입력")}</div><button class="tn-linked-contact-remove" type="button" data-remove-contact="${escapeHtml(ct.id)}" title="선택 해제" aria-label="${escapeHtml((ct.name||"담당자")+" 선택 해제")}">×</button>`;
       row.querySelector("[data-remove-contact]").addEventListener("click",()=>removeLinkedContact(ct.id));
+      if(index>0){
+        const primaryButton=document.createElement("button");
+        primaryButton.type="button";
+        primaryButton.className="tn-linked-contact-primary";
+        primaryButton.dataset.primaryContact=ct.id;
+        primaryButton.textContent="대표로 지정";
+        primaryButton.setAttribute("aria-label",`${ct.name||"이름 없는 연락처"} 대표로 지정`);
+        primaryButton.addEventListener("click",()=>setPrimaryContact(ct.id));
+        row.querySelector(".tn-linked-contact-main").appendChild(primaryButton);
+      }
       linkedWrap.appendChild(row);
     });
   }
@@ -5676,6 +5706,10 @@ function normalizeCalendarEntry(raw){
     endTime:validCalendarTime(item.endTime,"10:00"),
     location:String(item.location||""),
     description:String(item.description||""),
+    owner:String(item.owner||""),
+    relatedAreaKey:String(item.relatedAreaKey||""),
+    relatedDealId:String(item.relatedDealId||""),
+    relatedTaskId:String(item.relatedTaskId||""),
     googleEventId:String(item.googleEventId||""),
     googleHtmlLink:String(item.googleHtmlLink||""),
     googlePayloadHash:String(item.googlePayloadHash||""),
@@ -5685,6 +5719,86 @@ function normalizeCalendarEntry(raw){
     updatedAt:item.updatedAt||nowIso()
   };
 }
+function calendarRelatedDeal(item){
+  if(!item.relatedDealId)return null;
+  const deals=allDeals();
+  const exact=deals.find(({area,item:deal})=>area.key===item.relatedAreaKey && deal.id===item.relatedDealId);
+  if(exact)return exact;
+  // 다른 그룹으로 이동한 항목도 ID가 유일하면 계속 참조한다.
+  const matches=deals.filter(({item:deal})=>deal.id===item.relatedDealId);
+  return matches.length===1?matches[0]:null;
+}
+function calendarRelatedTask(item){return roadmapData.find(task=>task.id===item.relatedTaskId)||null;}
+function calendarWorkSummary(item){
+  const parts=[];
+  if(item.relatedDealId){
+    const deal=calendarRelatedDeal(item);
+    parts.push(deal?`파이프라인: ${deal.item.title||"제목 없는 항목"}`:"파이프라인: 연결된 항목을 찾을 수 없습니다");
+  }
+  if(item.relatedTaskId){
+    const task=calendarRelatedTask(item);
+    parts.push(task?`지원 업무: ${task.title||"제목 없는 업무"}`:"지원 업무: 연결된 업무를 찾을 수 없습니다");
+  }
+  return parts;
+}
+function readCalendarWorkSelection(){
+  let pair=[];
+  try{pair=JSON.parse(document.getElementById("calendar-event-deal").value||"[]");}catch(e){}
+  const valid=Array.isArray(pair)&&pair.length===2&&pair.every(value=>typeof value==="string");
+  return {
+    relatedAreaKey:valid?pair[0]:"",
+    relatedDealId:valid?pair[1]:"",
+    relatedTaskId:document.getElementById("calendar-event-task").value
+  };
+}
+function renderCalendarWorkPreview(){
+  const selected=readCalendarWorkSelection();
+  const deal=calendarRelatedDeal(selected),task=calendarRelatedTask(selected);
+  const dealBox=document.getElementById("calendar-event-deal-preview");
+  const taskBox=document.getElementById("calendar-event-task-preview");
+  dealBox.hidden=!selected.relatedDealId;
+  taskBox.hidden=!selected.relatedTaskId;
+  dealBox.textContent=deal?[
+    deal.item.title||"제목 없는 항목",
+    `그룹: ${deal.area.title} · 단계: ${normalizeStage(deal.item.stage)}`,
+    `담당자: ${deal.item.internalOwner||"미지정"} · 다음 연락일: ${deal.item.nextAction||"미지정"}`,
+    `다음 할 일: ${deal.item.action||"미입력"}`
+  ].join("\n"):"연결된 파이프라인 항목을 찾을 수 없습니다. 연결을 유지하거나 다른 항목을 선택할 수 있습니다.";
+  taskBox.textContent=task?[
+    task.title||"제목 없는 업무",
+    `상태: ${task.status} · 담당자: ${effectiveSupportTaskOwner(task)||"미지정"}`,
+    `마감일: ${task.dueDate||"미지정"}`,
+    `다음 할 일: ${task.nextAction||task.deliverable||"미입력"}`
+  ].join("\n"):"연결된 지원 업무를 찾을 수 없습니다. 연결을 유지하거나 다른 업무를 선택할 수 있습니다.";
+}
+function populateCalendarWorkFields(item={}){
+  const dealSelect=document.getElementById("calendar-event-deal");
+  const taskSelect=document.getElementById("calendar-event-task");
+  function option(select,value,label){
+    const el=document.createElement("option");el.value=value;el.textContent=label;select.appendChild(el);
+  }
+  dealSelect.replaceChildren();taskSelect.replaceChildren();
+  option(dealSelect,"","연결 안 함");option(taskSelect,"","연결 안 함");
+  allDeals().forEach(({area,item:deal})=>{
+    option(dealSelect,JSON.stringify([area.key,deal.id]),`${area.title} / ${deal.title||"제목 없는 항목"} · ${deal.internalOwner||"담당자 미지정"}`);
+  });
+  roadmapData.forEach(task=>option(taskSelect,task.id,`${task.title||"제목 없는 업무"} · ${effectiveSupportTaskOwner(task)||"담당자 미지정"}`));
+  if(item.relatedDealId){
+    const found=calendarRelatedDeal(item);
+    const value=JSON.stringify([found?found.area.key:item.relatedAreaKey||"",item.relatedDealId]);
+    if(!found)option(dealSelect,value,"연결된 파이프라인 항목을 찾을 수 없습니다");
+    dealSelect.value=value;
+  }
+  if(item.relatedTaskId){
+    if(!calendarRelatedTask(item))option(taskSelect,item.relatedTaskId,"연결된 지원 업무를 찾을 수 없습니다");
+    taskSelect.value=item.relatedTaskId;
+  }
+  const owners=document.getElementById("calendar-event-owner-options");
+  owners.replaceChildren();
+  const names=[item.owner,...calendarEntries.map(entry=>entry.owner),...allDeals().map(deal=>deal.item.internalOwner),...roadmapData.map(effectiveSupportTaskOwner)];
+  [...new Set(names.map(value=>String(value||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ko")).forEach(name=>option(owners,name,name));
+  renderCalendarWorkPreview();
+}
 async function loadCalendarEntries(){
   const data=await storageGet("tinico:calendar:events");
   return Array.isArray(data)?data.map(normalizeCalendarEntry):[];
@@ -5693,7 +5807,7 @@ async function saveCalendarEntries(){await storageSet("tinico:calendar:events",c
 function calendarEntryDetail(item){
   const time=item.allDay?"종일":`종료 ${item.endTime}`;
   const description=String(item.description||"").replace(/\s+/g," ").trim();
-  return [time,item.location,description].filter(Boolean).join(" · ");
+  return [time,item.owner?`담당자: ${item.owner}`:"",...calendarWorkSummary(item),item.location,description].filter(Boolean).join(" · ");
 }
 function manualCalendarSourceEvents(){
   return calendarEntries.map(item=>({
@@ -5927,6 +6041,8 @@ function openCalendarEventModal(id="",presetDate=""){
   document.getElementById("calendar-event-end-time").value=item?.endTime||"10:00";
   document.getElementById("calendar-event-location").value=item?.location||"";
   document.getElementById("calendar-event-description").value=item?.description||"";
+  document.getElementById("calendar-event-owner").value=item?.owner||"";
+  populateCalendarWorkFields(item||{});
   document.getElementById("calendar-event-delete").hidden=!item;
   document.getElementById("calendar-event-overlay").hidden=false;
   toggleCalendarEventTimeFields();updateCalendarEventSyncState();
@@ -5945,6 +6061,7 @@ async function saveCalendarEventModal(){
     let item=calendarEntries.find(x=>x.id===editingCalendarEventId);
     if(!item){item=normalizeCalendarEntry({id:uid(),createdAt:nowIso()});calendarEntries.push(item);editingCalendarEventId=item.id;}
     Object.assign(item,{title,date,allDay,startTime:validCalendarTime(startTime,"09:00"),endTime:validCalendarTime(endTime,"10:00"),location:document.getElementById("calendar-event-location").value.trim(),description:document.getElementById("calendar-event-description").value.trim(),googleSyncPending:true,updatedAt:nowIso()});
+    Object.assign(item,{owner:document.getElementById("calendar-event-owner").value.trim(),...readCalendarWorkSelection()});
     try{
       await saveCalendarEntries();
     }catch(error){
@@ -6016,6 +6133,8 @@ function initializeCalendarUi(){
   document.getElementById("calendar-today").addEventListener("click",()=>{const d=new Date();calendarCursor=new Date(d.getFullYear(),d.getMonth(),1);googleCalendarEvents=[];googleCalendarLoadedMonth="";renderCalendar();if(googleCalendarTokenValid())loadGoogleCalendarEvents(false,false);});
   document.getElementById("calendar-add").addEventListener("click",()=>openCalendarEventModal("",calendarDateKey(new Date())));
   document.getElementById("calendar-event-all-day").addEventListener("change",toggleCalendarEventTimeFields);
+  document.getElementById("calendar-event-deal").addEventListener("change",renderCalendarWorkPreview);
+  document.getElementById("calendar-event-task").addEventListener("change",renderCalendarWorkPreview);
   document.getElementById("calendar-event-cancel").addEventListener("click",closeCalendarEventModal);
   document.getElementById("calendar-event-save").addEventListener("click",saveCalendarEventModal);
   document.getElementById("calendar-event-delete").addEventListener("click",deleteCalendarEventModal);
