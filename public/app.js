@@ -857,14 +857,15 @@ async function emptyTrash(){
 }
 async function moveDealToTrash(areaKey,id){
   const found = findDeal(areaKey,id); if(!found) return;
-  cancelDealDrawerAutosave(areaKey,id);
+  if(dealDrafts.get(dealDrawerSaveKey(areaKey,id))?.saving){showToast("저장 완료 후 삭제해 주세요.");return;}
   const previousStage = stageData[areaKey];
   const previousTrash = [...trashData];
   try{
     await addTrash("deal", found.item.title || "영업 항목", found.item, {areaKey});
     stageData[areaKey] = stageData[areaKey].filter(x=>x.id !== id);
     await saveArea(areaKey);
-    if(selectedDealRef && selectedDealRef.id === id) closeDealDrawer();
+    dealDrafts.delete(dealDrawerSaveKey(areaKey,id));
+    if(selectedDealRef && selectedDealRef.id === id) closeDealDrawer(true);
   }catch(error){
     stageData[areaKey] = previousStage;
     trashData = previousTrash;
@@ -875,7 +876,7 @@ async function moveDealToTrash(areaKey,id){
 }
 async function moveContactsToTrash(ids){
   const idSet = new Set(ids);
-  ids.forEach(cancelContactDrawerAutosave);
+  if(ids.some(id=>contactDrafts.get(id)?.saving)){showToast("저장 완료 후 삭제해 주세요.");return;}
   const targets = contactsData.filter(c=>idSet.has(c.id));
   if(!targets.length) return;
   const previousTrash = [...trashData];
@@ -888,8 +889,9 @@ async function moveContactsToTrash(ids){
     await saveTrash();
     contactsData = contactsData.filter(c=>!idSet.has(c.id));
     selectedContactIds.clear();
-    if(selectedContactId && idSet.has(selectedContactId)) closeContactDetail();
     await saveContacts();
+    ids.forEach(id=>contactDrafts.delete(id));
+    if(selectedContactId && idSet.has(selectedContactId)) closeContactDetail(true);
     showUndo(`연락처 ${targets.length}개를 휴지통으로 이동했습니다.`, entries[0]?.id || "");
   }catch(error){
     trashData = previousTrash;
@@ -1682,6 +1684,18 @@ async function loadManualSections(){
     const section=data.find(item=>item.id===id);
     if(section&&!section.content.includes(guide))section.content+="\n"+guide;
   });
+  const saveGuide="파이프라인·연락처는 입력 후 상단 ‘저장’을 눌러야 반영됩니다. 파이프라인 표에서는 행별 ‘저장’을 사용합니다. 신규 항목, 담당자 선택·대표 변경, 명함 인식 결과도 저장 전까지 임시 입력입니다. ‘취소’나 닫기를 누르면 미저장 변경을 버릴지 확인하며, ‘저장 실패’가 보이면 입력을 유지한 채 ‘저장’을 다시 누릅니다.";
+  data.forEach(section=>{
+    if(!["manual_flow","manual_terms","manual_pipeline","manual_contacts","manual_troubleshooting"].includes(section.id))return;
+    section.content=section.content.split("\n").map(line=>{
+      if(/자동.?저장|진행 중인 저장은 완료된 뒤 닫/.test(line))return saveGuide;
+      return line.replace("저장과 문자 인식은 이어서 진행되므로 연락처 화면의 인식 상태를 확인합니다.","문자 인식 결과를 확인한 뒤 연락처의 ‘저장’을 눌러 등록합니다.");
+    }).filter((line,index,lines)=>line!==saveGuide||lines.indexOf(line)===index).join("\n");
+    if(!section.content.includes(saveGuide))section.content+="\n"+saveGuide;
+  });
+  const pipelineManual=data.find(section=>section.id==="manual_pipeline");
+  const kpiGuide="[파이프라인 분석 목록] 대시보드의 수주율·활성 항목 비중·후속조치 지연·실행과제 완료를 누르면 계산 대상 목록이 열립니다. 수주율은 수주·보류·실주, 실행과제 완료는 전체 과제의 상태를 표시하며 각 항목을 눌러 상세 화면으로 이동합니다. 보드에서 카드를 끌어 단계를 바꾼 뒤에는 상세 화면에서 저장해야 반영됩니다.";
+  if(pipelineManual&&!pipelineManual.content.includes(kpiGuide))pipelineManual.content+="\n"+kpiGuide;
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
     data.push(normalizeManualSection(deepCopy(cloudManualDef),data.length));
@@ -1700,8 +1714,6 @@ async function saveManualSections(){
 /* ---------- 딜 공통 저장/헬퍼 ---------- */
 function saveArea(areaKey){ return storageSet("tinico:stage:" + areaKey, stageData[areaKey]); }
 function findAreaByKey(key){ return AREAS.find(a=>a.key === key); }
-let homeRefreshTimer;
-function scheduleHomeRefresh(){ clearTimeout(homeRefreshTimer); homeRefreshTimer = setTimeout(()=>renderHome(), 900); }
 function simpleImportanceLabel(level){ return ({high:"높음",mid:"중간",low:"낮음"})[level] || "낮음"; }
 function simpleImportancePillHtml(imp){
   const level=["high","mid","low"].includes(imp && imp.level) ? imp.level : "low";
@@ -1715,7 +1727,101 @@ function applyPipelineStageStyle(select, stage){
 }
 
 /* ---------- 딜 행 렌더러 (그룹 페이지·파이프라인 목록 공용) ---------- */
+/* 편집본은 화면에서만 사용한다. DB 저장 성공 전에는 집계·내보내기 원본에 넣지 않는다. */
+const dealDrafts=new Map(),contactDrafts=new Map(),editSaveQueues=new Map();
+function draftChanges(base,value){
+  return Object.fromEntries(Object.entries(value).filter(([key,v])=>key!=="cardImage"&&!sameStoredValue(base?.[key],v)));
+}
+function editDraft(map,key,original,seed){
+  let draft=map.get(key);
+  if(!draft){
+    if(!original&&!seed)return null;
+    draft={base:deepCopy(original||{}),value:deepCopy(original||seed),isNew:!original,saving:false,message:""};map.set(key,draft);
+  }else if(original&&!draft.saving&&!sameStoredValue(original,draft.base)){
+    const changes=draftChanges(draft.base,draft.value);
+    const pendingImage=draft.pendingImage?draft.value.cardImage:null;
+    Object.assign(draft.value,deepCopy(original),changes);if(pendingImage)draft.value.cardImage=pendingImage;
+    draft.base=deepCopy(original);
+  }
+  return draft;
+}
+function dealDraft(areaKey,id,seed){return editDraft(dealDrafts,dealDrawerSaveKey(areaKey,id),findDeal(areaKey,id)?.item,seed);}
+function contactDraft(id,seed){return editDraft(contactDrafts,id,contactsData.find(c=>c.id===id),seed);}
+function draftDirty(draft){return !!draft&&(draft.isNew||!!draft.pendingImage||Object.keys(draftChanges(draft.base,draft.value)).length>0);}
+function updateEditStatus(kind,draft){
+  const dirty=draftDirty(draft)||draft?.syncPending,saving=!!draft?.saving,processing=!!draft?.processing;
+  const button=document.getElementById(`${kind}-drawer-save`);
+  button.disabled=saving||processing||!dirty;button.textContent=saving?"저장 중…":"저장";
+  document.getElementById(`${kind}-save-status`).textContent=draft?.message||(processing?"명함 인식 중…":saving?"저장 중…":dirty?"미저장 변경":"저장됨");
+  document.getElementById(`${kind}-drawer-cancel`).disabled=saving;
+  document.getElementById(`${kind}-drawer-body`).inert=saving;
+}
+function markDraft(kind,draft){draft.message="";updateEditStatus(kind,draft);}
+function enqueueEditSave(key,action){
+  const previous=editSaveQueues.get(key)||Promise.resolve();
+  const next=previous.catch(()=>{}).then(action);editSaveQueues.set(key,next);
+  next.finally(()=>{if(editSaveQueues.get(key)===next)editSaveQueues.delete(key);}).catch(()=>{});
+  return next;
+}
+async function commitDealDraft(areaKey,id){
+  const draft=dealDraft(areaKey,id);if(!draft||draft.saving)return false;
+  const snapshot=deepCopy(draft.value),changes=draftChanges(draft.base,snapshot);
+  draft.saving=true;draft.message="";
+  if(selectedDealRef?.id===id)updateEditStatus("deal",draft);
+  try{
+    await enqueueEditSave("tinico:stage:"+areaKey,async()=>{
+      const existing=findDeal(areaKey,id)?.item;
+      if(!existing&&!draft.isNew)throw new Error("항목이 삭제되었습니다. 입력 내용을 확인해 주세요.");
+      const saved=existing?{...deepCopy(existing),...changes}:snapshot;
+      const next=existing?stageData[areaKey].map(item=>item.id===id?saved:item):[...(stageData[areaKey]||[]),saved];
+      await storageSet("tinico:stage:"+areaKey,next);
+      stageData[areaKey]=next;
+      const later=draftChanges(snapshot,draft.value);
+      Object.assign(draft.value,deepCopy(saved),later);draft.base=deepCopy(saved);draft.isNew=false;
+    });
+    draft.message=draftDirty(draft)?"미저장 변경":"저장됨";
+    renderHome();
+    return true;
+  }catch(error){draft.message="저장 실패 · 다시 저장하세요";showToast(error?.message||draft.message);return false;}
+  finally{draft.saving=false;renderStageBody(findAreaByKey(areaKey));renderPipeline(true);if(selectedDealRef?.id===id){updateEditStatus("deal",draft);updateDealActionButtons(draft);}}
+}
+async function commitContactDraft(id){
+  const draft=contactDraft(id);if(!draft||draft.saving||draft.processing)return false;
+  const snapshot=deepCopy(draft.value),changes=draftChanges(draft.base,snapshot);
+  draft.saving=true;draft.message="";updateEditStatus("contact",draft);
+  try{
+    await enqueueEditSave("tinico:contacts",async()=>{
+      const existing=contactsData.find(ct=>ct.id===id);
+      if(!existing&&!draft.isNew)throw new Error("연락처가 삭제되었습니다. 입력 내용을 확인해 주세요.");
+      const saved=existing?{...deepCopy(existing),...changes}:snapshot;
+      let oldImage;
+      if(draft.pendingImage){oldImage=await storageGet(contactImageKey(id));await saveContactCardImage(saved,snapshot.cardImage);}
+      const next=existing?contactsData.map(ct=>ct.id===id?saved:ct):[saved,...contactsData];
+      try{await storageSet("tinico:contacts",stripContactImages(next));}
+      catch(error){
+        if(draft.pendingImage){try{if(oldImage)await storageSet(contactImageKey(id),oldImage);else await storageDelete(contactImageKey(id));}catch(rollbackError){showToast("명함 이미지 복구에 실패했습니다. 입력 화면을 유지하고 저장을 다시 시도하세요.");}}
+        throw error;
+      }
+      contactsData=next;
+      const later=draftChanges(snapshot,draft.value);
+      Object.assign(draft.value,deepCopy(saved),later);draft.base=deepCopy(saved);draft.isNew=false;draft.pendingImage=false;
+    });
+    draft.message=draftDirty(draft)?"미저장 변경":"저장됨";
+    try{await syncLinkedDealsFromContact(contactsData.find(ct=>ct.id===id));draft.syncPending=false;}
+    catch(error){draft.message="연락처 저장됨 · 영업 연결 재시도 필요";draft.syncPending=true;showToast("연락처는 저장됐지만 연결 영업 항목 반영에 실패했습니다. 저장을 눌러 다시 시도하세요.");}
+    renderContacts();renderHome();return true;
+  }catch(error){draft.message="저장 실패 · 다시 저장하세요";showToast(error?.message||draft.message);return false;}
+  finally{draft.saving=false;if(selectedContactId===id){updateEditStatus("contact",draft);if(draft.syncPending)document.getElementById("contact-drawer-save").disabled=false;}}
+}
+function updateDealActionButtons(draft){
+  document.querySelectorAll('#deal-drawer-body [data-add-activity],#deal-drawer-body [data-add-support-task],#deal-drawer-body [data-ai-analyze],#deal-drawer-body [data-convert-support]').forEach(button=>{
+    button.disabled=draft.isNew||draft.saving||draftDirty(draft);
+    button.title=button.disabled?"항목을 먼저 저장해 주세요.":"";
+  });
+}
+
 function makeDealRow(area, item, opts){
+  const draft=dealDraft(area.key,item.id);item=draft.value;
   const refresh = (opts && opts.refresh) || function(){};
   const tr = document.createElement("tr");
   tr.className = "tn-deal-row";
@@ -1759,11 +1865,10 @@ function makeDealRow(area, item, opts){
   STAGE_OPTIONS.forEach(opt=>{const o=document.createElement("option");o.value=opt;o.textContent=opt;if(opt===stage)o.selected=true;sel.appendChild(o);});
   applyPipelineStageStyle(sel,stage);
   sel.addEventListener("click",e=>e.stopPropagation());
-  sel.addEventListener("change",async()=>{item.stage=sel.value;item.prob=SIMPLE_STAGE_PROB[sel.value]??item.prob;sel.className="tn-stage "+sel.value;applyPipelineStageStyle(sel,sel.value);refreshRowImportance();await saveArea(area.key);renderHome();refresh();});
+  sel.addEventListener("change",()=>{item.stage=sel.value;item.prob=SIMPLE_STAGE_PROB[sel.value]??item.prob;sel.className="tn-stage "+sel.value;applyPipelineStageStyle(sel,sel.value);refreshRowImportance();saveSoon();});
   tdStage.appendChild(sel);tr.appendChild(tdStage);
 
-  let saveTimer;
-  function saveSoon(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{await saveArea(area.key);scheduleHomeRefresh();},450);}
+  function saveSoon(){draft.message="";rowSave.disabled=!draftDirty(draft);rowSave.textContent="저장";tr.classList.toggle("tn-unsaved-row",draftDirty(draft));}
   function addInput(type,field,placeholder=""){const td=document.createElement("td");const inp=document.createElement("input");inp.type=type;inp.className="tn-cell-input";inp.value=item[field]||"";inp.placeholder=placeholder;if(type==="number")inp.min="0";inp.addEventListener("click",e=>e.stopPropagation());inp.addEventListener("input",()=>{item[field]=inp.value;if(field==="amount")refreshRowImportance();saveSoon();});td.appendChild(inp);tr.appendChild(td);return inp;}
   addInput("number","amount","0");
   const next=addInput("date","nextAction");
@@ -1771,29 +1876,35 @@ function makeDealRow(area, item, opts){
   const dd=daysUntil(item.nextAction);next.classList.toggle("overdue",!isClosedStage(item.stage)&&dd!==null&&dd<0);
   next.addEventListener("input",()=>{const d=daysUntil(next.value);next.classList.toggle("overdue",!isClosedStage(item.stage)&&d!==null&&d<0);});
 
-  const tdDel=document.createElement("td");const del=document.createElement("button");del.className="tn-row-del";del.textContent="×";del.title="휴지통으로 이동";del.addEventListener("click",async e=>{e.stopPropagation();if(!confirm("이 항목을 휴지통으로 이동할까요?"))return;await moveDealToTrash(area.key,item.id);});tdDel.appendChild(del);tr.appendChild(tdDel);
+  const tdDel=document.createElement("td");tdDel.className="tn-deal-save-cell";
+  const rowSave=document.createElement("button");rowSave.type="button";rowSave.className="tn-btn primary small";rowSave.dataset.rowSave=item.id;rowSave.textContent=draft.saving?"저장 중…":draft.message.startsWith("저장 실패")?"다시 저장":"저장";rowSave.disabled=draft.saving||!draftDirty(draft);rowSave.title=draft.message||"이 항목의 변경 저장";
+  rowSave.addEventListener("click",async()=>{tr.querySelectorAll("input,select,button").forEach(el=>el.disabled=true);rowSave.textContent="저장 중…";await commitDealDraft(area.key,item.id);refresh();});tdDel.appendChild(rowSave);
+  const del=document.createElement("button");del.className="tn-row-del";del.textContent="×";del.title="휴지통으로 이동";del.addEventListener("click",async e=>{e.stopPropagation();if(!confirm("이 항목을 휴지통으로 이동할까요?"))return;await moveDealToTrash(area.key,item.id);});tdDel.appendChild(del);tr.appendChild(tdDel);
+  tr.classList.toggle("tn-unsaved-row",draftDirty(draft));
   tr.addEventListener("click",e=>{if(e.target.closest("input,select,button"))return;openDealDrawer(area.key,item.id);});
   return tr;
 }
 
 /* ---------- 딜 상세 드로어 (구조화된 입력 폼) ---------- */
 let selectedDealRef = null;
-const dealDrawerSaveTimers = new Map();
-function dealDrawerSaveKey(areaKey,id){return `${areaKey}\u0000${id}`;}
-function cancelDealDrawerAutosave(areaKey,id){
-  const key=dealDrawerSaveKey(areaKey,id),timer=dealDrawerSaveTimers.get(key);
-  if(timer)clearTimeout(timer);
-  dealDrawerSaveTimers.delete(key);
+function dealDrawerSaveKey(areaKey,id){return areaKey+"\u0000"+id;}
+function openDealDrawer(areaKey,id,seed){
+  if(selectedDealRef&&(selectedDealRef.areaKey!==areaKey||selectedDealRef.id!==id)&&!closeDealDrawer())return false;
+  if(!dealDraft(areaKey,id,seed))return false;
+  selectedDealRef={areaKey,id};renderDealDrawer(true);return true;
 }
-function openDealDrawer(areaKey, id){
-  selectedDealRef = {areaKey, id};
-  renderDealDrawer(true);
-}
-function closeDealDrawer(){
-  selectedDealRef = null;
-  document.getElementById("deal-drawer").hidden = true;
-  document.getElementById("deal-drawer-backdrop").hidden = true;
-  document.getElementById("deal-drawer-body").innerHTML = "";
+function closeDealDrawer(force=false){
+  const ref=selectedDealRef,draft=ref?dealDrafts.get(dealDrawerSaveKey(ref.areaKey,ref.id)):null;
+  if(force!==true){
+    if(draft?.saving){showToast("저장 중입니다. 완료 후 닫아 주세요.");return false;}
+    if(draftDirty(draft)&&!confirm("저장하지 않은 변경을 버리고 닫을까요?"))return false;
+  }
+  if(ref)dealDrafts.delete(dealDrawerSaveKey(ref.areaKey,ref.id));
+  selectedDealRef=null;
+  document.getElementById("deal-drawer").hidden=true;
+  document.getElementById("deal-drawer-backdrop").hidden=true;
+  document.getElementById("deal-drawer-body").innerHTML="";
+  if(ref){renderStageBody(findAreaByKey(ref.areaKey));renderPipeline(true);}return true;
 }
 function renderDealActivities(container,item,areaKey){
   if(!container) return;
@@ -1805,8 +1916,10 @@ function renderDealActivities(container,item,areaKey){
     row.innerHTML = `<div class="tn-activity-head"><span class="tn-activity-type">${escapeHtml(a.type)}</span><span>${escapeHtml(a.date)}</span>${a.nextDate ? `<span>다음 ${escapeHtml(a.nextDate)}</span>` : ""}</div><div class="tn-activity-content">${escapeHtml(a.content || "내용 없음")}</div>${a.result ? `<div class="tn-activity-result">결과: ${escapeHtml(a.result)}</div>` : ""}${a.nextAction ? `<div class="tn-activity-result">다음 업무: ${escapeHtml(a.nextAction)}</div>` : ""}<button class="tn-activity-del" type="button" data-del-activity="${escapeHtml(a.id)}" title="활동 삭제">×</button>`;
     row.querySelector("[data-del-activity]").addEventListener("click",async()=>{
       if(!confirm("이 활동 기록을 삭제할까요?")) return;
-      item.activities = item.activities.filter(x=>x.id !== a.id);
-      await saveArea(areaKey); renderDealActivities(container,item,areaKey); renderHome();
+      const found=findDeal(areaKey,item.id);if(!found)return;
+      const previous=found.item.activities;found.item.activities=previous.filter(x=>x.id!==a.id);
+      try{await saveArea(areaKey);renderDealDrawer(false);renderHome();}
+      catch(error){found.item.activities=previous;showToast(error?.message||"활동 삭제에 실패했습니다.");}
     });
     container.appendChild(row);
   });
@@ -1869,11 +1982,11 @@ function renderDealDrawer(resetScroll){
   const ref=selectedDealRef;
   if(!ref)return;
   const area=findAreaByKey(ref.areaKey);
-  const item=area?(stageData[ref.areaKey]||[]).find(x=>x.id===ref.id):null;
+  const draft=area?dealDraft(ref.areaKey,ref.id):null;
+  const item=draft?.value;
   if(!area||!item){closeDealDrawer();return;}
   const drawer=document.getElementById("deal-drawer"),backdrop=document.getElementById("deal-drawer-backdrop"),body=document.getElementById("deal-drawer-body");
   const stage=normalizeStage(item.stage);
-  if(item.prob===""||item.prob===null||item.prob===undefined)item.prob=SIMPLE_STAGE_PROB[stage]??"";
   const completion=dealCompletion(item);
 
   body.innerHTML=`
@@ -1950,29 +2063,21 @@ function renderDealDrawer(resetScroll){
   const importanceSel=body.querySelector("[data-importance]");[["","자동 산정"],["high","높음"],["mid","중간"],["low","낮음"]].forEach(([value,label])=>{const o=document.createElement("option");o.value=value;o.textContent=label;if((item.importanceOverride||"")===value)o.selected=true;importanceSel.appendChild(o);});
   const nextInput=body.querySelector('[data-f="nextAction"]');
   function updateComputed(){
-    const st=normalizeStage(item.stage);body.querySelector("[data-sum]").textContent=`${st} · 담당 ${item.internalOwner||"미지정"} · 자동 확률 ${item.prob||0}%`;
+    const st=normalizeStage(item.stage),prob=item.prob===""||item.prob==null?(SIMPLE_STAGE_PROB[st]??0):item.prob;
+    body.querySelector("[data-sum]").textContent=`${st} · 담당 ${item.internalOwner||"미지정"} · 자동 확률 ${prob}%`;
     body.querySelector("[data-stage-guide]").innerHTML=`${escapeHtml(stageGuide(st))}<br><b>성사 확률은 단계에 따라 자동으로 계산됩니다.</b>`;
     if(nextInput){const dd=daysUntil(item.nextAction);nextInput.classList.toggle("overdue",!isClosedStage(st)&&dd!==null&&dd<0);}
     const c=dealCompletion(item);body.querySelector("[data-completion-text]").textContent=`${c.done}/${c.total}`;body.querySelector("[data-completion-bar]").style.width=c.percent+"%";body.querySelector("[data-completion-missing]").textContent=c.missing.length?"확인 필요: "+c.missing.join(", "):"필수 정보가 모두 입력되었습니다.";
   }
   updateComputed();renderDealActivities(body.querySelector("[data-activity-list]"),item,ref.areaKey);renderDealRelatedTasks(body.querySelector("[data-related-task-list]"),item,ref.areaKey);
-  const hint=body.querySelector("[data-save-hint]"),drawerAreaKey=ref.areaKey,drawerItemId=ref.id,saveTimerKey=dealDrawerSaveKey(drawerAreaKey,drawerItemId);
+  const hint=body.querySelector("[data-save-hint]"),drawerAreaKey=ref.areaKey;
   function persist(){
-    body.querySelectorAll("[data-f]").forEach(el=>{item[el.dataset.f]=el.value;});item.stage=stageSel.value;item.bucket=bucketSel.value;item.importanceOverride=importanceSel.value;stageSel.className="tn-stage "+stageSel.value;updateComputed();hint.textContent="자동 저장 중...";
-    cancelDealDrawerAutosave(drawerAreaKey,drawerItemId);
-    const timer=setTimeout(async()=>{
-      dealDrawerSaveTimers.delete(saveTimerKey);
-      try{
-        await saveArea(drawerAreaKey);
-        if(hint.isConnected){hint.textContent="저장됨";setTimeout(()=>{if(hint.isConnected)hint.textContent="";},1000);}
-        const areaToRender=findAreaByKey(drawerAreaKey);if(areaToRender)renderStageBody(areaToRender);renderPipeline(true);renderHome();
-      }catch(error){
-        console.error("영업 항목 자동저장 실패",error);
-        if(hint.isConnected)hint.textContent="저장 실패 · 다시 입력해 주세요";
-      }
-    },450);
-    dealDrawerSaveTimers.set(saveTimerKey,timer);
+    body.querySelectorAll("[data-f]").forEach(el=>{item[el.dataset.f]=el.value;});
+    item.stage=stageSel.value;item.bucket=bucketSel.value;item.importanceOverride=importanceSel.value;
+    stageSel.className="tn-stage "+stageSel.value;updateComputed();
+    hint.textContent="저장 버튼을 눌러 변경을 반영하세요.";markDraft("deal",draft);updateDealActionButtons(draft);
   }
+  updateEditStatus("deal",draft);updateDealActionButtons(draft);
   body.querySelectorAll("[data-f]").forEach(el=>el.addEventListener("input",persist));
   stageSel.addEventListener("change",()=>{item.prob=SIMPLE_STAGE_PROB[stageSel.value]??item.prob;body.querySelector('[data-f="prob"]').value=item.prob;persist();});
   bucketSel.addEventListener("change",persist);importanceSel.addEventListener("change",persist);
@@ -2184,8 +2289,8 @@ function renderDealDrawer(resetScroll){
   areaSel.addEventListener("change",async()=>{});
   body.querySelector("[data-ai-analyze]").addEventListener("click",()=>openAiForDeal(drawerAreaKey,item.id));
   body.querySelector("[data-open-group]").addEventListener("click",()=>{});
-  body.querySelector("[data-delete]").addEventListener("click",async()=>{if(!confirm("이 항목을 휴지통으로 이동할까요?"))return;cancelDealDrawerAutosave(drawerAreaKey,drawerItemId);await moveDealToTrash(drawerAreaKey,item.id);});
-  body.querySelector("[data-convert-support]").addEventListener("click",async()=>{cancelDealDrawerAutosave(drawerAreaKey,drawerItemId);await convertDealToSupportTask(drawerAreaKey,item.id);});
+  body.querySelector("[data-delete]").addEventListener("click",async()=>{if(!confirm("이 항목을 휴지통으로 이동할까요?"))return;if(draft.isNew){closeDealDrawer(true);return;}await moveDealToTrash(drawerAreaKey,item.id);});
+  body.querySelector("[data-convert-support]").addEventListener("click",()=>convertDealToSupportTask(drawerAreaKey,item.id));
   drawer.hidden=false;backdrop.hidden=false;if(resetScroll)drawer.querySelector(".tn-drawer-scroll").scrollTop=0;
 }
 
@@ -2244,7 +2349,7 @@ function buildStageView(area){
         <tbody id="grid-${areaKeyAttr}"></tbody>
       </table>
     </div>
-    <div class="tn-kanban-hint">표에서 단계, 예상 매출, 다음 연락일과 할 일을 바로 수정할 수 있습니다.</div>
+    <div class="tn-kanban-hint">표에서 값을 수정한 뒤 해당 행의 저장 버튼을 눌러 반영하세요.</div>
   `;
   document.getElementById("tn-stage-views").appendChild(wrap);
 
@@ -2253,11 +2358,7 @@ function buildStageView(area){
   wrap.querySelector("[data-edit-area]").addEventListener("click", ()=>openAreaModal("edit", area.key));
   document.getElementById("add-" + area.key).addEventListener("click", async ()=>{
     const newItem = normalizeItem({id:uid(), title:"새 항목", tag:"", stage:STAGE_OPTIONS[0] || "리드", bucket:areaBucketKey(area), internalOwner:"", action:"", prob:SIMPLE_STAGE_PROB[STAGE_OPTIONS[0] || "리드"] || 10});
-    stageData[area.key].push(newItem);
-    await saveArea(area.key);
-    renderStageBody(area);
-    renderHome();
-    openDealDrawer(area.key, newItem.id);
+    openDealDrawer(area.key,newItem.id,newItem);
   });
 }
 
@@ -2334,12 +2435,7 @@ async function pipeCreateDeal(stage){
   const targetArea = findAreaByKey(areaKey) || findAreaByKey("existing_accounts") || AREAS[0];
   if(!targetArea) return;
   const newItem = normalizeItem({id:uid(), title:"새 항목", tag:"", stage: stage || STAGE_OPTIONS[0], bucket: validBucketKey(bucket) || areaBucketKey(targetArea), internalOwner:"", action:"", prob:SIMPLE_STAGE_PROB[stage || STAGE_OPTIONS[0]] || 10});
-  stageData[targetArea.key].push(newItem);
-  await saveArea(targetArea.key);
-  renderStageBody(targetArea);
-  renderPipeline(true);
-  renderHome();
-  openDealDrawer(targetArea.key, newItem.id);
+  openDealDrawer(targetArea.key,newItem.id,newItem);
 }
 
 function renderPipeBoard(list){
@@ -2433,22 +2529,10 @@ function renderPipeBoard(list){
       if(!payload || !payload.areaKey) return;
       const item = (stageData[payload.areaKey] || []).find(x=>x.id === payload.id);
       if(!item || normalizeStage(item.stage) === stage) return;
-      const previousStage = item.stage;
-      const previousProb = item.prob;
-      item.stage = stage;
-      /* 드래그 이동도 단계 선택과 동일하게 성사 확률을 자동 갱신 */
-      item.prob = SIMPLE_STAGE_PROB[stage] ?? item.prob;
-      try{
-        await saveArea(payload.areaKey);
-      }catch(error){
-        item.stage = previousStage;
-        item.prob = previousProb;
-        console.error("kanban stage save failed", error);
-        showToast(error?.message||"단계 이동 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
-      }
-      renderStageBody(findAreaByKey(payload.areaKey));
-      renderPipeline(true);
-      renderHome();
+      if(!openDealDrawer(payload.areaKey,item.id))return;
+      const draft=dealDraft(payload.areaKey,item.id);
+      draft.value.stage=stage;draft.value.prob=SIMPLE_STAGE_PROB[stage]??draft.value.prob;
+      renderDealDrawer(false);showToast("단계 변경을 확인한 뒤 저장해 주세요.","info");
     });
 
     board.appendChild(col);
@@ -2488,12 +2572,12 @@ function renderPipeline(force){
   if(pipeViewMode === "table"){
     board.hidden = true;
     tableWrap.hidden = false;
-    hint.textContent = "표에서 단계, 예상 매출, 다음 연락일과 할 일을 바로 수정할 수 있습니다. 행을 클릭하면 상세 화면이 열립니다.";
+    hint.textContent = "표에서 값을 수정한 뒤 해당 행의 저장 버튼을 눌러 반영하세요. 행을 클릭하면 상세 화면이 열립니다.";
     renderPipeTable(list);
   }else{
     board.hidden = false;
     tableWrap.hidden = true;
-    hint.textContent = "카드를 드래그해 단계를 변경하고, 카드를 클릭하면 상세 입력창이 열립니다. 각 열의 + 로 새 항목을 추가합니다.";
+    hint.textContent = "카드를 드래그한 뒤 상세 화면에서 저장하면 단계가 변경됩니다. 카드를 클릭하면 상세 입력창이 열립니다. 각 열의 + 로 새 항목을 추가합니다.";
     renderPipeBoard(list);
   }
 }
@@ -3184,10 +3268,6 @@ let pendingImageTargetId = null;
 let contactViewMode = "table";
 let selectedContactId = null;
 let pendingCompanyContactId = null;
-const contactDrawerSaveTimers = new Map();
-function cancelContactDrawerAutosave(id){
-  const timer=contactDrawerSaveTimers.get(id);if(timer)clearTimeout(timer);contactDrawerSaveTimers.delete(id);
-}
 
 function splitLegacyRole(role){
   const text = String(role || "").trim();
@@ -3939,7 +4019,7 @@ function openCompanySearchEngine(engine){
   window.open(url, "_blank", "noopener,noreferrer");
 }
 async function downloadCompanySearchImage(){
-  const contact = contactsData.find(c=>c.id === pendingCompanyContactId);
+  const contact = contactDrafts.get(pendingCompanyContactId)?.value;
   if(!contactHasCardImage(contact)){ showToast("저장할 명함 이미지가 없습니다."); return; }
   const image = (await loadContactCardImage(contact)) || contact.cardThumb;
   if(!image){ showToast("명함 원본 이미지를 불러오지 못했습니다. 네트워크 확인 후 다시 시도해 주세요."); return; }
@@ -3951,7 +4031,7 @@ async function downloadCompanySearchImage(){
   a.remove();
 }
 async function saveConfirmedCompanyName(){
-  const contact = contactsData.find(c=>c.id === pendingCompanyContactId);
+  const contact = contactDrafts.get(pendingCompanyContactId)?.value;
   if(!contact){ closeCompanySearchModal(); return; }
   const name = document.getElementById("company-search-name").value.trim();
   if(!name){ showToast("이미지 검색에서 확인한 회사명을 입력하세요."); return; }
@@ -3961,12 +4041,10 @@ async function saveConfirmedCompanyName(){
   contact.companyLookupSource = "일반 이미지 검색 사용자 확인";
   const log = `[회사명 이미지 검색 확인] ${name}`;
   if(!String(contact.memo || "").includes(log)) contact.memo = (contact.memo ? contact.memo + "\n" : "") + log;
-  await saveContacts();
-  renderContacts();
-  renderHome();
+  markDraft("contact",contactDrafts.get(contact.id));
   if(selectedContactId === contact.id) renderContactDrawer(false);
   closeCompanySearchModal();
-  setOcrStatus(`회사명을 "${name}"(으)로 저장했습니다.`);
+  setOcrStatus(`회사명 "${name}"을 입력에 적용했습니다. 연락처의 저장 버튼으로 반영하세요.`);
   setTimeout(()=>setOcrStatus(""), 4500);
 }
 async function resolveCompanyFromImage(contact, dataUrl, rawText="", options={}){
@@ -3979,10 +4057,14 @@ async function resolveCompanyFromImage(contact, dataUrl, rawText="", options={})
 
 /* OCR 결과를 비어 있는 필드에만 채움 (사용자 입력 및 메모 보호) */
 async function applyOcrToContact(contact, dataUrl){
+  const draft=contactDrafts.get(contact.id);
+  if(!draft||draft.value!==contact)return false;
+  draft.processing=true;if(selectedContactId===contact.id)updateEditStatus("contact",draft);
   let rawText = "";
   let ocrSucceeded = false;
   try{
     const result = await ocrCardImage(dataUrl);
+    if(contactDrafts.get(contact.id)!==draft)return false;
     rawText = result.text || "";
     const p = result.parsed || parseCardText(rawText);
     if(!contact.name) contact.name = p.name;
@@ -3999,9 +4081,6 @@ async function applyOcrToContact(contact, dataUrl){
     contact.ocrConfidence = result.confidence || 0;
     contact.ocrUpdatedAt = new Date().toISOString();
     ocrSucceeded = true;
-    await saveContacts();
-    renderContacts();
-    renderHome();
     if(selectedContactId === contact.id) renderContactDrawer(false);
     /* 인식된 정보를 먼저 저장·표시한 뒤, 회사명 검색 등 사용자 작업은 버튼으로만 안내 (자동으로 화면을 가로막지 않음) */
     const quality=result.confidence?` · 신뢰도 ${result.confidence}%`:"";
@@ -4015,28 +4094,27 @@ async function applyOcrToContact(contact, dataUrl){
     if(!contact.name)missing.push("이름");
     if(!contact.mobilePhone&&!contact.businessPhone)missing.push("전화번호");
     if(!contact.email)missing.push("이메일");
-    const savedText=saved.length?` · 저장: ${saved.join(", ")}`:"";
+    const savedText=saved.length?` · 인식: ${saved.join(", ")}`:"";
     const missingText=missing.length?` · 미인식: ${missing.join(", ")}`:"";
     if(!contact.company){
       setOcrStatus(`명함 인식 완료${quality}${savedText}${missingText}. 회사명은 인식되지 않아 이미지 검색으로 확인할 수 있습니다.`,"회사명 이미지 검색",()=>openCompanySearchModal(contact, p.raw));
     }else{
-      setOcrStatus(`명함 인식 완료${quality}${missingText}. 결과를 확인해 주세요.`,"결과 확인",()=>openContactDetail(contact));
+      setOcrStatus(`명함 인식 완료${quality}${missingText}. 결과를 확인한 뒤 저장해 주세요.`,"결과 확인",()=>openContactDetail(contact));
     }
   }catch(e){
     console.error("OCR failed", e);
-    /* 오류 처리 중의 저장 실패가 다시 던져져 처리되지 않은 거부가 되지 않게 보호 */
-    try{ await saveContacts(); }catch(saveError){ console.error("contact save failed after OCR error", saveError); }
-    renderContacts();
-    renderHome();
+    if(contactDrafts.get(contact.id)!==draft)return false;
     if(selectedContactId === contact.id) renderContactDrawer(false);
     if(!contact.company){
       /* 실패 시에도 화면을 가로막지 않고, 회사명 이미지 검색은 사용자가 버튼으로 열도록 안내만 함 */
-      setOcrStatus("문자 인식에 실패했습니다. 명함 이미지는 저장됐습니다. 회사명은 이미지 검색으로 확인할 수 있습니다.","회사명 이미지 검색",()=>openCompanySearchModal(contact, rawText));
+      setOcrStatus("문자 인식에 실패했습니다. 명함 이미지는 임시 보관 중입니다. 내용을 확인한 뒤 저장하세요. 회사명은 이미지 검색으로 확인할 수 있습니다.","회사명 이미지 검색",()=>openCompanySearchModal(contact, rawText));
     }else{
-      setOcrStatus("자동 문자 인식에 실패했습니다. 명함 이미지는 저장됐으니 내용을 직접 확인해 주세요.");
+      setOcrStatus("자동 문자 인식에 실패했습니다. 내용을 직접 입력한 뒤 저장해 주세요.");
       setTimeout(()=>setOcrStatus(""), 5000);
     }
   }
+  draft.processing=false;
+  if(contactDrafts.get(contact.id)===draft&&selectedContactId===contact.id)markDraft("contact",draft);
   return ocrSucceeded;
 }
 
@@ -4051,42 +4129,18 @@ async function handlePickedImage(file, options={}){
   }
   catch(e){ showToast("이미지를 읽지 못했습니다. 다른 사진으로 시도해 주세요."); return; }
 
-  if(pendingImageTargetId){
-    const ct = contactsData.find(c=>c.id === pendingImageTargetId);
-    pendingImageTargetId = null;
-    if(ct){
-      const previousImage = ct.cardImage;
-      const previousThumb = ct.cardThumb;
-      try{
-        await saveContactCardImage(ct, dataUrl);
-        await saveContacts();
-      }catch(error){
-        ct.cardImage = previousImage;
-        ct.cardThumb = previousThumb;
-        console.error("card image save failed", error);
-        showToast(error?.message||"명함 이미지 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
-        return;
-      }
-      renderContacts(); renderHome();
-      await applyOcrToContact(ct, dataUrl);
-    }
-    return;
-  }
-  const contact = normalizeContact({id:uid(), createdAt: todayStr()});
-  contact.cardImage = dataUrl;
-  contactsData.unshift(contact);
-  try{
-    await saveContactCardImage(contact, dataUrl);
-    await saveContacts();
-  }catch(error){
-    contactsData = contactsData.filter(c=>c.id !== contact.id);
-    console.error("new contact save failed", error);
-    showToast(error?.message||"연락처 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
-    renderContacts(); renderHome();
-    return;
-  }
-  renderContacts(); renderHome();
-  await applyOcrToContact(contact, dataUrl);
+  const targetId=pendingImageTargetId;pendingImageTargetId=null;
+  await stageContactImage(dataUrl,targetId);
+}
+async function stageContactImage(dataUrl,targetId){
+  const ct=(targetId&&contactDrafts.get(targetId)?.value)||(targetId&&contactsData.find(c=>c.id===targetId))||normalizeContact({id:uid(),createdAt:todayStr()});
+  if(!openContactDetail(ct))return;
+  const draft=contactDrafts.get(ct.id);draft.pendingImage=true;draft.processing=true;
+  draft.value.cardImage=dataUrl;updateEditStatus("contact",draft);
+  const thumb=await makeCardThumb(dataUrl);
+  if(contactDrafts.get(ct.id)!==draft)return;
+  draft.value.cardThumb=thumb||"";renderContactDrawer(false);
+  await applyOcrToContact(draft.value,dataUrl);
 }
 
 /* ---- 카메라 스캐너: 명함 비율 가이드·실시간 품질 진단·고해상도 촬영 ---- */
@@ -4369,18 +4423,7 @@ async function captureScan(){
     /* 화면을 먼저 닫아 사용자가 즉시 촬영되었음을 느끼게 한 뒤 JPEG 인코딩 */
     await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
     const dataUrl=canvas.toDataURL("image/jpeg",.96);
-    const contact=normalizeContact({id:uid(),createdAt:todayStr()});
-    contact.cardImage=dataUrl;
-    contactsData.unshift(contact);
-    try{
-      await saveContactCardImage(contact,dataUrl);
-      await saveContacts();
-    }catch(saveError){
-      contactsData=contactsData.filter(c=>c.id!==contact.id);
-      throw saveError;
-    }
-    renderContacts();renderHome();
-    await applyOcrToContact(contact,dataUrl);
+    await stageContactImage(dataUrl);
   }catch(e){
     console.error("scan capture failed",e);
     button.disabled=false;button.textContent="명함 촬영";
@@ -4404,13 +4447,9 @@ async function convertContactToDeal(ct){
     note: ct.memo ? "[연락처에서 전환됨]\n" + ct.memo : "[연락처에서 전환됨]",
     lastContact: todayStr(), linkedContactIds:[ct.id],
   });
-  stageData[targetArea.key].push(newItem);
-  await storageSet("tinico:stage:" + targetArea.key, stageData[targetArea.key]);
-  renderStageBody(targetArea);
-  renderHome();
-  closeContactDetail();
+  if(!closeContactDetail())return;
   showView(targetArea.key);
-  openDealDrawer(targetArea.key, newItem.id);
+  openDealDrawer(targetArea.key,newItem.id,newItem);
 }
 
 /* 리멤버식 연락처 목록·우측 상세 */
@@ -4441,7 +4480,6 @@ function formatRememberDate(value){
   if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v.replace(/-/g,".");
   return v || "날짜 미입력";
 }
-function syncAndSaveContact(ct){ syncContactLegacyFields(ct); return saveContacts(); }
 
 function contactCompanyPeers(ct){
   const company=(ct.company||"").trim();
@@ -4469,20 +4507,21 @@ function renderContactActivities(container,ct){
   rows.forEach(({a,d})=>{const row=document.createElement("div");row.className="tn-activity";row.innerHTML=`<div class="tn-activity-head"><span class="tn-activity-type">${escapeHtml(a.type)}</span><span>${escapeHtml(a.date)}</span><span>${escapeHtml(d.item.title)}</span></div><div class="tn-activity-content">${escapeHtml(a.content)}</div>${a.result?`<div class="tn-activity-result">결과: ${escapeHtml(a.result)}</div>`:""}`;container.appendChild(row);});
 }
 async function syncLinkedDealsFromContact(ct){
-  const touched=new Set();
-  allDeals().forEach(({area,item})=>{
-    if(!(item.linkedContactIds||[]).includes(ct.id))return;
-    /* 고객 담당자 이름은 선택한 담당자 전체를 반영하고, 직함·연락처·이메일은 대표(첫 번째)만 반영 */
-    let changed=false;
-    const names=linkedContactNamesOf(item);
-    if(item.contactName!==names){item.contactName=names;changed=true;}
-    if(linkedContactsOf(item)[0]?.id===ct.id){
-      const next={contactRole:[ct.department,ct.jobTitle].filter(Boolean).join(" / "),contactPhone:contactPrimaryPhone(ct),contactEmail:ct.email||""};
-      Object.entries(next).forEach(([field,value])=>{ if(item[field]!==value){item[field]=value;changed=true;} });
-    }
-    if(changed)touched.add(area.key);
-  });
-  for(const key of touched)await saveArea(key);
+  for(const area of AREAS){
+    if(!(stageData[area.key]||[]).some(item=>(item.linkedContactIds||[]).includes(ct.id)))continue;
+    await enqueueEditSave("tinico:stage:"+area.key,async()=>{
+      const next=deepCopy(stageData[area.key]);
+      next.forEach(item=>{
+        if(!(item.linkedContactIds||[]).includes(ct.id))return;
+        item.contactName=linkedContactNamesOf(item);
+        if(linkedContactsOf(item)[0]?.id===ct.id)Object.assign(item,{contactRole:[ct.department,ct.jobTitle].filter(Boolean).join(" / "),contactPhone:contactPrimaryPhone(ct),contactEmail:ct.email||""});
+      });
+      if(sameStoredValue(next,stageData[area.key]))return;
+      await storageSet("tinico:stage:"+area.key,next);stageData[area.key]=next;
+      renderStageBody(area);
+    });
+  }
+  renderPipeline(true);
 }
 
 function renderDrawerQuick(container, ct){
@@ -4499,7 +4538,8 @@ function renderContactDrawer(scrollIntoView=false){
   const drawer=document.getElementById("contact-drawer");
   const backdrop=document.getElementById("contact-drawer-backdrop");
   const body=document.getElementById("contact-drawer-body");
-  const ct=contactsData.find(c=>c.id===selectedContactId);
+  const draft=contactDraft(selectedContactId);
+  const ct=draft?.value;
   if(!ct){ drawer.hidden=true; backdrop.hidden=true; body.innerHTML=""; selectedContactId=null; return; }
 
   body.innerHTML=`
@@ -4607,21 +4647,9 @@ function renderContactDrawer(scrollIntoView=false){
     renderContactCompanyOverview(body.querySelector("[data-company-overview]"),ct);
     renderContactLinkedDeals(body.querySelector("[data-linked-deals]"),ct);
     renderContactActivities(body.querySelector("[data-contact-activities]"),ct);
-    hint.textContent="저장 중...";cancelContactDrawerAutosave(ct.id);
-    const timer=setTimeout(async()=>{
-      contactDrawerSaveTimers.delete(ct.id);
-      try{
-        await saveContacts();
-        if(contactsData.some(contact=>contact.id===ct.id))await syncLinkedDealsFromContact(ct);
-        if(hint.isConnected){hint.textContent="저장됨";setTimeout(()=>{if(hint.isConnected)hint.textContent="";},1000);}
-        renderContacts();renderHome();
-      }catch(error){
-        console.error("연락처 자동저장 실패",error);
-        if(hint.isConnected)hint.textContent="저장 실패 · 다시 입력해 주세요";
-      }
-    },450);
-    contactDrawerSaveTimers.set(ct.id,timer);
+    hint.textContent="저장 버튼을 눌러 변경을 반영하세요.";markDraft("contact",draft);
   };
+  updateEditStatus("contact",draft);
   body.querySelectorAll("[data-field]").forEach(el=>el.addEventListener("input",persist));
   body.querySelector("[data-change-card]").addEventListener("click",()=>{pendingImageTargetId=ct.id; document.getElementById("contact-file-input").click();});
   body.querySelector("[data-company-search]").addEventListener("click",async()=>{
@@ -4639,15 +4667,27 @@ function renderContactDrawer(scrollIntoView=false){
       await applyOcrToContact(ct,image);
     }finally{button.disabled=false;}
   });
-  body.querySelector("[data-deal]").addEventListener("click",()=>convertContactToDeal(ct));
-  body.querySelector("[data-fav]").addEventListener("click",async()=>{ct.fav=!ct.fav; await saveContacts(); renderContacts();});
-  body.querySelector("[data-delete]").addEventListener("click",async()=>{if(!confirm("이 연락처를 휴지통으로 이동할까요?"))return;cancelContactDrawerAutosave(ct.id);await moveContactsToTrash([ct.id]);});
+  body.querySelector("[data-deal]").addEventListener("click",()=>{if(draftDirty(draft)){showToast("연락처를 먼저 저장해 주세요.");return;}convertContactToDeal(ct);});
+  body.querySelector("[data-fav]").addEventListener("click",()=>{ct.fav=!ct.fav;markDraft("contact",draft);renderContactDrawer(false);});
+  body.querySelector("[data-delete]").addEventListener("click",async()=>{if(!confirm("이 연락처를 휴지통으로 이동할까요?"))return;if(draft.isNew){closeContactDetail(true);return;}await moveContactsToTrash([ct.id]);});
 
   drawer.hidden=false; backdrop.hidden=false;
   if(scrollIntoView) drawer.querySelector(".tn-drawer-scroll").scrollTop=0;
 }
-function openContactDetail(ct){ selectedContactId=ct.id; renderContacts(); renderContactDrawer(true); }
-function closeContactDetail(){ selectedContactId=null; document.getElementById("contact-drawer").hidden=true; document.getElementById("contact-drawer-backdrop").hidden=true; document.getElementById("contact-drawer-body").innerHTML=""; renderContacts(); }
+function openContactDetail(ct){
+  if(selectedContactId&&selectedContactId!==ct.id&&!closeContactDetail())return false;
+  contactDraft(ct.id,ct);selectedContactId=ct.id;renderContacts();renderContactDrawer(true);return true;
+}
+function closeContactDetail(force=false){
+  const draft=contactDrafts.get(selectedContactId);
+  if(force!==true){
+    if(draft?.saving){showToast("저장 중입니다. 완료 후 닫아 주세요.");return false;}
+    if(draftDirty(draft)&&!confirm("저장하지 않은 변경을 버리고 닫을까요?"))return false;
+  }
+  contactDrafts.delete(selectedContactId);selectedContactId=null;
+  document.getElementById("contact-drawer").hidden=true;document.getElementById("contact-drawer-backdrop").hidden=true;
+  document.getElementById("contact-drawer-body").innerHTML="";renderContacts();return true;
+}
 
 /* ---------- 연락처 목록 페이지 이동 ---------- */
 const CONTACT_PAGE_SIZES = [20, 30, 40, 50];
@@ -4793,7 +4833,7 @@ function renderContactTable(list){
     tr.addEventListener("click",e=>{if(e.target.closest("[data-check],[data-fav],[data-del]"))return; openContactDetail(ct);});
     /* 체크 하나 때문에 목록 전체를 다시 만들지 않고 요약과 "모두 선택"만 갱신 */
     tr.querySelector("[data-check]").addEventListener("change",e=>{e.stopPropagation(); if(e.target.checked)selectedContactIds.add(ct.id);else selectedContactIds.delete(ct.id); renderContactStats(); updateContactSelectAll(list);});
-    tr.querySelector("[data-fav]").addEventListener("click",async e=>{e.stopPropagation();ct.fav=!ct.fav;await saveContacts();renderContacts();});
+    tr.querySelector("[data-fav]").addEventListener("click",async e=>{e.stopPropagation();if(!openContactDetail(ct))return;const draft=contactDrafts.get(ct.id);draft.value.fav=!draft.value.fav;markDraft("contact",draft);renderContactDrawer(false);});
     tr.querySelector("[data-del]").addEventListener("click",async e=>{e.stopPropagation();if(!confirm("이 연락처를 휴지통으로 이동할까요?"))return;await moveContactsToTrash([ct.id]);});
     tbody.appendChild(tr);
   });
@@ -6150,6 +6190,55 @@ function initializeCalendarUi(){
 
 /* ---------- 대시보드 ---------- */
 
+let kpiReturnFocus=null;
+function closeKpiDetails(){
+  document.getElementById("kpi-overlay").hidden=true;
+  if(kpiReturnFocus?.isConnected)kpiReturnFocus.focus();
+}
+function openKpiDetails(kind,trigger){
+  const deals=allDeals(),closed=deals.filter(d=>isClosedStage(d.stage));
+  const active=deals.filter(d=>!isClosedStage(d.stage));
+  let title,summary,rows;
+  if(kind==="win"){
+    const won=closed.filter(d=>d.stage==="수주").length;
+    title="수주율";summary=`수주 ${won}건 / 종료 항목 ${closed.length}건 · 수주·보류·실주 항목을 표시합니다.`;
+    rows=closed.slice().sort((a,b)=>Number(b.stage==="수주")-Number(a.stage==="수주"));
+  }else if(kind==="active"){
+    title="활성 항목 비중";summary=`활성 ${active.length}건 / 전체 ${deals.length}건 · 수주·보류·실주를 제외한 항목입니다.`;rows=active;
+  }else if(kind==="overdue"){
+    rows=active.filter(d=>{const days=daysUntil(d.item.nextAction);return days!==null&&days<0;})
+      .sort((a,b)=>a.item.nextAction.localeCompare(b.item.nextAction));
+    title="후속조치 지연";summary=`지연 ${rows.length}건 / 활성 ${active.length}건 · 다음 연락일이 오늘보다 이전인 항목입니다.`;
+  }else if(kind==="tasks"){
+    title="실행과제 완료";summary=`완료 ${roadmapData.filter(isSupportTaskDone).length}건 / 전체 ${roadmapData.length}건 · 완료 여부를 비교할 수 있도록 모든 실행과제를 표시합니다.`;
+    rows=roadmapData.slice().sort((a,b)=>Number(isSupportTaskDone(b))-Number(isSupportTaskDone(a))).map(task=>({task}));
+  }else return;
+  const overlay=document.getElementById("kpi-overlay"),list=document.getElementById("kpi-modal-list");
+  document.getElementById("kpi-modal-title").textContent=title;
+  document.getElementById("kpi-modal-summary").textContent=summary+" 항목을 누르면 상세 화면으로 이동합니다.";
+  list.replaceChildren();
+  if(!rows.length){const empty=document.createElement("p");empty.className="tn-empty-compact";empty.textContent="해당하는 항목이 없습니다.";list.appendChild(empty);}
+  rows.forEach(({area,item,stage,task})=>{
+    const button=document.createElement("button");button.type="button";button.className="tn-kpi-list-item";
+    const name=task?.title||item?.title||"제목 없음",status=task?.status||stage;
+    const owner=task?effectiveSupportTaskOwner(task):item.internalOwner;
+    const meta=task?`지원 업무 · 담당 ${owner||"미지정"} · ${supportTaskDueText(task)}`:`${area.title} · 담당 ${owner||"미지정"} · 다음 연락 ${item.nextAction||"미정"}`;
+    button.innerHTML=`<span class="tn-kpi-item-main"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(meta)}</span>${item?.action?`<span>다음 할 일: ${escapeHtml(item.action)}</span>`:""}</span><span class="tn-kpi-item-status">${escapeHtml(status||"미지정")} →</span>`;
+    button.addEventListener("click",()=>{
+      if(task){
+        if(!roadmapData.some(t=>t.id===task.id)){showToast("해당 실행과제가 삭제되었습니다.");openKpiDetails(kind,trigger);return;}
+        closeKpiDetails();showView("roadmap");openRoadmapModal(task.id);
+      }else{
+        if(!findDeal(area.key,item.id)){showToast("해당 항목이 이동되었거나 삭제되었습니다.");openKpiDetails(kind,trigger);return;}
+        if(!openDealDrawer(area.key,item.id))return;
+        closeKpiDetails();showView("pipeline");
+        document.querySelector('#deal-drawer-body [data-f="title"]')?.focus();
+      }
+    });list.appendChild(button);
+  });
+  kpiReturnFocus=trigger;overlay.hidden=false;document.getElementById("kpi-modal-close").focus();
+}
+
 function renderHome(){
   applyDashboardOrder();
   applyDashboardCollapse();
@@ -6263,12 +6352,15 @@ function renderHome(){
   const kpiEl = document.getElementById("tn-kpis");
   kpiEl.innerHTML = "";
   [
-    {label:"수주율", value:`${winRate}%`, r:winRate, color:"var(--ok-500)"},
-    {label:"활성 항목 비중", value:`${activeDeals}건 (${activeRate}%)`, r:activeRate, color:"var(--warn-500)"},
-    {label:"후속조치 지연", value:`${overdueCount}건`, r: activeDeals ? Math.round((overdueCount/activeDeals)*100) : 0, color:"var(--danger-500)"},
-    {label:"실행과제 완료", value:`${roadmapRate}%`, r:roadmapRate, color:"var(--ink-500)"},
+    {key:"win",label:"수주율", value:`${winRate}%`, r:winRate, color:"var(--ok-500)"},
+    {key:"active",label:"활성 항목 비중", value:`${activeDeals}건 (${activeRate}%)`, r:activeRate, color:"var(--warn-500)"},
+    {key:"overdue",label:"후속조치 지연", value:`${overdueCount}건`, r: activeDeals ? Math.round((overdueCount/activeDeals)*100) : 0, color:"var(--danger-500)"},
+    {key:"tasks",label:"실행과제 완료", value:`${roadmapRate}%`, r:roadmapRate, color:"var(--ink-500)"},
   ].forEach(k=>{
-    const div = document.createElement("div");
+    const div = document.createElement("button");
+    div.type="button";div.dataset.kpi=k.key;div.setAttribute("aria-haspopup","dialog");
+    div.setAttribute("aria-label",`${k.label} ${k.value} · 항목 목록 보기`);
+    div.addEventListener("click",()=>openKpiDetails(k.key,div));
     div.className = "tn-kpi" + (k.label === "후속조치 지연" && overdueCount > 0 ? " urgent-kpi" : "");
     div.innerHTML = `<div class="tn-kpi-label">${k.label}</div><div class="tn-kpi-value">${k.value}</div>
       <div class="tn-kpi-bar"><div class="tn-kpi-bar-fill" style="width:${k.r}%;background:${k.color};"></div></div>`;
@@ -6430,6 +6522,11 @@ async function init(){
   document.getElementById("bucket-modal-overlay").addEventListener("click", (e)=>{
     if(e.target.id === "bucket-modal-overlay") closeBucketModal();
   });
+  document.getElementById("deal-drawer-save").addEventListener("click",()=>{if(selectedDealRef)commitDealDraft(selectedDealRef.areaKey,selectedDealRef.id);});
+  document.getElementById("deal-drawer-cancel").addEventListener("click",closeDealDrawer);
+  document.getElementById("contact-drawer-save").addEventListener("click",()=>{if(selectedContactId)commitContactDraft(selectedContactId);});
+  document.getElementById("contact-drawer-cancel").addEventListener("click",closeContactDetail);
+  window.addEventListener("beforeunload",event=>{if([...dealDrafts.values(),...contactDrafts.values()].some(draft=>draftDirty(draft)||draft.saving)){event.preventDefault();event.returnValue="";}});
   document.getElementById("deal-drawer-close").addEventListener("click", closeDealDrawer);
   document.getElementById("deal-drawer-backdrop").addEventListener("click", closeDealDrawer);
   document.getElementById("activity-cancel").addEventListener("click", closeActivityModal);
@@ -6440,6 +6537,16 @@ async function init(){
   document.getElementById("tn-start-guide-btn")?.addEventListener("click",openOnboarding);
   document.getElementById("tn-start-steps")?.addEventListener("click",e=>{const b=e.target.closest("[data-start-action]");if(b)handleStartAction(b.dataset.startAction);});
   initDashboardReorder();
+  document.getElementById("kpi-modal-close").addEventListener("click",closeKpiDetails);
+  document.getElementById("kpi-overlay").addEventListener("click",event=>{if(event.target.id==="kpi-overlay")closeKpiDetails();});
+  document.getElementById("kpi-overlay").addEventListener("keydown",event=>{
+    if(event.key==="Escape"){event.preventDefault();event.stopPropagation();closeKpiDetails();}
+    if(event.key==="Tab"){
+      const buttons=[...document.querySelectorAll("#kpi-overlay button:not(:disabled)")],first=buttons[0],last=buttons.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    }
+  });
   document.getElementById("tn-today-refresh").addEventListener("click",renderTodayTasks);
   document.getElementById("tn-today-collapse").addEventListener("click",()=>toggleDashboardSection("today"));
   document.getElementById("tn-groups-collapse").addEventListener("click",()=>toggleDashboardSection("groups"));
@@ -6486,10 +6593,6 @@ async function init(){
   });
   document.getElementById("contact-manual-btn").addEventListener("click", async ()=>{
     const ct = normalizeContact({id:uid(), createdAt: todayStr()});
-    contactsData.unshift(ct);
-    await saveContacts();
-    renderContacts();
-    renderHome();
     openContactDetail(ct);
   });
   document.getElementById("contact-file-input").addEventListener("change", async (e)=>{

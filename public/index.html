@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM 간편 모드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260910e">
+<link rel="stylesheet" href="styles.css?v=20260910g">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F3F4F6;padding:22px 14px 40px;">
@@ -494,6 +494,9 @@
     <div class="tn-drawer-bar">
       <span class="tn-drawer-bar-title">대표 명함</span>
       <span class="tn-drawer-spacer"></span>
+      <span class="tn-edit-status" id="contact-save-status" role="status"></span>
+      <button class="tn-btn small" id="contact-drawer-cancel" type="button">취소</button>
+      <button class="tn-btn primary small" id="contact-drawer-save" type="button">저장</button>
       <button class="tn-drawer-icon" id="contact-drawer-close" type="button" aria-label="닫기">×</button>
     </div>
     <div class="tn-drawer-scroll" id="contact-drawer-body"></div>
@@ -505,12 +508,22 @@
     <div class="tn-drawer-bar">
       <span class="tn-drawer-bar-title">항목 상세</span>
       <span class="tn-drawer-spacer"></span>
+      <span class="tn-edit-status" id="deal-save-status" role="status"></span>
+      <button class="tn-btn small" id="deal-drawer-cancel" type="button">취소</button>
+      <button class="tn-btn primary small" id="deal-drawer-save" type="button">저장</button>
       <button class="tn-drawer-icon" id="deal-drawer-close" type="button" aria-label="닫기">×</button>
     </div>
     <div class="tn-drawer-scroll" id="deal-drawer-body"></div>
   </aside>
 
   <!-- ============ 모바일 하단 탭바 ============ -->
+  <div class="tn-modal-overlay" id="kpi-overlay" hidden>
+    <div class="tn-modal wide tn-kpi-modal" role="dialog" aria-modal="true" aria-labelledby="kpi-modal-title" aria-describedby="kpi-modal-summary">
+      <div class="tn-section-head"><h2 class="tn-modal-title" id="kpi-modal-title"></h2><button class="tn-btn small" id="kpi-modal-close" type="button">닫기</button></div>
+      <p class="tn-modal-hint" id="kpi-modal-summary"></p>
+      <div class="tn-kpi-list" id="kpi-modal-list"></div>
+    </div>
+  </div>
   <nav class="tn-bottombar" id="tn-bottombar"></nav>
 
   <footer class="tn-footer">HLB-BUSISUP SALES SUPPORT CRM</footer>
@@ -725,7 +738,7 @@
       <input type="text" id="company-search-name" placeholder="확인한 정확한 회사명 입력">
       <div class="tn-modal-actions">
         <button class="tn-modal-btn" id="company-search-cancel">취소</button>
-        <button class="tn-modal-btn save" id="company-search-save">회사명 저장</button>
+        <button class="tn-modal-btn save" id="company-search-save">입력에 적용</button>
       </div>
     </div>
   </div>
@@ -957,6 +970,6 @@
 
 </div>
 
-<script src="app.js?v=20260910e"></script>
+<script src="app.js?v=20260910g"></script>
 </body>
 </html>
