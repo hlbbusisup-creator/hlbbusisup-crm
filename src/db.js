@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { buildAuditEntries } from "./audit.js";
+import { randomUUID } from "node:crypto";
+import { initialDocument, publicDocument, applyChange, validateTransaction, requestFingerprint, concurrencyError } from "./concurrency.js";
 
 const { Pool } = pg;
 const schemaUrl = new URL("../schema.sql", import.meta.url);
@@ -99,7 +101,108 @@ async function insertAuditRows(client, workspaceId, entries) {
 }
 
 export function createPostgresRepository(pool) {
+  // A short database-only workspace lock orders saves, first-time migration and restore.
+  // Editors never hold a lock. Version checks remain per item, including in a batch.
+  async function lockWorkspace(client, workspaceId) {
+    await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", ["crm-save:" + workspaceId]);
+    await client.query("INSERT INTO crm_workspace_version (workspace_id, generation) VALUES ($1, $2) ON CONFLICT DO NOTHING", [workspaceId, randomUUID()]);
+    const result = await client.query("SELECT generation FROM crm_workspace_version WHERE workspace_id = $1", [workspaceId]);
+    return result.rows[0].generation;
+  }
+  async function persistItems(client, workspaceId, doc, previous) {
+    await client.query("INSERT INTO crm_document (workspace_id, storage_key, collection, head) VALUES ($1, $2, $3, $4) ON CONFLICT (workspace_id, storage_key) DO UPDATE SET head = EXCLUDED.head", [workspaceId, doc.key, doc.collection, doc.head]);
+    const versions = new Map((previous?.items || []).map(item => [item.id, item.version]));
+    const changed = doc.items.filter(item => versions.get(item.id) !== item.version);
+    if (changed.length) await client.query(
+      "INSERT INTO crm_item (workspace_id, storage_key, item_id, version, value, deleted) SELECT $1, $2, i.id, i.version, COALESCE(i.value, 'null'::jsonb), i.deleted FROM jsonb_to_recordset($3::jsonb) AS i(id TEXT, version TEXT, value JSONB, deleted BOOLEAN) ON CONFLICT (workspace_id, storage_key, item_id) DO UPDATE SET version = EXCLUDED.version, value = EXCLUDED.value, deleted = EXCLUDED.deleted",
+      [workspaceId, doc.key, JSON.stringify(changed)]);
+  }
+  async function loadDocument(client, workspaceId, key) {
+    const record = await client.query("SELECT value, revision, updated_at FROM crm_kv WHERE workspace_id = $1 AND storage_key = $2", [workspaceId, key]);
+    const meta = await client.query("SELECT collection, head FROM crm_document WHERE workspace_id = $1 AND storage_key = $2", [workspaceId, key]);
+    const row = record.rows[0];
+    if (!meta.rowCount) {
+      const doc = initialDocument(key, row ? { value: row.value, revision: Number(row.revision), updatedAt: row.updated_at } : null);
+      await persistItems(client, workspaceId, doc);
+      return doc;
+    }
+    const items = await client.query("SELECT item_id AS id, version, value, deleted FROM crm_item WHERE workspace_id = $1 AND storage_key = $2", [workspaceId, key]);
+    return { key, ...meta.rows[0], value: row?.value ?? null, revision: Number(row?.revision || 0), updatedAt: row?.updated_at || null, items: items.rows };
+  }
+  async function persistDocument(client, workspaceId, doc, previous) {
+    await persistItems(client, workspaceId, doc, previous);
+    await client.query("INSERT INTO crm_kv (workspace_id, storage_key, value, revision, updated_at) VALUES ($1, $2, $3::jsonb, $4, $5) ON CONFLICT (workspace_id, storage_key) DO UPDATE SET value = EXCLUDED.value, revision = EXCLUDED.revision, updated_at = EXCLUDED.updated_at", [workspaceId, doc.key, JSON.stringify(doc.value), doc.revision, doc.updatedAt]);
+    await insertAuditRows(client, workspaceId, buildAuditEntries({ storageKey: doc.key, beforeValue: previous.value, afterValue: doc.value }));
+  }
   return {
+    concurrent: true,
+    async getConcurrent(workspaceId, key) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const generation = await lockWorkspace(client, workspaceId);
+        const doc = await loadDocument(client, workspaceId, key);
+        await client.query("COMMIT"); client.release();
+        return publicDocument(doc, generation);
+      } catch (error) { await rollbackAndRelease(client, error); throw error; }
+    },
+    async saveConcurrent(workspaceId, body) {
+      validateTransaction(body);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const generation = await lockWorkspace(client, workspaceId);
+        if (body.generation !== generation) throw concurrencyError("workspace_restored", "전체 데이터가 복원되었습니다. 입력 내용을 복사한 뒤 페이지를 다시 열어 주세요.");
+        const fingerprint = requestFingerprint(body);
+        const replay = await client.query("SELECT fingerprint, result FROM crm_save_request WHERE workspace_id = $1 AND request_id = $2", [workspaceId, body.requestId]);
+        if (replay.rowCount) {
+          if (replay.rows[0].fingerprint !== fingerprint) throw concurrencyError("request_id_reused", "이미 사용한 저장 요청 번호입니다.");
+          await client.query("COMMIT"); client.release(); return replay.rows[0].result;
+        }
+        const changed = new Map();
+        const conflicts = [];
+        for (const change of body.changes) {
+          const before = await loadDocument(client, workspaceId, change.key);
+          try { changed.set(change.key, { before, after: applyChange(before, change) }); }
+          catch (error) { if (error.conflicts) conflicts.push(...error.conflicts); else throw error; }
+        }
+        if (conflicts.length) throw concurrencyError("revision_conflict", "다른 사용자가 먼저 저장했습니다. 입력 내용과 최신 값을 비교해 주세요.", { conflicts });
+        // Contact display fields are derived from the saved contacts inside this same transaction.
+        // Other authored deal fields are read from the latest row and left intact.
+        const contactChange = changed.get("tinico:contacts");
+        if (contactChange) {
+          const contacts = new Map((contactChange.after.value || []).map(item => [item.id, item]));
+          const affected = new Set(body.changes.find(change => change.key === "tinico:contacts").mutations.map(item => item.id));
+          const keys = await client.query("SELECT storage_key FROM crm_kv WHERE workspace_id = $1 AND storage_key LIKE 'tinico:stage:%' AND storage_key <> 'tinico:stage:roadmap'", [workspaceId]);
+          for (const row of keys.rows) {
+            const key = row.storage_key;
+            const existing = changed.get(key);
+            const before = existing?.before || await loadDocument(client, workspaceId, key);
+            const current = existing?.after || before;
+            if (!current.collection) continue;
+            const mutations = [];
+            for (const deal of current.value || []) {
+              if (!(deal.linkedContactIds || []).some(id => affected.has(id))) continue;
+              const linked = (deal.linkedContactIds || []).map(id => contacts.get(id)).filter(Boolean);
+              const primary = linked[0];
+              const value = { ...deal, contactName: linked.map(item => String(item.name || "").trim()).filter(Boolean).join(", ") };
+              if (primary) Object.assign(value, { contactRole: [primary.department, primary.jobTitle].filter(Boolean).join(" / "), contactPhone: primary.mobilePhone || primary.businessPhone || primary.phone || "", contactEmail: primary.email || "" });
+              else Object.assign(value, { contactRole: "", contactPhone: "", contactEmail: "" });
+              if (JSON.stringify(value) !== JSON.stringify(deal)) mutations.push({ id: deal.id, version: current.items.find(item => item.id === deal.id).version, value });
+            }
+            if (mutations.length) changed.set(key, { before, after: applyChange(current, { mutations }) });
+          }
+        }
+        const records = {};
+        for (const [key, { before, after }] of changed) {
+          await persistDocument(client, workspaceId, after, before);
+          records[key] = publicDocument(after, generation);
+        }
+        const result = { status: "saved", records };
+        await client.query("INSERT INTO crm_save_request (workspace_id, request_id, fingerprint, result) VALUES ($1, $2, $3, $4::jsonb)", [workspaceId, body.requestId, fingerprint, JSON.stringify(result)]);
+        await client.query("COMMIT"); client.release(); return result;
+      } catch (error) { await rollbackAndRelease(client, error); throw error; }
+    },
     async health() {
       await pool.query("SELECT 1");
     },
@@ -270,6 +373,11 @@ export function createPostgresRepository(pool) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+        await lockWorkspace(client, workspaceId);
+        await client.query("UPDATE crm_workspace_version SET generation = $2 WHERE workspace_id = $1", [workspaceId, randomUUID()]);
+        await client.query("DELETE FROM crm_save_request WHERE workspace_id = $1", [workspaceId]);
+        await client.query("DELETE FROM crm_item WHERE workspace_id = $1", [workspaceId]);
+        await client.query("DELETE FROM crm_document WHERE workspace_id = $1", [workspaceId]);
         await client.query("DELETE FROM crm_audit_log WHERE workspace_id = $1", [workspaceId]);
         await client.query("DELETE FROM crm_kv WHERE workspace_id = $1", [workspaceId]);
         if (records.length) {
@@ -301,6 +409,10 @@ export function createPostgresRepository(pool) {
     },
 
     /* 감사 로그가 무한히 쌓여 DB 용량 한도를 넘지 않도록 보존 기간이 지난 항목을 정리 */
+    async pruneSaveRequests() {
+      const result = await pool.query("DELETE FROM crm_save_request WHERE created_at < NOW() - INTERVAL '7 days'");
+      return result.rowCount;
+    },
     async pruneAuditLogs(retentionDays) {
       const days = Number(retentionDays);
       if (!Number.isFinite(days) || days <= 0) return 0;

@@ -384,7 +384,8 @@ export function createApp({
     const storageKey = readStorageKey(req, res);
     if (!storageKey) return;
     try {
-      const record = await repository.get(workspaceId, storageKey);
+      const record = repository.concurrent ? await repository.getConcurrent(workspaceId, storageKey) : await repository.get(workspaceId, storageKey);
+      res.set("Cache-Control", "no-store");
       res.json(record || { value: null, revision: 0, updatedAt: null });
     } catch (error) {
       next(error);
@@ -394,6 +395,11 @@ export function createApp({
   app.put("/api/storage/:key", requireAccessKey, async (req, res, next) => {
     const storageKey = readStorageKey(req, res);
     if (!storageKey) return;
+    if (repository.concurrent) {
+      if (!req.body?.changes) return res.status(428).json({ error: "version_required", message: "저장 방식이 변경되었습니다. 입력 내용을 복사한 뒤 페이지를 다시 열어 주세요." });
+      try { return res.json(await repository.saveConcurrent(workspaceId, req.body)); }
+      catch (error) { return next(error); }
+    }
     if (!Object.prototype.hasOwnProperty.call(req.body || {}, "value")) {
       res.status(400).json({ error: "value_is_required" });
       return;
@@ -426,6 +432,7 @@ export function createApp({
   app.delete("/api/storage/:key", requireAccessKey, async (req, res, next) => {
     const storageKey = readStorageKey(req, res);
     if (!storageKey) return;
+    if (repository.concurrent) return res.status(428).json({ error: "version_required", message: "버전 검사가 포함된 저장 요청으로 삭제해야 합니다." });
     try {
       const result = await deleteStorageWithAudit(storageKey);
       res.json({ status: "deleted", ...result });
@@ -500,7 +507,12 @@ export function createApp({
     setHeaders(res, filePath) {
       if (filePath.endsWith("index.html")) {
         res.setHeader("Cache-Control", "no-cache");
+        return;
       }
+      /* index.html이 ?v=... 로 자산 주소를 바꾸므로, 버전이 붙은 요청은 내용이 바뀔 일이 없다.
+         1년간 재확인 없이 쓰게 해 재방문 시 app.js·styles.css를 다시 내려받지 않는다.
+         버전 없이 직접 연 주소는 예전처럼 1시간만 캐시한다. */
+      if (res.req?.query?.v) res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     }
   }));
 
@@ -528,7 +540,7 @@ export function createApp({
       return;
     }
     if (error?.publicCode && Number.isInteger(error.statusCode)) {
-      res.status(error.statusCode).json({ error: error.publicCode, message: error.message });
+      res.status(error.statusCode).json({ error: error.publicCode, message: error.message, ...(error.conflicts ? { conflicts: error.conflicts } : {}) });
       return;
     }
     const requestId = crypto.randomUUID();
