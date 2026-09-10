@@ -18,7 +18,8 @@ async function withServer(app, callback) {
 
 const records = new Map();
 let auditLogs = [];
-const requestedAdminCode = Buffer.from("aGxiMTMyNTAh", "base64").toString("utf8");
+/* 실제 운영 관리자 코드를 저장소에 남기지 않도록 테스트 전용 코드를 명시적으로 주입한다 */
+const requestedAdminCode = "api-test-admin-code";
 const repository = {
   async health() {},
   async get(workspaceId, key) {
@@ -99,7 +100,7 @@ const repository = {
 };
 
 const accessKey = "test-access-key-1234567890";
-const app = createApp({ repository, accessKey, workspaceId: "test" });
+const app = createApp({ repository, accessKey, adminCode: requestedAdminCode, workspaceId: "test" });
 let server;
 let baseUrl;
 
@@ -417,4 +418,17 @@ test("app configuration requires a repository and a sufficiently long key", () =
   assert.throws(() => createApp({ repository: null, accessKey }), /repository is required/);
   assert.throws(() => createApp({ repository, accessKey: "too-short" }), /at least 16 characters/);
   assert.throws(() => createApp({ repository, accessKey, adminCode: "short" }), /at least 8 characters/);
+});
+
+test("without CRM_ADMIN_CODE the built-in default code still rejects other codes", async () => {
+  /* 기본 관리자 코드 경로가 살아 있는지 확인한다. 실제 코드 값은 저장소에 두지 않으므로
+     '아무 코드나 통과하지 않는다'는 성질만 검증한다. */
+  const defaultCodeApp = createApp({ repository, accessKey, workspaceId: "test" });
+  await withServer(defaultCodeApp, async (url) => {
+    for (const candidate of ["", "wrong-admin-code", "api-test-admin-code"]) {
+      const { response, body } = await createAdminSession(url, candidate);
+      assert.equal(response.status, 403);
+      assert.deepEqual(body, { error: "invalid_admin_code" });
+    }
+  });
 });

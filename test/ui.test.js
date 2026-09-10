@@ -5,7 +5,8 @@ import { JSDOM, VirtualConsole } from "jsdom";
 
 const htmlPath = new URL("../public/index.html", import.meta.url);
 const accessKey = "browser-test-key-1234567890";
-const requestedAdminCode = Buffer.from("aGxiMTMyNTAh", "base64").toString("utf8");
+/* 모의 서버가 검증하는 값이므로 실제 관리자 코드를 저장소에 남기지 않는다 */
+const requestedAdminCode = "ui-test-admin-code";
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -375,11 +376,14 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
     "calendar update"
   );
 
-  const backup = dom.window.backupObject();
-  assert.equal(backup.tinikoCRMBackupVersion, 2);
-  assert.ok(backup.data.contactsData.some((contact) => contact.name === "테스트 담당자"));
-  assert.ok(Object.values(backup.data.stageData).flat().some((deal) => deal.title === "자동저장 검증 영업 건"));
-  assert.ok(backup.data.calendarEntries.some((event) => event.title === "수정된 기능 테스트 일정"));
+  /* 화면 조작 결과가 메모리 상태에 반영됐는지 확인 (최상위 let 바인딩은 window에 붙지 않아 eval로 읽는다) */
+  const state = dom.window.eval(
+    "JSON.stringify({contactsData: stripContactImages(contactsData), stageData, calendarEntries})"
+  );
+  const snapshot = JSON.parse(state);
+  assert.ok(snapshot.contactsData.some((contact) => contact.name === "테스트 담당자"));
+  assert.ok(Object.values(snapshot.stageData).flat().some((deal) => deal.title === "자동저장 검증 영업 건"));
+  assert.ok(snapshot.calendarEntries.some((event) => event.title === "수정된 기능 테스트 일정"));
 
   const updatedButton = await waitFor(
     () => [...document.querySelectorAll(".tn-calendar-event.manual")].find((button) => button.textContent.includes("수정된 기능 테스트 일정")),
@@ -1084,5 +1088,186 @@ test("stored and restored values cannot break out of dynamic HTML attributes", a
   assert.equal(document.querySelector('[id^="xss-marker"]'), null);
   assert.equal(document.querySelector(".tn-card-mini")?.getAttribute("onerror"), null);
   assert.equal(document.querySelector('[style*="example.com"]'), null);
+  assert.deepEqual(runtimeErrors.map((error) => error.message), []);
+});
+
+test("a repeat visit loads without re-uploading unchanged data", async (t) => {
+  /* 첫 접속은 기본값을 저장한다. 그 결과를 그대로 둔 채 다시 접속하면
+     정규화 결과가 저장본과 같으므로 저장(PUT) 왕복이 한 건도 없어야 한다. */
+  const first = await createBrowser();
+  t.after(() => first.dom.window.close());
+  await waitFor(() => first.api.records.has("tinico:manual:sections"), "first boot seeding");
+  assert.ok(first.api.allRequests.some((request) => request.method === "PUT"), "first boot stores defaults");
+
+  const seeded = Object.fromEntries(first.api.records);
+  const repeat = await createBrowser(seeded);
+  t.after(() => repeat.dom.window.close());
+
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const writes = repeat.api.allRequests.filter((request) => request.method !== "GET");
+  assert.deepEqual(writes, [], "a repeat visit must not write anything back");
+  assert.deepEqual(repeat.runtimeErrors.map((error) => error.message), []);
+
+  /* 매뉴얼 마이그레이션 표시 키는 순차가 아니라 한 번에 조회해야 접속 지연이 쌓이지 않는다 */
+  const manualFlagReads = repeat.api.allRequests.filter((request) => request.url.includes("tinico%3Amanual%3Amigration%3A"));
+  assert.ok(manualFlagReads.length >= 9, "every manual migration flag is checked");
+});
+
+const rememberCsvPath = new URL("./fixtures/remember_outlook_contacts.csv", import.meta.url);
+
+async function importRememberCsv(dom) {
+  const buffer = await readFile(rememberCsvPath);
+  const file = new dom.window.File([buffer], "remember_outlook_contacts.csv", { type: "text/csv" });
+  await dom.window.eval("importContactsCsv")(file);
+}
+
+test("navigation shows 대시보드 · 파이프라인 · 지원 업무 · 연락처 · 캘린더 · 설정 in order", async (t) => {
+  const { dom } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+  const expected = ["home", "pipeline", "roadmap", "contacts", "calendar", "settings"];
+  const expectedLabels = ["대시보드", "파이프라인", "지원 업무", "연락처", "캘린더", "설정"];
+
+  assert.deepEqual([...document.querySelectorAll("#tn-tabs .tn-tab")].map((tab) => tab.dataset.key), expected);
+  assert.deepEqual([...document.querySelectorAll("#tn-tabs .tn-tab")].map((tab) => tab.textContent), expectedLabels);
+  /* 모바일 하단 메뉴도 같은 순서여야 한다 */
+  assert.deepEqual([...document.querySelectorAll("#tn-bottombar .tn-btab")].map((tab) => tab.dataset.key), expected);
+
+  /* 순서를 바꿔도 각 탭이 자기 화면을 여는지 확인 */
+  for (const key of expected) {
+    document.querySelector('#tn-tabs [data-key="' + key + '"]').click();
+    assert.equal(document.getElementById("view-" + key).classList.contains("active"), true, key + " view");
+  }
+});
+
+test("contact list pages 20 rows at a time and the size dropdown offers 20/30/40/50", async (t) => {
+  const { dom, api, runtimeErrors } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+  await importRememberCsv(dom);
+  await waitFor(() => dom.window.eval("contactsData.length") === 32, "CSV import");
+
+  const rows = () => document.querySelectorAll("#contact-tbody .tn-contact-row").length;
+  const pageButtons = () => [...document.querySelectorAll("#contact-page-numbers .tn-pager-btn")].map((b) => b.textContent);
+  const activePage = () => document.querySelector("#contact-page-numbers .tn-pager-btn.active")?.textContent;
+
+  assert.deepEqual([...document.querySelectorAll("#contact-page-size option")].map((o) => o.value), ["20", "30", "40", "50"]);
+  assert.equal(document.getElementById("contact-page-size").value, "20", "기본 20줄");
+  assert.equal(rows(), 20);
+  assert.deepEqual(pageButtons(), ["1", "2"]);
+  assert.equal(activePage(), "1");
+  assert.match(document.getElementById("contact-page-range").textContent, /1–20 \/ 전체 32명/);
+  assert.equal(document.getElementById("contact-page-first").disabled, true);
+  assert.equal(document.getElementById("contact-page-prev").disabled, true);
+  assert.equal(document.getElementById("contact-page-next").disabled, false);
+
+  document.getElementById("contact-page-next").click();
+  assert.equal(activePage(), "2");
+  assert.equal(rows(), 12, "마지막 페이지는 남은 12건");
+  assert.match(document.getElementById("contact-page-range").textContent, /21–32 \/ 전체 32명/);
+  assert.equal(document.getElementById("contact-page-next").disabled, true);
+  assert.equal(document.getElementById("contact-page-last").disabled, true);
+
+  document.getElementById("contact-page-first").click();
+  assert.equal(activePage(), "1");
+  document.getElementById("contact-page-last").click();
+  assert.equal(activePage(), "2");
+  document.querySelector('#contact-page-numbers [data-page="1"]').click();
+  assert.equal(activePage(), "1");
+
+  /* "모두 선택"은 지금 보이는 페이지만 대상으로 한다 */
+  document.getElementById("contact-select-all").click();
+  assert.equal(dom.window.eval("selectedContactIds.size"), 20);
+  document.getElementById("contact-select-all").click();
+  assert.equal(dom.window.eval("selectedContactIds.size"), 0);
+
+  /* 줄 수를 바꾸면 첫 페이지부터 다시 보여 주고 선택값은 외부 DB에 저장된다 */
+  document.getElementById("contact-page-next").click();
+  const sizeSelect = document.getElementById("contact-page-size");
+  sizeSelect.value = "50";
+  sizeSelect.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+  await waitFor(() => (api.records.get("tinico:app:settings") || {}).contactPageSize === 50, "page size persisted");
+  assert.equal(rows(), 32);
+  assert.deepEqual(pageButtons(), ["1"]);
+  assert.equal(document.getElementById("contact-page-next").disabled, true);
+
+  /* 검색하면 결과가 달라지므로 1페이지로 되돌아간다 */
+  sizeSelect.value = "20";
+  sizeSelect.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+  await waitFor(() => rows() === 20, "back to 20 rows");
+  document.getElementById("contact-page-next").click();
+  assert.equal(activePage(), "2");
+  input(dom.window, document.getElementById("contact-search"), "가온테크");
+  await waitFor(() => activePage() === "1", "search resets to first page");
+  assert.ok(rows() > 0 && rows() < 20);
+
+  /* 설정 > 매뉴얼의 연락처 안내에도 페이지 이동과 CSV 사용법이 들어가야 한다 */
+  const contactManual = (api.records.get("tinico:manual:sections") || []).find((section) => section.id === "manual_contacts");
+  assert.match(contactManual.content, /20줄씩/);
+  assert.match(contactManual.content, /20·30·40·50줄/);
+  assert.match(contactManual.content, /리멤버의 Outlook CSV와 같은 열 구성/);
+  assert.deepEqual(runtimeErrors.map((error) => error.message), []);
+});
+
+test("Remember CSV uploads into the same fields and exports back in Remember's layout", async (t) => {
+  const blobs = [];
+  const { dom, runtimeErrors } = await createBrowser({}, (window) => {
+    window.URL.createObjectURL = (blob) => { blobs.push(blob); return "blob:csv-test"; };
+  });
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  await importRememberCsv(dom);
+  await waitFor(() => dom.window.eval("contactsData.length") === 32, "CSV import");
+  const contacts = JSON.parse(dom.window.eval("JSON.stringify(contactsData)"));
+  const byName = (name) => contacts.find((contact) => contact.name === name);
+
+  /* 리멤버가 채우는 열이 CRM의 같은 입력 칸으로 들어가는지 */
+  const first = byName("이아름");
+  assert.equal(first.company, "나래바이오");
+  assert.equal(first.department, "영업팀");
+  assert.equal(first.jobTitle, "과장");
+  assert.equal(first.mobilePhone, "010-1037-2053");
+  assert.equal(first.email, "user02@example.com");
+  /* "2026년 07월 16일"도 등록일로 읽어 YYYY-MM-DD로 통일 */
+  assert.equal(first.createdAt, "2026-07-16");
+  /* 국가번호가 붙은 해외 번호는 그대로 보존 */
+  assert.equal(byName("Taro Yamada").mobilePhone, "+81 80-1234-5678");
+  /* 메일·전화가 없는 명함도 버리지 않는다 */
+  assert.equal(byName("한이름").company, "이름만테크");
+  assert.equal(byName("한이름").department, "총무팀");
+  assert.equal(contacts.filter((contact) => !contact.name || !contact.company).length, 0);
+
+  /* 같은 파일을 다시 올려도 중복이 생기지 않아야 한다 */
+  await importRememberCsv(dom);
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(dom.window.eval("contactsData.length"), 32, "re-upload must not duplicate");
+  assert.match(document.getElementById("ocr-status").textContent, /신규 0명/);
+
+  /* 내보낸 파일이 리멤버 export와 같은 열 구성인지 */
+  document.getElementById("contact-export-btn").click();
+  await waitFor(() => blobs.length > 0, "CSV export blob");
+  const exported = (await blobs[0].text()).replace(/^﻿/, "");
+  const exportedRows = exported.split("\r\n").filter((line) => line.trim());
+  const fixture = (await readFile(rememberCsvPath, "utf8")).replace(/^﻿/, "");
+  const fixtureRows = fixture.split(/\r?\n/).filter((line) => line.trim());
+
+  assert.equal(exportedRows[0], fixtureRows[0], "header must match Remember's Outlook layout exactly");
+  assert.equal(exportedRows.length - 1, 32);
+  const headers = exportedRows[0].split(",");
+  const cells = exportedRows.slice(1).map((line) => line.split(","));
+  const column = (row, name) => row[headers.indexOf(name)];
+  const exportedFirst = cells.find((row) => column(row, "First Name") === "이아름");
+  assert.equal(column(exportedFirst, "Company"), "나래바이오");
+  assert.equal(column(exportedFirst, "Department"), "영업팀");
+  assert.equal(column(exportedFirst, "Job Title"), "과장");
+  assert.equal(column(exportedFirst, "Mobile Phone"), "010-1037-2053");
+  assert.equal(column(exportedFirst, "Primary Phone"), "010-1037-2053");
+  assert.equal(column(exportedFirst, "E-mail Address"), "user02@example.com");
+  assert.equal(column(exportedFirst, "E-mail Type"), "SMTP");
+  assert.equal(column(exportedFirst, "E-mail Display Name"), "이아름");
+  assert.equal(column(exportedFirst, "User 2"), "2026-07-16");
+  /* 리멤버는 성/이름을 나누지 않고 First Name 한 칸만 쓴다 */
+  assert.equal(column(exportedFirst, "Last Name"), "");
   assert.deepEqual(runtimeErrors.map((error) => error.message), []);
 });
