@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { JSDOM, VirtualConsole } from "jsdom";
+import { randomUUID } from "node:crypto";
+import { initialDocument, publicDocument, applyChange, validateTransaction } from "../src/concurrency.js";
+import { buildAuditEntries } from "../src/audit.js";
 
 const htmlPath = new URL("../public/index.html", import.meta.url);
 const accessKey = "browser-test-key-1234567890";
@@ -27,6 +30,8 @@ function createMockApi(initialRecords = {}) {
   const allRequests = [];
   const adminRequests = [];
   const auditLogs = [];
+  const documents=new Map(),requests=new Map();let generation=randomUUID();
+  function getDocument(key){if(!documents.has(key))documents.set(key,initialDocument(key,records.has(key)?{value:clone(records.get(key)),revision:revisions.get(key)||1}:null));return documents.get(key);}
   let expectedAccessKey = accessKey;
   const adminToken = "ui-test-admin-token";
 
@@ -35,6 +40,8 @@ function createMockApi(initialRecords = {}) {
     allRequests,
     googleRequests,
     adminRequests,
+    remoteSave(key,value){const before=getDocument(key);const mutations=before.collection?value.filter(item=>JSON.stringify(item)!==JSON.stringify((before.value||[]).find(old=>old.id===item.id))).map(item=>({id:item.id,version:before.items.find(old=>old.id===item.id)?.version??null,value:item})):[{id:"",version:before.items[0]?.version??null,value}];if(before.collection)for(const old of before.value||[])if(!value.some(item=>item.id===old.id))mutations.push({id:old.id,version:before.items.find(item=>item.id===old.id).version,deleted:true});const after=applyChange(before,{mutations});documents.set(key,after);records.set(key,clone(after.value));return publicDocument(after,generation);},
+    simulateRestore(){generation=randomUUID();documents.clear();requests.clear();},
     setExpectedAccessKey(value) {
       expectedAccessKey = value;
     },
@@ -109,6 +116,7 @@ function createMockApi(initialRecords = {}) {
         const body = JSON.parse(String(options.body || "{}"));
         if (body.backup?.tinikoCRMBackupVersion !== 3) return jsonResponse({ error: "unsupported_backup" }, 400);
         records.clear();
+        documents.clear();requests.clear();generation=randomUUID();
         (body.backup.data?.records || []).forEach((record) => records.set(record.key, clone(record.value)));
         return jsonResponse({ status: "restored", recordCount: records.size, auditLogCount: (body.backup.data?.auditLogs || []).length + 1 });
       }
@@ -118,20 +126,41 @@ function createMockApi(initialRecords = {}) {
         const key = decodeURIComponent(url.pathname.slice("/api/storage/".length));
 
         if (method === "GET") {
-          return jsonResponse({
-            value: records.has(key) ? clone(records.get(key)) : null,
-            revision: revisions.get(key) || 0,
-            updatedAt: null
-          });
+          return jsonResponse(publicDocument(getDocument(key),generation));
         }
 
         if (method === "PUT") {
-          if (failedPuts.has(key)) {
-            const status = failedPuts.get(key);
-            failedPuts.delete(key);
+          const body = JSON.parse(String(options.body || "{}"));
+          const failedKey=body.changes?.find(change=>failedPuts.has(change.key))?.key;
+          if (failedKey) {
+            const status = failedPuts.get(failedKey);
+            failedPuts.delete(failedKey);
             return jsonResponse({ error: "forced_test_failure", requestId: "ui-test-request" }, status);
           }
-          const body = JSON.parse(String(options.body || "{}"));
+          if(body.changes){
+            try{
+              validateTransaction(body);
+              if(body.generation!==generation)return jsonResponse({error:"workspace_restored",message:"전체 데이터가 복원되었습니다."},409);
+              if(requests.has(body.requestId))return jsonResponse(requests.get(body.requestId));
+              const pending=new Map(body.changes.map(change=>[change.key,applyChange(getDocument(change.key),change)]));
+              const contacts=pending.get("tinico:contacts");
+              if(contacts)for(const [stageKey,values] of records){
+                if(!stageKey.startsWith("tinico:stage:")||stageKey.endsWith(":roadmap")||!Array.isArray(values))continue;
+                const current=pending.get(stageKey)||getDocument(stageKey),mutations=[];
+                for(const item of current.value||[]){
+                  if(!(item.linkedContactIds||[]).some(id=>body.changes.find(change=>change.key==="tinico:contacts").mutations.some(m=>m.id===id)))continue;
+                  const linked=(item.linkedContactIds||[]).map(id=>(contacts.value||[]).find(ct=>ct.id===id)).filter(Boolean),primary=linked[0];
+                  const value={...item,contactName:linked.map(ct=>ct.name||"").filter(Boolean).join(", "),contactRole:primary?[primary.department,primary.jobTitle].filter(Boolean).join(" / "):"",contactPhone:primary?.mobilePhone||primary?.businessPhone||primary?.phone||"",contactEmail:primary?.email||""};
+                  mutations.push({id:item.id,version:current.items.find(i=>i.id===item.id).version,value});
+                }
+                if(mutations.length)pending.set(stageKey,applyChange(current,{mutations}));
+              }
+              const result={status:"saved",records:{}};
+              for(const changedKey of pending.keys())if(failedPuts.has(changedKey)){const status=failedPuts.get(changedKey);failedPuts.delete(changedKey);return jsonResponse({error:"forced_test_failure"},status);}
+              for(const [changedKey,doc] of pending){auditLogs.push(...buildAuditEntries({storageKey:changedKey,beforeValue:records.get(changedKey)??null,afterValue:doc.value}));documents.set(changedKey,doc);records.set(changedKey,clone(doc.value));revisions.set(changedKey,doc.revision);result.records[changedKey]=publicDocument(doc,generation);}
+              requests.set(body.requestId,result);return jsonResponse(result);
+            }catch(error){return jsonResponse({error:error.publicCode,message:error.message,conflicts:error.conflicts},error.statusCode||500);}
+          }
           records.set(key, clone(body.value));
           const revision = (revisions.get(key) || 0) + 1;
           revisions.set(key, revision);
@@ -191,14 +220,16 @@ function input(window, element, value) {
 
 async function createBrowser(initialRecords = {}, setupWindow = null) {
   /* jsdom은 외부 리소스를 내려받지 않으므로 분리된 app.js/styles.css를 다시 인라인해 로드 */
-  const [rawHtml, appJs, stylesCss] = await Promise.all([
+  const [rawHtml, appJs, stylesCss, heavyJs] = await Promise.all([
     readFile(htmlPath, "utf8"),
     readFile(new URL("../public/app.js", import.meta.url), "utf8"),
-    readFile(new URL("../public/styles.css", import.meta.url), "utf8")
+    readFile(new URL("../public/styles.css", import.meta.url), "utf8"),
+    readFile(new URL("../public/heavy.js", import.meta.url), "utf8")
   ]);
   const html = rawHtml
     .replace(/<link rel="stylesheet" href="styles\.css[^"]*">/, () => `<style>${stylesCss}</style>`)
-    .replace(/<script src="app\.js[^"]*"><\/script>/, () => `<script>${appJs}</script>`);
+    /* 운영에서는 heavy.js를 쓸 때 내려받지만, 테스트 화면은 외부 파일을 받을 수 없어 함께 넣어 둔다 */
+    .replace(/<script src="app\.js[^"]*"><\/script>/, () => `<script>${appJs}</script><script>${heavyJs}</script>`);
   if (!html.includes("async function init()")) throw new Error("app.js inlining failed in test harness");
   const api = createMockApi({
     "tinico:app:settings": { onboardingSeen: true, beginnerMode: true },
@@ -242,6 +273,9 @@ async function createBrowser(initialRecords = {}, setupWindow = null) {
         if (this.download) downloads.push({ filename: this.download, href: this.href });
       };
       window.navigator.clipboard = { writeText: async () => {} };
+      /* 실제 브라우저처럼 압축 기능을 제공해 Excel이 다시 저장한 형태까지 검증할 수 있게 한다 */
+      window.CompressionStream = CompressionStream;
+      window.DecompressionStream = DecompressionStream;
       window.HTMLElement.prototype.scrollIntoView = () => {};
       if (setupWindow) setupWindow(window);
       window.addEventListener("unhandledrejection", (event) => {
@@ -297,10 +331,10 @@ test("browser UI persists contact, pipeline, and calendar changes safely", async
   document.getElementById("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
   await waitFor(() => document.getElementById("settings-admin-overlay").hidden, "administrator unlock");
   assert.equal(document.getElementById("settings-admin-actions").hidden, false);
-  assert.equal(document.getElementById("settings-admin-open").textContent, "관리자 인증됨");
+  assert.equal(document.getElementById("settings-admin-open").textContent, "활성화됨");
   document.getElementById("settings-backup-export").click();
   await waitFor(() => downloads.length === 1, "administrator backup download");
-  assert.match(downloads[0].filename, /^hlb_busisup_crm_backup_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/);
+  assert.match(downloads[0].filename, /^hlb_busisup_crm_backup_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.xlsx$/);
   assert.ok(api.adminRequests.some((request) => request.path === "/api/admin/backup"));
 
   document.getElementById("contact-manual-btn").click();
@@ -1122,9 +1156,11 @@ test("a repeat visit loads without re-uploading unchanged data", async (t) => {
   assert.deepEqual(writes, [], "a repeat visit must not write anything back");
   assert.deepEqual(repeat.runtimeErrors.map((error) => error.message), []);
 
-  /* 매뉴얼 마이그레이션 표시 키는 순차가 아니라 한 번에 조회해야 접속 지연이 쌓이지 않는다 */
-  const manualFlagReads = repeat.api.allRequests.filter((request) => request.url.includes("tinico%3Amanual%3Amigration%3A"));
-  assert.ok(manualFlagReads.length >= 9, "every manual migration flag is checked");
+  /* 매뉴얼 마이그레이션 진행 기록은 키 하나에 모아 두므로, 재접속에서는 그 키만 읽어야 한다 */
+  const separateFlagReads = repeat.api.allRequests.filter((request) => request.url.includes("tinico%3Amanual%3Amigration%3A"));
+  assert.deepEqual(separateFlagReads, [], "재접속 때 예전 방식의 표시 키를 다시 읽으면 안 된다");
+  const consolidatedReads = repeat.api.allRequests.filter((request) => request.url.includes("tinico%3Amanual%3Amigrations"));
+  assert.equal(consolidatedReads.length, 1, "모아 둔 진행 기록만 한 번 읽어야 한다");
 });
 
 const rememberCsvPath = new URL("./fixtures/remember_outlook_contacts.csv", import.meta.url);
@@ -1548,7 +1584,7 @@ test("pipeline row saves isolate other drafts and kanban changes require confirm
   assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
 });
 
-test("saved contact mirrors update only after Save and linked-deal failures are retryable without losing drafts",async t=>{
+test("contact and linked-deal failures roll back together and dirty deal edits require explicit conflict resolution",async t=>{
   const key="tinico:stage:existing_accounts";
   const {dom,api,runtimeErrors}=await createBrowser({"tinico:contacts":comboContacts,[key]:[{id:"mirror",title:"연결 영업",stage:"제안",linkedContactIds:["ct-gaon"],contactName:"김가온",contactPhone:"010-1111-2222"}]});
   t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
@@ -1557,14 +1593,80 @@ test("saved contact mirrors update only after Save and linked-deal failures are 
   input(win,doc.querySelector('[data-field="mobilePhone"]'),"010-9999-0000");
   assert.equal(win.eval('findDeal("existing_accounts","mirror").item.contactPhone'),"010-1111-2222");
   api.failNextPut(key);doc.getElementById("contact-drawer-save").click();
-  await waitFor(()=>/영업 연결 재시도/.test(doc.getElementById("contact-save-status").textContent),"mirror failure");
-  assert.equal(api.records.get("tinico:contacts")[0].mobilePhone,"010-9999-0000");assert.equal(api.records.get(key)[0].contactPhone,"010-1111-2222");
+  await waitFor(()=>/저장 실패/.test(doc.getElementById("contact-save-status").textContent),"atomic mirror failure");
+  assert.equal(api.records.get("tinico:contacts")[0].mobilePhone,"010-1111-2222");assert.equal(api.records.get(key)[0].contactPhone,"010-1111-2222");
   assert.equal(win.eval('findDeal("existing_accounts","mirror").item.contactPhone'),"010-1111-2222");
   await saveEditor(win,"contact");assert.equal(api.records.get(key)[0].contactPhone,"010-9999-0000");
   assert.equal(api.records.get(key)[0].title,"연결 영업","contact save must not leak the open deal draft");
   doc.getElementById("contact-drawer-close").click();
-  await saveEditor(win,"deal");assert.equal(api.records.get(key)[0].title,"아직 저장 안 한 제목");assert.equal(api.records.get(key)[0].contactPhone,"010-9999-0000");
+  doc.getElementById("deal-drawer-save").click();
+  await waitFor(()=>doc.getElementById("save-conflict-overlay"),"dirty deal token stays pinned");
+  const overlay=doc.getElementById("save-conflict-overlay");assert.match(overlay.textContent,/010-9999-0000/);
+  overlay.querySelector("select").value="mine";[...overlay.querySelectorAll("button")].find(button=>button.textContent==="선택한 내용으로 저장").click();
+  await waitFor(()=>doc.getElementById("deal-save-status").textContent==="저장됨","explicit overwrite");
+  assert.equal(api.records.get(key)[0].title,"아직 저장 안 한 제목");assert.equal(api.records.get(key)[0].contactPhone,"010-1111-2222","only explicit mine choice may replace the latest fields");
   assert.deepEqual(runtimeErrors.map(e=>e.message),[]);
+});
+
+test("a remote edit to another item is not overwritten by later local saves",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api}=await createBrowser({[key]:[{id:"a",title:"A",stage:"제안"},{id:"b",title:"B",stage:"제안"}]});t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  api.remoteSave(key,api.records.get(key).map(item=>item.id==="b"?{...item,title:"다른 사용자 B"}:item));
+  win.openDealDrawer("existing_accounts","a");input(win,doc.querySelector('[data-f="title"]'),"내 A");await saveEditor(win,"deal");
+  input(win,doc.querySelector('[data-f="title"]'),"내 A 두 번째");await saveEditor(win,"deal");
+  assert.equal(api.records.get(key).find(item=>item.id==="b").title,"다른 사용자 B");assert.equal(doc.getElementById("save-conflict-overlay"),null);
+});
+
+test("same-item conflicts retain input, recheck a second race, and reflect the selected server value",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api}=await createBrowser({[key]:[{id:"a",title:"원본",stage:"제안"}]});t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  win.openDealDrawer("existing_accounts","a");input(win,doc.querySelector('[data-f="title"]'),"내 입력");
+  const remote=title=>api.remoteSave(key,api.records.get(key).map(item=>({...item,title})));
+  remote("서버 1");doc.getElementById("deal-drawer-save").click();
+  let overlay=await waitFor(()=>doc.getElementById("save-conflict-overlay"),"first conflict");
+  assert.match(overlay.textContent,/원본/);assert.match(overlay.textContent,/내 입력/);assert.match(overlay.textContent,/서버 1/);
+  [...overlay.querySelectorAll("button")].find(button=>button.textContent==="돌아가서 계속 편집").click();
+  await waitFor(()=>!doc.getElementById("deal-drawer-save").disabled,"draft retry enabled");assert.equal(doc.querySelector('[data-f="title"]').value,"내 입력");
+  doc.getElementById("deal-drawer-save").click();overlay=await waitFor(()=>doc.getElementById("save-conflict-overlay"),"retry conflict");
+  remote("서버 2");overlay.querySelector("select").value="mine";[...overlay.querySelectorAll("button")].find(button=>button.textContent==="선택한 내용으로 저장").click();
+  overlay=await waitFor(()=>{const el=doc.getElementById("save-conflict-overlay");return el?.textContent.includes("서버 2")&&el;},"second race rechecked");
+  assert.equal(api.records.get(key)[0].title,"서버 2");assert.equal(overlay.querySelector("select").value,"server");
+  [...overlay.querySelectorAll("button")].find(button=>button.textContent==="선택한 내용으로 저장").click();
+  await waitFor(()=>doc.getElementById("deal-save-status").textContent==="저장됨","server choice saved");
+  assert.equal(doc.querySelector('[data-f="title"]').value,"서버 2");assert.equal(win.eval('findDeal("existing_accounts","a").item.title'),"서버 2");
+});
+
+test("a stale delete creates no trash entry and a restored workspace keeps unsaved input",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api}=await createBrowser({[key]:[{id:"a",title:"원본",stage:"제안"}]});t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  api.remoteSave(key,api.records.get(key).map(item=>({...item,title:"삭제 전 수정"})));
+  const deleting=win.moveDealToTrash("existing_accounts","a");let overlay=await waitFor(()=>doc.getElementById("save-conflict-overlay"),"delete conflict");
+  assert.equal((api.records.get("tinico:trash")||[]).length,0);
+  [...overlay.querySelectorAll("button")].find(button=>button.textContent==="돌아가서 계속 편집").click();await deleting;
+  assert.equal(api.records.get(key)[0].title,"삭제 전 수정");
+  win.openDealDrawer("existing_accounts","a");input(win,doc.querySelector('[data-f="title"]'),"복원 전에 작성한 내용");api.simulateRestore();
+  doc.getElementById("deal-drawer-save").click();overlay=await waitFor(()=>doc.getElementById("save-conflict-overlay"),"restore protection");
+  assert.match(overlay.textContent,/복원/);assert.ok([...overlay.querySelectorAll("button")].some(button=>button.textContent==="내 입력 복사"));
+  [...overlay.querySelectorAll("button")].find(button=>button.textContent==="돌아가서 계속 편집").click();
+  await waitFor(()=>!doc.getElementById("deal-drawer-save").disabled,"restore draft retained");assert.equal(doc.querySelector('[data-f="title"]').value,"복원 전에 작성한 내용");
+});
+
+test("a lost successful response retries the same save without duplication",async t=>{
+  const key="tinico:stage:existing_accounts";
+  const {dom,api}=await createBrowser({[key]:[{id:"a",title:"원본",stage:"제안"}]});t.after(()=>dom.window.close());const win=dom.window,doc=win.document;
+  const fetch=win.fetch,requests=[];let lost=false;
+  win.fetch=async(url,options)=>{const response=await fetch(url,options);if(options?.method==="PUT"&&decodeURIComponent(String(url)).endsWith(key)){requests.push(JSON.parse(options.body).requestId);if(!lost){lost=true;throw new Error("lost response");}}return response;};
+  win.openDealDrawer("existing_accounts","a");input(win,doc.querySelector('[data-f="title"]'),"한 번 저장");await saveEditor(win,"deal");
+  assert.equal(requests.length,2);assert.equal(new Set(requests).size,1);assert.equal(api.records.get(key).length,1);assert.equal(doc.getElementById("save-conflict-overlay"),null);
+});
+
+test("manual retry of a new calendar event after an uncertain response reuses its ID and request",async t=>{
+  const {dom,api}=await createBrowser();t.after(()=>dom.window.close());const win=dom.window,doc=win.document,key="tinico:calendar:events";
+  const fetch=win.fetch,requests=[];let lost=false;
+  win.fetch=async(url,options)=>{const response=await fetch(url,options);if(options?.method==="PUT"&&decodeURIComponent(String(url)).endsWith(key)){requests.push(JSON.parse(options.body).requestId);if(!lost){lost=true;return jsonResponse({error:"uncertain_response"},500);}}return response;};
+  win.openCalendarEventModal("","2026-09-11");input(win,doc.getElementById("calendar-event-title"),"중복 방지 일정");
+  await win.saveCalendarEventModal();assert.equal(api.records.get(key).length,1);assert.equal(doc.getElementById("calendar-event-overlay").hidden,false);
+  await win.saveCalendarEventModal();assert.equal(api.records.get(key).length,1);assert.equal(new Set(requests).size,1);assert.equal(doc.getElementById("calendar-event-overlay").hidden,true);
 });
 
 test("in-flight saves block closing and serialize row writes without overwriting another item",async t=>{
@@ -1691,4 +1793,197 @@ test("calendar preserves missing work references and safely previews a moved dea
   assert.equal(api.records.get("tinico:calendar:events")[0].relatedTaskId, "missing-task");
   assert.equal(api.records.get("tinico:calendar:events")[0].relatedAreaKey, "sample_validation");
   assert.deepEqual(runtimeErrors.map(error => error.message), []);
+});
+
+test("admin backup downloads an .xlsx workbook that restores back losslessly", async (t) => {
+  const blobs = [];
+  const bigMemo = "가".repeat(45000); /* Excel 한 칸 상한을 넘겨 여러 줄로 나뉘는 경우 */
+  const { dom, api, runtimeErrors } = await createBrowser({
+    "tinico:contacts": [{ id: "ct-1", name: "김가온", company: "가온테크", memo: bigMemo, createdAt: "2026-07-16" }]
+  }, (window) => {
+    window.URL.createObjectURL = (blob) => { blobs.push(blob); return "blob:xlsx-test"; };
+  });
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  document.getElementById("settings-admin-open").click();
+  document.getElementById("settings-admin-code").value = requestedAdminCode;
+  document.getElementById("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor(() => document.getElementById("settings-admin-overlay").hidden, "administrator unlock");
+
+  document.getElementById("settings-backup-export").click();
+  await waitFor(() => blobs.length > 0, "backup workbook");
+  const bytes = new Uint8Array(await blobs[0].arrayBuffer());
+  /* Excel 파일은 ZIP이라 PK로 시작한다 */
+  assert.equal(String.fromCharCode(bytes[0], bytes[1]), "PK");
+  assert.ok(bytes.length > 500, "통합 문서에 내용이 들어 있어야 한다");
+
+  /* 시트 구성과 내용이 Excel에서 읽을 수 있는 형태인지 */
+  const sheets = await dom.window.eval("workbookSheetRows")(bytes.buffer);
+  assert.deepEqual(Array.from(sheets.keys()).map(String), ["백업정보", "저장데이터", "변경로그"]);
+  const info = new Map(sheets.get("백업정보").slice(1).map((row) => [row[0], row[1]]));
+  assert.equal(info.get("형식"), "tiniko-crm-admin-backup-v3");
+  assert.equal(info.get("버전"), "3");
+  const recordSheet = sheets.get("저장데이터");
+  assert.deepEqual(Array.from(recordSheet[0]).map(String), ["저장키", "리비전", "수정시각", "값(JSON)", "조각"]);
+  assert.ok(recordSheet.some((row) => row[0] === "tinico:contacts"));
+  /* 큰 값은 상한을 넘지 않게 나뉘어야 한다 */
+  recordSheet.slice(1).forEach((row) => assert.ok(String(row[3] || "").length <= 30000, "한 칸이 Excel 상한을 넘으면 안 된다"));
+  assert.ok(recordSheet.some((row) => Number(row[4]) > 1), "긴 값은 여러 줄로 나뉘어야 한다");
+
+  /* 되읽으면 원래 백업 내용으로 돌아와야 한다 */
+  const restored = await dom.window.eval("readBackupWorkbook")(bytes.buffer);
+  assert.equal(restored.tinikoCRMBackupVersion, 3);
+  assert.equal(restored.format, "tiniko-crm-admin-backup-v3");
+  const contacts = restored.data.records.find((record) => record.key === "tinico:contacts");
+  assert.equal(contacts.value[0].name, "김가온");
+  assert.equal(contacts.value[0].memo, bigMemo, "나뉘어 저장된 긴 값이 원래대로 합쳐져야 한다");
+  assert.ok(restored.data.auditLogs.length >= 1);
+  const auditEntry = restored.data.auditLogs[0];
+  assert.ok(auditEntry.eventId && auditEntry.screen && auditEntry.action);
+  assert.ok(Array.isArray(auditEntry.changedFields));
+
+  /* 까다로운 값도 통합 문서를 거쳐 그대로 돌아와야 한다 */
+  const nasty = {
+    trailingSpace: "끝에 공백 ", leadingSpace: " 앞에 공백",
+    quotes: 'he said "hi" & <tag>', newlines: "첫 줄\n둘째 줄\t탭",
+    unicode: "이모지 😀 한자 漢字 ü", empty: "", nullValue: null,
+    numbers: [0, -1, 3.14159, Number.MAX_SAFE_INTEGER], bools: [true, false],
+    nested: { a: { b: { c: ["깊은 값 ", ""] } } }, huge: "긴값 ".repeat(20000)
+  };
+  const sample = {
+    format: "tiniko-crm-admin-backup-v3", tinikoCRMBackupVersion: 3, workspaceId: "hlbbusisup",
+    exportedAt: "2026-09-10T05:00:00.000Z", description: '설명 & <문자> "따옴표"',
+    summary: { recordCount: 2, auditLogCount: 1 },
+    data: {
+      records: [
+        { key: "tinico:contacts", value: [nasty], revision: 7, updatedAt: "2026-09-10T05:00:00.000Z" },
+        { key: "tinico:app:settings", value: null, revision: 2, updatedAt: "2026-09-10T05:00:00.000Z" }
+      ],
+      auditLogs: [{
+        eventId: "evt-round", eventAt: "2026-09-10T05:00:00.000Z", screen: "연락처", action: "입력",
+        entityType: "연락처", entityId: null, entityLabel: "김가온 · 가온테크 ", storageKey: "tinico:contacts",
+        changedFields: [{ field: "memo", label: "메모", before: null, after: "값 " }],
+        beforeValue: null, afterValue: nasty, summary: "연락처에서 연락처 '김가온' 입력 & <검증>"
+      }]
+    }
+  };
+  const sampleBlob = await dom.window.eval("buildBackupWorkbook")(sample);
+  const sampleBytes = new Uint8Array(await sampleBlob.arrayBuffer());
+  const sampleBack = await dom.window.eval("readBackupWorkbook")(sampleBytes.buffer);
+  assert.equal(sampleBack.workspaceId, sample.workspaceId);
+  assert.equal(sampleBack.exportedAt, sample.exportedAt);
+  assert.equal(sampleBack.description, sample.description);
+  sample.data.records.forEach((record, index) => {
+    const got = sampleBack.data.records[index];
+    assert.equal(got.key, record.key);
+    assert.equal(got.revision, record.revision);
+    assert.equal(got.updatedAt, record.updatedAt);
+    assert.equal(JSON.stringify(got.value), JSON.stringify(record.value), record.key + " 값이 그대로 보존되어야 한다");
+  });
+  const gotLog = sampleBack.data.auditLogs[0];
+  const sourceLog = sample.data.auditLogs[0];
+  ["eventId", "eventAt", "screen", "action", "entityType", "entityLabel", "storageKey", "summary"].forEach((field) => {
+    assert.equal(gotLog[field], sourceLog[field], "변경 로그 " + field);
+  });
+  assert.equal(gotLog.entityId, null);
+  assert.equal(JSON.stringify(gotLog.changedFields), JSON.stringify(sourceLog.changedFields));
+  assert.equal(JSON.stringify(gotLog.afterValue), JSON.stringify(sourceLog.afterValue));
+
+  assert.deepEqual(runtimeErrors.map((error) => error.message), []);
+});
+
+test("restore accepts the .xlsx workbook and older .json backups", async (t) => {
+  const blobs = [];
+  const { dom, api, runtimeErrors } = await createBrowser({}, (window) => {
+    window.URL.createObjectURL = (blob) => { blobs.push(blob); return "blob:xlsx-test"; };
+  });
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  document.getElementById("settings-admin-open").click();
+  document.getElementById("settings-admin-code").value = requestedAdminCode;
+  document.getElementById("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor(() => document.getElementById("settings-admin-overlay").hidden, "administrator unlock");
+  document.getElementById("settings-backup-export").click();
+  await waitFor(() => blobs.length > 0, "backup workbook");
+  const workbookBytes = new Uint8Array(await blobs[0].arrayBuffer());
+
+  const restoreCalls = () => api.adminRequests.filter((request) => request.path === "/api/admin/restore").length;
+  const before = restoreCalls();
+
+  /* Excel 파일로 복원 */
+  const xlsxFile = new dom.window.File([workbookBytes], "backup.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  await dom.window.eval("importFullBackup")(xlsxFile);
+  await waitFor(() => restoreCalls() === before + 1, "xlsx restore request");
+
+  /* 예전에 내려받은 .json 백업도 그대로 복원돼야 한다 */
+  const legacy = JSON.stringify({
+    format: "tiniko-crm-admin-backup-v3", tinikoCRMBackupVersion: 3, workspaceId: "test",
+    exportedAt: new Date().toISOString(), data: { records: [{ key: "tinico:areas", value: [], revision: 1, updatedAt: new Date().toISOString() }], auditLogs: [] }
+  });
+  const jsonFile = new dom.window.File([legacy], "backup.json", { type: "application/json" });
+  await dom.window.eval("importFullBackup")(jsonFile);
+  await waitFor(() => restoreCalls() === before + 2, "json restore request");
+
+  /* 백업이 아닌 파일은 안내만 하고 복원을 시도하지 않는다 */
+  const junk = new dom.window.File(["이건 백업이 아닙니다"], "memo.txt", { type: "text/plain" });
+  await dom.window.eval("importFullBackup")(junk);
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(restoreCalls(), before + 2, "잘못된 파일로는 복원을 시도하지 않아야 한다");
+  assert.match(document.querySelector(".tn-notice-stack")?.textContent || "", /백업 파일을 읽을 수 없습니다|not valid JSON/,
+    "읽을 수 없는 파일은 사용자에게 알려야 한다");
+  /* 복원 뒤 화면 새로 부르기(jsdom 미지원)와 잘못된 파일에 대한 진단 기록은 예상된 출력이다 */
+  assert.deepEqual(
+    runtimeErrors.map((error) => error.message)
+      .filter((message) => !/Not implemented: navigation|backup file read failed/.test(message)),
+    []
+  );
+});
+
+test("trash list collapses and expands, and the state is stored", async (t) => {
+  const { dom, api, runtimeErrors } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  const list = document.getElementById("settings-trash-list");
+  const toggle = document.getElementById("settings-trash-collapse");
+  assert.equal(list.hidden, false);
+  assert.equal(toggle.textContent, "접기");
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+
+  /* 휴지통에 항목이 있을 때 접으면 개수를 함께 보여 준다 */
+  document.getElementById("contact-manual-btn").click();
+  await waitFor(() => !document.getElementById("contact-drawer").hidden, "contact drawer");
+  input(dom.window, document.querySelector('#contact-drawer-body [data-field="name"]'), "휴지통 검증 담당자");
+  document.getElementById("contact-drawer-save").click();
+  await waitFor(() => (api.records.get("tinico:contacts") || []).some((contact) => contact.name === "휴지통 검증 담당자"), "contact saved");
+  document.getElementById("contact-drawer-close").click();
+  document.querySelector("#contact-tbody [data-check]").click();
+  document.getElementById("contact-bulk-delete-btn").click();
+  await waitFor(() => (api.records.get("tinico:trash") || []).length === 1, "moved to trash");
+  document.querySelector('#tn-tabs [data-key="settings"]').click();
+  await waitFor(() => document.querySelectorAll("#settings-trash-list .tn-trash-row").length === 1, "trash row");
+
+  toggle.click();
+  assert.equal(list.hidden, true);
+  assert.equal(toggle.textContent, "펼치기 · 1개");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  await waitFor(() => (api.records.get("tinico:app:settings") || {}).trashCollapsed === true, "collapsed state stored");
+
+  toggle.click();
+  assert.equal(list.hidden, false);
+  assert.equal(toggle.textContent, "접기");
+  await waitFor(() => (api.records.get("tinico:app:settings") || {}).trashCollapsed === false, "expanded state stored");
+
+  /* 접어 둔 채로 다시 접속하면 접힌 상태가 유지된다 */
+  toggle.click();
+  await waitFor(() => (api.records.get("tinico:app:settings") || {}).trashCollapsed === true, "collapsed again");
+  const seeded = Object.fromEntries(api.records);
+  const repeat = await createBrowser(seeded);
+  t.after(() => repeat.dom.window.close());
+  assert.equal(repeat.dom.window.document.getElementById("settings-trash-list").hidden, true);
+  assert.equal(repeat.dom.window.document.getElementById("settings-trash-collapse").textContent, "펼치기 · 1개");
+
+  assert.deepEqual(runtimeErrors.map((error) => error.message), []);
 });

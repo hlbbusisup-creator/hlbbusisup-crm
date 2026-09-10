@@ -3,14 +3,13 @@ import { test } from "node:test";
 import { readFile } from "node:fs/promises";
 
 /* 명함 OCR 텍스트 파싱 회귀 테스트 — 실제 배포 코드에서 파싱 함수를 그대로 추출해 검증 */
-let source;
-try {
-  source = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
-} catch {
-  source = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
-}
+/* 연락처 쪽 도우미는 app.js 에, 명함 글자 해석은 필요할 때 내려받는 heavy.js 에 있다 */
+const [appSource, heavySource] = await Promise.all([
+  readFile(new URL("../public/app.js", import.meta.url), "utf8"),
+  readFile(new URL("../public/heavy.js", import.meta.url), "utf8")
+]);
 
-function slice(startMarker, endMarker) {
+function slice(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
   if (start < 0) throw new Error("start marker not found: " + startMarker);
   const end = source.indexOf(endMarker, start);
@@ -18,10 +17,11 @@ function slice(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-const code =
-  slice("function splitLegacyRole(role){", "function syncContactLegacyFields") +
-  "\n" +
-  slice("function normalizePhoneNumber", "let ocrJobQueue");
+const code = [
+  slice(appSource, "function splitLegacyRole(role){", "function syncContactLegacyFields"),
+  slice(appSource, "function normalizePhoneNumber", "function loadImageFromDataUrl"),
+  slice(heavySource, "function editDistanceAtMost", "let ocrJobQueue")
+].join("\n");
 
 const { parseCardText, mergeParsedCards, normalizePhoneNumber, splitLegacyRole } = new Function(
   code + "\nreturn { parseCardText, mergeParsedCards, normalizePhoneNumber, splitLegacyRole };"
