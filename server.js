@@ -31,6 +31,7 @@ const auditRetentionDays = Number(process.env.CRM_AUDIT_RETENTION_DAYS ?? 90);
 async function pruneOldAuditLogs() {
   if (typeof repository.pruneAuditLogs !== "function") return;
   try {
+    await repository.pruneSaveRequests();
     const removed = await repository.pruneAuditLogs(auditRetentionDays);
     if (removed) console.log(`Pruned ${removed} audit log entries older than ${auditRetentionDays} days`);
   } catch (error) {
