@@ -862,6 +862,60 @@ test("사용자 계정: 로그인한 이름이 변경 이력에 남고 열람 �
   byId("contact-drawer-close").click();
 });
 
+test("사용자를 바꾸면 앞사람의 관리자 인증과 편집 내용이 넘어가지 않는다", async () => {
+  const adminSession = await (await fetch(baseUrl + "/api/admin/session", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ code: adminCode })
+  })).json();
+  const adminHeaders = { "x-crm-key": accessKey, "content-type": "application/json", authorization: "Bearer " + adminSession.token };
+  const created = await (await fetch(baseUrl + "/api/admin/members", {
+    method: "POST", headers: adminHeaders, body: JSON.stringify({ name: "전환확인", role: "admin", password: "" })
+  })).json();
+  const cleanup = async () => {
+    await fetch(baseUrl + "/api/admin/members/" + created.member.id, { method: "DELETE", headers: adminHeaders });
+  };
+
+  try {
+    /* 화면에서 로그인하고 관리자 인증까지 끝낸 상태를 만든다 */
+    win().eval("showMemberGate")("");
+    await waitFor(async () => doc().querySelectorAll("#member-login-name option").length > 0, "사용자 목록");
+    setSelect(byId("member-login-name"), created.member.id);
+    byId("member-login-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => byId("member-gate").hidden && win().eval("currentMember && currentMember.name") === "전환확인", "사용자 로그인");
+
+    doc().querySelector('#tn-tabs [data-key="settings"]').click();
+    byId("settings-admin-open").click();
+    setInput(byId("settings-admin-code"), adminCode);
+    byId("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => !byId("settings-admin-actions").hidden, "관리자 인증");
+    await waitFor(async () => doc().querySelector("#settings-member-list [data-edit-member]"), "사용자 목록 표시");
+    byId("settings-audit-refresh").click();
+    await waitFor(async () => doc().querySelectorAll("#audit-tbody [data-audit-detail]").length > 0, "변경 이력 조회");
+    assert.equal(win().eval("adminSessionActive()"), true);
+
+    /* 사용자 전환: 화면을 새로 여는 자리를 가로채 상태만 확인한다 */
+    win().eval("window.__reloaded = 0; reloadApp = function(){ window.__reloaded++; };");
+    byId("tn-user-chip").click();
+    assert.equal(byId("account-overlay").hidden, false, "이름을 누르면 내 계정 창이 열려야 한다");
+    byId("account-logout").click();
+
+    assert.equal(win().eval("window.__reloaded"), 1, "로그아웃하면 화면을 새로 열어야 한다");
+    assert.equal(win().eval("adminSessionActive()"), false, "앞사람의 관리자 인증이 남아 있으면 안 된다");
+    assert.equal(byId("settings-admin-actions").hidden, true, "백업·복원 버튼이 다시 잠겨야 한다");
+    assert.equal(byId("settings-admin-open").textContent, "활성화");
+    assert.equal(win().eval("currentMember"), null, "로그인 상태가 비워져야 한다");
+    assert.equal(win().eval("!!localStorage.getItem('tinico:member:token')"), false, "저장된 로그인 정보도 지워져야 한다");
+    assert.equal(win().eval("adminMemberList.length"), 0, "앞사람이 불러온 사용자 목록이 남으면 안 된다");
+    assert.equal(win().eval("auditState.entries.length"), 0, "앞사람이 본 변경 이력이 남으면 안 된다");
+    assert.equal(win().eval("Object.keys(aiChatHistories).length"), 0, "앞사람의 AI 대화가 남으면 안 된다");
+  } finally {
+    await cleanup();
+    /* 뒤 테스트가 이어서 쓸 수 있도록 사용자 계정이 꺼진 상태로 되돌린다 */
+    win().eval("memberAccountsEnabled = false; memberToken = ''; currentMember = null; updateMemberUi();");
+  }
+});
+
 test("사용자가 있으면 접속 직후 뜬 로그인 화면에서 바로 로그인된다", async (t) => {
   /* 로그인 화면은 init()이 사용자 확인을 기다리는 동안 떠 있다. 그 시점에 이미
      버튼이 연결되어 있지 않으면 눌러도 아무 일이 없고 화면이 영원히 닫히지 않는다. */
@@ -924,6 +978,11 @@ test("사용자가 있으면 접속 직후 뜬 로그인 화면에서 바로 로
 
 test("설정 > 변경 이력이 조건에 맞는 기록과 상세를 보여준다", async () => {
   doc().querySelector('#tn-tabs [data-key="settings"]').click();
+  /* 앞 테스트에서 사용자를 바꾸며 관리자 인증이 풀렸다 — 다시 인증하고 시작한다 */
+  byId("settings-admin-open").click();
+  setInput(byId("settings-admin-code"), adminCode);
+  byId("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor(async () => !byId("settings-admin-actions").hidden, "관리자 인증");
   await waitFor(async () => !byId("settings-audit-refresh").disabled, "변경 이력 사용 가능");
   setSelect(byId("audit-range"), "");
   byId("settings-audit-refresh").click();
@@ -954,6 +1013,167 @@ test("설정 > 변경 이력이 조건에 맞는 기록과 상세를 보여준�
   /* 다음 테스트를 위해 조건을 되돌린다 */
   setInput(byId("audit-search"), "");
   setSelect(byId("audit-screen"), "");
+});
+
+test("사용자는 자기 변경 이력·휴지통만 보고, 관리자 인증을 하면 전체가 보인다", async (t) => {
+  const adminSession = await (await fetch(baseUrl + "/api/admin/session", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ code: adminCode })
+  })).json();
+  const adminHeaders = { "x-crm-key": accessKey, "content-type": "application/json", authorization: "Bearer " + adminSession.token };
+  const make = async (name) => (await (await fetch(baseUrl + "/api/admin/members", {
+    method: "POST", headers: adminHeaders, body: JSON.stringify({ name, role: "editor", password: "" })
+  })).json()).member;
+  const first = await make("갑사용자");
+  const second = await make("을사용자");
+
+  const signIn = async (member) => {
+    win().eval("showMemberGate")("");
+    await waitFor(async () => doc().querySelectorAll("#member-login-name option").length > 1, "사용자 목록");
+    setSelect(byId("member-login-name"), member.id);
+    byId("member-login-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => byId("member-gate").hidden && win().eval("currentMember && currentMember.id") === member.id, "로그인 " + member.name);
+  };
+  const refreshAudit = async () => {
+    win().eval("auditState.loaded = false;");
+    byId("settings-audit-refresh").click();
+    await waitFor(async () => win().eval("auditState.loaded && !auditState.loading"), "변경 이력 조회");
+  };
+
+  try {
+    /* 관리자 코드를 모르는 보통 사용자 상태에서 시작한다 */
+    win().eval("lockAdmin()");
+    /* 갑사용자가 연락처 하나를 만들고 지운다 */
+    await signIn(first);
+    doc().querySelector('#tn-tabs [data-key="contacts"]').click();
+    byId("contact-manual-btn").click();
+    await waitFor(async () => !byId("contact-drawer").hidden, "연락처 상세");
+    setInput(doc().querySelector('#contact-drawer-body [data-field="name"]'), "갑이만든연락처");
+    byId("contact-drawer-save").click();
+    await waitFor(async () => ((await stored("tinico:contacts")) || []).some((c) => c.name === "갑이만든연락처"), "갑 저장");
+    await settleDrafts();
+    byId("contact-drawer-close").click();
+    await waitFor(async () => byId("contact-drawer").hidden, "상세 닫힘");
+
+    const row = [...doc().querySelectorAll("#contact-tbody tr")].find((tr) => tr.textContent.includes("갑이만든연락처"));
+    assert.ok(row, "목록에 갑 연락처가 있어야 한다");
+    row.querySelector("[data-check]").click();
+    byId("contact-bulk-delete-btn").click();
+    await waitFor(async () => ((await stored("tinico:trash")) || []).some((entry) => entry.label === "갑이만든연락처"), "갑 휴지통 이동");
+    const trashed = ((await stored("tinico:trash")) || []).find((entry) => entry.label === "갑이만든연락처");
+    assert.equal(trashed.deletedBy?.id, first.id, "휴지통 항목에 지운 사람이 남아야 한다");
+    assert.equal(trashed.deletedBy?.name, "갑사용자");
+
+    /* 갑 화면: 변경 이력은 내 것만, 휴지통도 내가 지운 것만 */
+    doc().querySelector('#tn-tabs [data-key="settings"]').click();
+    assert.equal(byId("settings-audit-refresh").disabled, false, "로그인만 해도 변경 이력을 볼 수 있어야 한다");
+    await refreshAudit();
+    assert.equal(win().eval("auditState.scope"), "mine");
+    assert.ok(win().eval("auditState.total") > 0, "갑의 기록이 있어야 한다");
+    const actors = win().eval("JSON.stringify(auditState.entries.map(e=>e.actorName))");
+    assert.deepEqual([...new Set(JSON.parse(actors))], ["갑사용자"], "다른 사람 기록이 섞이면 안 된다");
+    assert.equal(byId("audit-scope-note").hidden, false, "내 기록만 보인다는 안내가 있어야 한다");
+    assert.equal(byId("audit-actor").hidden, true, "사용자 선택은 전체를 볼 때만 나온다");
+    assert.ok(byId("settings-trash-list").textContent.includes("갑이만든연락처"), "내가 지운 항목은 보여야 한다");
+
+    /* 을사용자로 바꾸면 갑의 기록도 휴지통 항목도 보이지 않는다 */
+    await signIn(second);
+    doc().querySelector('#tn-tabs [data-key="settings"]').click();
+    await refreshAudit();
+    assert.equal(win().eval("auditState.scope"), "mine");
+    assert.equal(
+      win().eval("auditState.entries.filter(e=>e.actorName==='갑사용자').length"),
+      0,
+      "다른 사용자의 변경 이력이 보이면 안 된다"
+    );
+    assert.equal(byId("settings-trash-list").textContent.includes("갑이만든연락처"), false, "다른 사용자가 지운 항목이 보이면 안 된다");
+    assert.ok(byId("trash-scope-note").hidden === false, "휴지통에도 범위 안내가 있어야 한다");
+
+    /* 관리자 인증을 하면 전체가 보인다 */
+    byId("settings-admin-open").click();
+    setInput(byId("settings-admin-code"), adminCode);
+    byId("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => !byId("settings-admin-actions").hidden, "관리자 인증");
+    await refreshAudit();
+    assert.equal(win().eval("auditState.scope"), "all");
+    assert.ok(win().eval("auditState.entries.some(e=>e.actorName==='갑사용자')"), "관리자는 갑의 기록도 봐야 한다");
+    assert.equal(byId("audit-scope-note").hidden, true, "전체를 볼 때는 범위 안내를 감춘다");
+    assert.equal(byId("audit-actor").hidden, false, "사용자 선택이 나와야 한다");
+    assert.ok(byId("settings-trash-list").textContent.includes("갑이만든연락처"), "관리자는 전체 휴지통을 봐야 한다");
+
+    /* 사용자 선택으로 좁히면 그 사람 기록만 남는다 */
+    setSelect(byId("audit-actor"), first.id);
+    await waitFor(async () => win().eval("auditState.loaded && !auditState.loading && auditState.entries.every(e=>e.actorName==='갑사용자')"), "사용자 필터");
+    assert.ok(win().eval("auditState.total") > 0);
+  } finally {
+    for (const member of [first, second]) {
+      await fetch(baseUrl + "/api/admin/members/" + member.id, { method: "DELETE", headers: adminHeaders });
+    }
+    win().eval("memberAccountsEnabled = false; memberToken = ''; currentMember = null; updateMemberUi(); renderTrash();");
+  }
+});
+
+test("내 계정 창에서 기존 비밀번호를 확인하고 새 비밀번호로 바꾼다", async (t) => {
+  const adminSession = await (await fetch(baseUrl + "/api/admin/session", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ code: adminCode })
+  })).json();
+  const adminHeaders = { "x-crm-key": accessKey, "content-type": "application/json", authorization: "Bearer " + adminSession.token };
+  const member = (await (await fetch(baseUrl + "/api/admin/members", {
+    method: "POST", headers: adminHeaders, body: JSON.stringify({ name: "비번변경", role: "editor", password: "first-pass" })
+  })).json()).member;
+  const login = async (password) => {
+    const response = await fetch(baseUrl + "/api/auth/login", {
+      method: "POST",
+      headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+      body: JSON.stringify({ memberId: member.id, password })
+    });
+    return response.status;
+  };
+
+  try {
+    win().eval("showMemberGate")("");
+    await waitFor(async () => doc().querySelectorAll("#member-login-name option").length > 0, "사용자 목록");
+    setSelect(byId("member-login-name"), member.id);
+    setInput(byId("member-login-password"), "first-pass");
+    byId("member-login-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => byId("member-gate").hidden && win().eval("currentMember && currentMember.name") === "비번변경", "로그인");
+
+    /* 이름을 누르면 내 계정 창이 열리고 비밀번호 변경 칸이 나온다 */
+    byId("tn-user-chip").click();
+    assert.equal(byId("account-overlay").hidden, false);
+    assert.ok(byId("account-sub").textContent.includes("비번변경"));
+    assert.equal(byId("account-password-form").hidden, true, "처음에는 버튼만 보인다");
+    byId("account-password-open").click();
+    assert.equal(byId("account-password-form").hidden, false);
+
+    /* 기존 비밀번호가 틀리면 바뀌지 않는다 */
+    setInput(byId("account-current-password"), "wrong-pass");
+    setInput(byId("account-new-password"), "second-pass");
+    setInput(byId("account-new-password-confirm"), "second-pass");
+    byId("account-password-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => byId("account-password-status").textContent.includes("기존 비밀번호"), "기존 비밀번호 확인");
+    assert.equal(byId("account-overlay").hidden, false, "실패하면 창이 열려 있어야 한다");
+    assert.equal(await login("second-pass"), 403, "비밀번호가 바뀌면 안 된다");
+
+    /* 새 비밀번호 확인이 다르면 서버에 보내지도 않는다 */
+    setInput(byId("account-current-password"), "first-pass");
+    setInput(byId("account-new-password-confirm"), "different-pass");
+    byId("account-password-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    assert.ok(byId("account-password-status").textContent.includes("서로 다릅니다"));
+
+    /* 제대로 입력하면 바뀐다 */
+    setInput(byId("account-new-password-confirm"), "second-pass");
+    byId("account-password-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await waitFor(async () => byId("account-overlay").hidden, "비밀번호 변경 완료");
+    assert.equal(await login("second-pass"), 200, "새 비밀번호로 들어갈 수 있어야 한다");
+    assert.equal(await login("first-pass"), 403, "예전 비밀번호는 막혀야 한다");
+  } finally {
+    await fetch(baseUrl + "/api/admin/members/" + member.id, { method: "DELETE", headers: adminHeaders });
+    win().eval("memberAccountsEnabled = false; memberToken = ''; currentMember = null; updateMemberUi();");
+  }
 });
 
 test("관리자 백업·복원: 내려받은 Excel 파일로 실제 DB가 되돌아온다", async () => {

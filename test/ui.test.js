@@ -1171,6 +1171,55 @@ async function importRememberCsv(dom) {
   await dom.window.eval("importContactsCsv")(file);
 }
 
+test("상단·하단 메뉴 글씨는 줄바꿈 없이 한 줄로 나오고, 좁으면 메뉴 줄만 밀린다", async (t) => {
+  const { dom } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  const tab = document.querySelector("#tn-tabs .tn-tab");
+  const bottomTab = document.querySelector("#tn-bottombar .tn-btab");
+  assert.ok(tab && bottomTab, "메뉴 버튼이 있어야 한다");
+
+  const tabStyle = dom.window.getComputedStyle(tab);
+  assert.equal(tabStyle.whiteSpace, "nowrap", "탭 글씨가 두 줄로 접히면 안 된다");
+  /* 폭이 모자랄 때 탭이 줄어들며 글자가 접히던 원인 — 탭은 줄이지 않는다 */
+  assert.equal(tabStyle.flexShrink, "0", "탭은 줄어들지 않아야 한다");
+  assert.equal(dom.window.getComputedStyle(bottomTab).whiteSpace, "nowrap", "모바일 하단 메뉴도 한 줄이어야 한다");
+
+  /* 대신 탭 줄 자체가 가로로 밀려 어떤 메뉴도 잘리지 않는다 */
+  const tabsStyle = dom.window.getComputedStyle(document.getElementById("tn-tabs"));
+  assert.equal(tabsStyle.overflowX, "auto", "폭이 모자라면 메뉴 줄이 가로로 밀려야 한다");
+  assert.equal(dom.window.getComputedStyle(document.querySelector(".tn-topbar")).flexWrap, "nowrap");
+});
+
+test("파이프라인 목록의 저장·삭제 버튼은 행 카드 안쪽에 들어간다", async (t) => {
+  const { dom } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  /* 마지막 칸이 좁으면(52px) 버튼이 둥근 테두리 밖으로 밀려 나갔다.
+     jsdom에는 실제 배치가 없으므로 칸 폭과 정렬 규칙으로 확인한다. */
+  const lastHeaders = [
+    document.querySelector("#pipe-table-wrap thead tr th:last-child"),
+    /* 그룹 상세 표도 같은 행 렌더러를 쓰므로 함께 확인 */
+    ...[...document.querySelectorAll("#tn-stage-views thead tr th:last-child")]
+  ].filter(Boolean);
+  assert.ok(lastHeaders.length >= 1, "파이프라인 표가 있어야 한다");
+  for (const th of lastHeaders) {
+    const width = Number(String(th.getAttribute("style") || "").replace(/[^0-9]/g, ""));
+    assert.ok(width >= 120, "저장·삭제 버튼이 들어갈 만큼 넓어야 한다: " + width + "px");
+  }
+
+  const cellStyle = dom.window.getComputedStyle(document.createElement("td"));
+  const probe = document.createElement("td");
+  probe.className = "tn-deal-save-cell";
+  document.getElementById("pipe-tbody").appendChild(probe);
+  const saveStyle = dom.window.getComputedStyle(probe);
+  assert.equal(saveStyle.whiteSpace, "nowrap", "저장·삭제 버튼이 두 줄로 내려가면 안 된다");
+  assert.equal(saveStyle.textAlign, "right", "버튼은 카드 오른쪽 안쪽에 붙어야 한다");
+  assert.ok(cellStyle, "기본 칸 스타일도 읽혀야 한다");
+});
+
 test("navigation shows 대시보드 · 파이프라인 · 활동 · 지원 업무 · 연락처 · 캘린더 · 설정 in order", async (t) => {
   const { dom } = await createBrowser();
   t.after(() => dom.window.close());

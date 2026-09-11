@@ -438,7 +438,7 @@ test("without CRM_ADMIN_CODE the built-in default code still rejects other codes
 
 test("사용자 계정과 변경 이력 조회는 접속키와 관리자 인증을 모두 요구한다", async () => {
   /* 접속키가 없으면 목록도 조회도 열리지 않는다 */
-  for (const path of ["/api/members", "/api/admin/members", "/api/admin/audit"]) {
+  for (const path of ["/api/members", "/api/admin/members", "/api/audit"]) {
     const response = await fetch(baseUrl + path);
     assert.equal(response.status, 401, path);
   }
@@ -448,12 +448,23 @@ test("사용자 계정과 변경 이력 조회는 접속키와 관리자 인증�
   assert.equal(directory.status, 200);
   assert.deepEqual(await directory.json(), { members: [], enabled: false });
 
-  /* 관리자 인증 없이 사용자 관리·변경 이력은 막힌다 */
-  for (const path of ["/api/admin/members", "/api/admin/audit"]) {
-    const response = await fetch(baseUrl + path, { headers: { "x-crm-key": accessKey } });
-    assert.equal(response.status, 403, path);
-    assert.deepEqual(await response.json(), { error: "invalid_or_expired_admin_session" });
-  }
+  /* 관리자 인증 없이 사용자 관리는 막힌다 */
+  const members = await fetch(baseUrl + "/api/admin/members", { headers: { "x-crm-key": accessKey } });
+  assert.equal(members.status, 403);
+  assert.deepEqual(await members.json(), { error: "invalid_or_expired_admin_session" });
+
+  /* 사용자 계정을 쓰지 않는 작업공간은 "내 기록"을 가릴 수 없어 예전처럼 관리자만 본다 */
+  const audit = await fetch(baseUrl + "/api/audit", { headers: { "x-crm-key": accessKey } });
+  assert.equal(audit.status, 403);
+  assert.equal((await audit.json()).error, "invalid_or_expired_admin_session");
+
+  /* 비밀번호 변경도 로그인한 사용자만 할 수 있다 */
+  const password = await fetch(baseUrl + "/api/auth/password", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ currentPassword: "", newPassword: "new-password" })
+  });
+  assert.equal(password.status, 501, "사용자 계정을 지원하지 않는 저장소에서는 501");
 
   /* 사용자 계정을 지원하지 않는 저장소에서는 501로 분명히 알린다 */
   const admin = await createAdminSession();
