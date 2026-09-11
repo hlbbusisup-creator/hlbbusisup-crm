@@ -1171,6 +1171,79 @@ async function importRememberCsv(dom) {
   await dom.window.eval("importContactsCsv")(file);
 }
 
+test("예전 이름이 남은 매뉴얼은 접속할 때 '현장지원팀'으로 바뀌어 저장된다", async (t) => {
+  /* 사용자가 직접 추가한 매뉴얼 (기본 매뉴얼과 id가 달라 내용이 그대로 유지되는 항목) */
+  const stored = [
+    {
+      id: "id_custom_rule",
+      title: "티니코 CRM 운영 기준",
+      category: "운영 기준",
+      format: "list",
+      order: 0,
+      content: "티니코 CRM은 매일 아침 확인합니다.\nTiniko 기준으로 단계를 정리하고 tiniko 담당자와 공유합니다."
+    },
+    {
+      id: "id_keep",
+      title: "그대로 두는 항목",
+      category: "운영 기준",
+      format: "list",
+      order: 1,
+      content: "저장 키 tinico:manual:sections 는 손대지 않습니다."
+    }
+  ];
+  const { dom, api } = await createBrowser({ "tinico:manual:sections": stored });
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const parsed = JSON.parse(dom.window.eval("JSON.stringify(manualSections)"));
+  const renamed = parsed.find((section) => section.id === "id_custom_rule");
+  const keep = parsed.find((section) => section.id === "id_keep");
+
+  assert.equal(renamed.title, "현장지원팀 CRM 운영 기준");
+  assert.equal(renamed.content.includes("티니코"), false, "티니코가 남으면 안 된다");
+  assert.match(renamed.content, /현장지원팀 CRM은 매일 아침/);
+  assert.match(renamed.content, /현장지원팀 기준으로 단계를 정리하고 현장지원팀 담당자와 공유합니다./, "Tiniko·tiniko 모두 바뀌어야 한다");
+  /* 저장 키에 쓰는 tinico(c)는 철자가 달라 건드리지 않는다 */
+  assert.equal(keep.content, "저장 키 tinico:manual:sections 는 손대지 않습니다.");
+
+  /* 바뀐 내용이 외부 DB에도 저장된다 */
+  const savedManual = api.records.get("tinico:manual:sections");
+  assert.ok(savedManual, "매뉴얼이 저장되어야 한다");
+  assert.equal(JSON.stringify(savedManual).includes("티니코"), false, "저장된 매뉴얼에도 남으면 안 된다");
+  assert.equal(JSON.stringify(savedManual).toLowerCase().includes("tiniko"), false, "영문 표기도 남으면 안 된다");
+  assert.equal(document.getElementById("settings-manual-list").textContent.includes("티니코"), false, "화면에도 남으면 안 된다");
+});
+
+test("상단 바에 CRM 글자와 오늘 날짜를 두지 않고, 로그인 목록은 이름만 보여준다", async (t) => {
+  const { dom } = await createBrowser();
+  t.after(() => dom.window.close());
+  const { document } = dom.window;
+
+  assert.equal(document.querySelector(".tn-home-logo-crm"), null, "로고 옆 CRM 글자는 없어야 한다");
+  assert.equal(document.getElementById("tn-today-chip"), null, "오늘 날짜 칸은 없어야 한다");
+  assert.ok(document.getElementById("tn-home-logo"), "로고 버튼은 남아 있어야 한다");
+  assert.ok(document.querySelector("#tn-tabs .tn-tab"), "메뉴는 그대로여야 한다");
+
+  /* 로그인 목록은 이름만 — 권한은 로그인한 뒤 오른쪽 위와 내 계정 창에서 확인한다 */
+  dom.window.eval("memberDirectory = [{id:'m1', name:'강민지', role:'editor'}, {id:'m2', name:'박대리', role:'admin'}];");
+  const select = document.getElementById("member-login-name");
+  select.innerHTML = "";
+  dom.window.eval(`
+    memberDirectory.forEach(member=>{
+      const option = document.createElement("option");
+      option.value = member.id;
+      option.textContent = member.name;
+      document.getElementById("member-login-name").appendChild(option);
+    });
+  `);
+  assert.deepEqual([...select.options].map((option) => option.textContent), ["강민지", "박대리"]);
+  /* 실제 코드도 이름만 넣는지 확인 */
+  const source = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(source, /option\.textContent = member\.name;/, "목록을 채우는 코드가 이름만 넣어야 한다");
+  assert.equal(/option\.textContent = `\$\{member\.name\} · /.test(source), false, "권한을 덧붙이면 안 된다");
+});
+
 test("상단·하단 메뉴 글씨는 줄바꿈 없이 한 줄로 나오고, 좁으면 메뉴 줄만 밀린다", async (t) => {
   const { dom } = await createBrowser();
   t.after(() => dom.window.close());
