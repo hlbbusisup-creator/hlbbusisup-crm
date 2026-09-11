@@ -63,3 +63,23 @@ CREATE TABLE IF NOT EXISTS crm_save_request (
   PRIMARY KEY (workspace_id, request_id)
 );
 CREATE INDEX IF NOT EXISTS crm_save_request_created_at_idx ON crm_save_request (created_at);
+
+-- 사용자 계정: 작업공간 접속키(CRM_ACCESS_KEY) 안쪽에서 "누가" 작업했는지 구분하고 쓰기 권한을 나눈다.
+CREATE TABLE IF NOT EXISTS crm_member (
+  workspace_id TEXT NOT NULL,
+  member_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL DEFAULT '',
+  role TEXT NOT NULL DEFAULT 'editor',
+  password_hash TEXT,
+  password_salt TEXT,
+  disabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (workspace_id, member_id)
+);
+CREATE INDEX IF NOT EXISTS crm_member_name_idx ON crm_member (workspace_id, name);
+
+-- 변경 로그에 작업한 사용자를 남긴다 (사용자 계정을 쓰지 않는 작업공간은 NULL).
+ALTER TABLE crm_audit_log ADD COLUMN IF NOT EXISTS actor_id TEXT;
+ALTER TABLE crm_audit_log ADD COLUMN IF NOT EXISTS actor_name TEXT;
