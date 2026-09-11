@@ -360,6 +360,11 @@ export function createApp({
     }
   };
   const auditActor = (req) => (req.member ? { id: req.member.id, name: req.member.name } : null);
+  const hasAdminSession = (req) => {
+    const authorization = String(req.get("authorization") || "");
+    const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+    return verifyAdminSessionToken({ token, accessKey, configuredAdminCode: adminCode, workspaceId });
+  };
 
   function revisionConflictError(currentRevision) {
     const error = new Error("revision_conflict");
@@ -529,9 +534,27 @@ export function createApp({
     }
   });
 
-  /* 설정 > 변경 이력: 백업 파일을 열지 않고 화면에서 바로 본다 */
-  app.get("/api/admin/audit", requireAccessKey, requireAdminSession, async (req, res, next) => {
+  /* 설정 > 변경 이력: 백업 파일을 열지 않고 화면에서 바로 본다.
+     관리자 인증을 마쳤으면 전체를, 로그인만 한 사용자는 자기가 남긴 기록만 본다. */
+  app.get("/api/audit", requireAccessKey, async (req, res, next) => {
     try {
+      const admin = hasAdminSession(req);
+      const member = await activeMember(req);
+      let scope = "all";
+      let actorId = req.query.actorId;
+      if (!admin) {
+        if (!(await memberAccountsEnabled())) {
+          /* 사용자 계정을 쓰지 않는 작업공간은 "내 기록"을 가릴 수 없다 — 예전처럼 관리자만 본다 */
+          res.status(403).json({ error: "invalid_or_expired_admin_session", message: "변경 이력을 보려면 관리자 인증이 필요합니다." });
+          return;
+        }
+        if (!member) {
+          res.status(403).json({ error: "member_session_required", message: "사용자 로그인이 필요합니다." });
+          return;
+        }
+        scope = "mine";
+        actorId = member.id;
+      }
       if (typeof repository.queryAudit !== "function") {
         res.status(501).json({ error: "audit_query_unsupported", message: "이 서버는 변경 이력 조회를 지원하지 않습니다." });
         return;
@@ -539,7 +562,7 @@ export function createApp({
       const result = await repository.queryAudit(workspaceId, {
         screen: req.query.screen,
         action: req.query.action,
-        actorId: req.query.actorId,
+        actorId,
         storageKey: req.query.storageKey,
         from: req.query.from,
         to: req.query.to,
@@ -549,8 +572,39 @@ export function createApp({
       });
       res.set("Cache-Control", "no-store").json({
         ...result,
+        scope,
         entries: result.entries.map((entry) => ({ ...entry, eventAtKST: kstDateTime(new Date(entry.eventAt)) }))
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /* 본인 비밀번호 변경 — 관리자 코드 없이 자기 계정만 바꾼다 */
+  app.post("/api/auth/password", requireAccessKey, memberLoginLimiter, async (req, res, next) => {
+    try {
+      if (typeof repository.verifyMemberPassword !== "function" || typeof repository.updateMember !== "function") {
+        res.status(501).json({ error: "members_unsupported", message: "이 서버는 사용자 계정을 지원하지 않습니다." });
+        return;
+      }
+      const member = await activeMember(req);
+      if (!member) {
+        res.status(403).json({ error: "member_session_required", message: "사용자 로그인이 필요합니다." });
+        return;
+      }
+      const nextPassword = String(req.body?.newPassword ?? "");
+      if (nextPassword.length < 6 || nextPassword.length > 200) {
+        res.status(400).json({ error: "invalid_member", message: "새 비밀번호는 6자 이상으로 정해 주세요." });
+        return;
+      }
+      const confirmed = await repository.verifyMemberPassword(workspaceId, member.id, String(req.body?.currentPassword ?? ""));
+      if (!confirmed) {
+        res.status(403).set("Cache-Control", "no-store").json({ error: "invalid_current_password", message: "기존 비밀번호가 맞지 않습니다." });
+        return;
+      }
+      await repository.updateMember(workspaceId, member.id, { password: nextPassword });
+      invalidateMemberCache();
+      res.set("Cache-Control", "no-store").json({ status: "updated" });
     } catch (error) {
       next(error);
     }

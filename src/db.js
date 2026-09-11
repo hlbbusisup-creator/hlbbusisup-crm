@@ -441,16 +441,31 @@ export function createPostgresRepository(pool) {
         ].join(" "),
         [...params, limit, offset]
       );
+      /* 화면·사용자 목록은 "지금 조회 범위" 안에서만 뽑는다.
+         내 기록만 볼 수 있는 사용자에게 다른 사람 이름이 보이면 안 된다. */
+      const scopeWhere = ["workspace_id = $1"];
+      const scopeParams = [workspaceId];
+      if (filters.actorId) { scopeParams.push(String(filters.actorId)); scopeWhere.push("actor_id = $" + scopeParams.length); }
+      const scopeClause = scopeWhere.join(" AND ");
       const screensResult = await pool.query(
-        "SELECT screen, COUNT(*)::bigint AS count FROM crm_audit_log WHERE workspace_id = $1 GROUP BY screen ORDER BY screen",
-        [workspaceId]
+        "SELECT screen, COUNT(*)::bigint AS count FROM crm_audit_log WHERE " + scopeClause + " GROUP BY screen ORDER BY screen",
+        scopeParams
+      );
+      const actorsResult = await pool.query(
+        [
+          "SELECT actor_id, MAX(actor_name) AS actor_name, COUNT(*)::bigint AS count",
+          "FROM crm_audit_log WHERE " + scopeClause + " AND actor_id IS NOT NULL",
+          "GROUP BY actor_id ORDER BY MAX(actor_name)"
+        ].join(" "),
+        scopeParams
       );
       return {
         total: Number(totalResult.rows[0].total),
         limit,
         offset,
         entries: mapAuditRows(rowsResult.rows),
-        screens: screensResult.rows.map((row) => ({ screen: row.screen, count: Number(row.count) }))
+        screens: screensResult.rows.map((row) => ({ screen: row.screen, count: Number(row.count) })),
+        actors: actorsResult.rows.map((row) => ({ id: row.actor_id, name: row.actor_name || row.actor_id, count: Number(row.count) }))
       };
     },
 
