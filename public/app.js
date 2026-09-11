@@ -6030,7 +6030,8 @@ async function fetchMemberDirectory(){
 async function fillMemberLoginOptions(){
   const select = document.getElementById("member-login-name");
   if(!select) return;
-  try{ memberDirectory = await fetchMemberDirectory(); }
+  let loaded = false;
+  try{ memberDirectory = await fetchMemberDirectory(); loaded = true; }
   catch(error){ memberDirectory = []; }
   const previous = select.value;
   select.innerHTML = "";
@@ -6041,6 +6042,21 @@ async function fillMemberLoginOptions(){
     select.appendChild(option);
   });
   if(previous && memberDirectory.some(member=>member.id === previous)) select.value = previous;
+  /* 관리자가 사용자를 모두 지우거나 중지했으면 서버도 로그인을 요구하지 않는다.
+     고를 이름이 없는 화면에 갇히지 않도록 그대로 닫고 넘어간다. */
+  if(loaded && !memberDirectory.length){
+    memberAccountsEnabled = false;
+    updateMemberUi();
+    hideMemberGate(true);
+    return;
+  }
+  if(!loaded){
+    const status = document.getElementById("member-login-status");
+    if(status){
+      status.textContent = "사용자 목록을 불러오지 못했습니다. 네트워크를 확인한 뒤 화면을 새로고침해 주세요.";
+      status.classList.add("error");
+    }
+  }
 }
 function showMemberGate(message){
   const gate = document.getElementById("member-gate");
@@ -6111,6 +6127,13 @@ function signOutMember(){
   currentMember = null;
   updateMemberUi();
   if(memberAccountsEnabled) showMemberGate("다른 사용자로 로그인하세요.");
+}
+/* 이 화면의 버튼은 init()이 사용자 확인을 기다리기 전에 먼저 연결해야 한다.
+   기다리는 동안에는 아래쪽 이벤트 연결 코드에 닿지 못해 로그인 버튼이 죽는다. */
+function setupMemberGateUi(){
+  document.getElementById("member-login-form")?.addEventListener("submit", submitMemberLogin);
+  document.getElementById("member-login-cancel")?.addEventListener("click", ()=>hideMemberGate(false));
+  document.getElementById("tn-user-chip")?.addEventListener("click", signOutMember);
 }
 async function ensureMemberSession(){
   if(!memberAccountsEnabled || currentMember){ updateMemberUi(); return true; }
@@ -7069,6 +7092,7 @@ async function applyAiNextAction(areaKey, id){
 async function init(){
   buildNav();
   setupCloudStorageUi();
+  setupMemberGateUi();
   const d = new Date();
   document.getElementById("tn-today-chip").textContent = `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
 
@@ -7379,10 +7403,7 @@ async function init(){
     toggleAiChat(true);
   });
 
-  /* ---- 사용자 계정 ---- */
-  document.getElementById("member-login-form").addEventListener("submit", submitMemberLogin);
-  document.getElementById("member-login-cancel").addEventListener("click", ()=>hideMemberGate(false));
-  document.getElementById("tn-user-chip").addEventListener("click", signOutMember);
+  /* ---- 사용자 계정 (로그인 화면 자체는 setupMemberGateUi에서 먼저 연결했다) ---- */
   document.getElementById("settings-member-add").addEventListener("click", ()=>openMemberModal(""));
   document.getElementById("settings-member-list").addEventListener("click", (e)=>{
     const edit=e.target.closest("[data-edit-member]");
