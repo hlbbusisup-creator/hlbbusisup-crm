@@ -775,15 +775,20 @@ function updateAdminUi(){
   }
   if(actions)actions.hidden=!unlocked;
   if(lockedNote)lockedNote.hidden=unlocked;
-  setAuditControlsEnabled(unlocked);
+  setAuditControlsEnabled(canViewAudit());
   const memberAddButton=document.getElementById("settings-member-add");
   if(memberAddButton)memberAddButton.disabled=!unlocked;
   if(!unlocked){
     adminMemberList=[];
-    auditState.entries=[];auditState.total=0;auditState.loaded=false;auditState.page=1;auditState.error="";memberAdminError="";
+    memberAdminError="";
     renderMemberSettings();
-    renderAuditTable();
   }
+  /* 인증을 켜거나 끄면 볼 수 있는 범위가 달라지므로 이전 결과는 버린다 */
+  auditState.entries=[];auditState.total=0;auditState.loaded=false;auditState.page=1;auditState.error="";auditState.actors=[];
+  auditState.scope=unlocked?"all":"mine";
+  renderAuditTable();
+  /* 휴지통에 보이는 범위도 관리자 인증 여부에 따라 달라진다 */
+  renderTrash();
   if(backupStatus){
     if(!unlocked)backupStatus.textContent="관리자 인증 후 전체 데이터와 변경 로그를 내려받을 수 있습니다.";
     else if(adminLastBackupAt)backupStatus.textContent=`마지막 내려받기: ${formatDateTime(adminLastBackupAt)} · 데이터와 변경 로그 포함`;
@@ -989,8 +994,17 @@ function showUndo(message, trashId){
   clearTimeout(undoToastTimer);
   undoToastTimer = setTimeout(()=>{ toast.hidden = true; undoTrashId = ""; }, 6000);
 }
+/* 휴지통 항목에 지운 사람을 남긴다. 사용자 계정을 쓰지 않으면 null (예전과 같이 모두에게 보인다). */
+function trashActor(){ return currentMember ? {id:currentMember.id, name:currentMember.name} : null; }
+/* 관리자 인증을 마쳤거나 사용자 계정을 쓰지 않으면 전부, 아니면 내가 지운 것만 본다.
+   누가 지웠는지 기록이 없는 예전 항목은 복구할 길이 막히지 않도록 모두에게 보여 준다. */
+function canSeeAllTrash(){ return adminSessionActive() || !memberAccountsEnabled || !currentMember; }
+function visibleTrashEntries(){
+  if(canSeeAllTrash()) return trashData;
+  return trashData.filter(entry=>!entry.deletedBy || entry.deletedBy.id === currentMember.id);
+}
 async function addTrash(type,label,payload,meta={}){
-  const entry = {id:uid(), type, label:label || "삭제 항목", deletedAt:nowIso(), payload:deepCopy(payload), meta:deepCopy(meta)};
+  const entry = {id:uid(), type, label:label || "삭제 항목", deletedAt:nowIso(), deletedBy:trashActor(), payload:deepCopy(payload), meta:deepCopy(meta)};
   trashData.unshift(entry);
   await saveTrash();
   showUndo(`${label || "항목"}을(를) 휴지통으로 이동했습니다.`, entry.id);
@@ -1052,11 +1066,15 @@ async function permanentlyDeleteTrash(id){
   renderTrash();
 }
 async function emptyTrash(){
-  if(!trashData.length) return;
-  if(!confirm(`휴지통의 ${trashData.length}개 항목을 영구 삭제할까요?`)) return;
+  const targets = visibleTrashEntries();
+  if(!targets.length) return;
+  /* 남의 항목까지 지우지 않도록, 지금 화면에 보이는 것만 비운다 */
+  const scoped = targets.length !== trashData.length;
+  if(!confirm(`휴지통의 ${targets.length}개 항목을 영구 삭제할까요?${scoped ? "\n(내가 지운 항목만 비웁니다)" : ""}`)) return;
   const previous = trashData;
-  const contactImageIds = trashData.filter(x=>x.type === "contact" && x.payload?.id).map(x=>x.payload.id);
-  trashData = [];
+  const removing = new Set(targets.map(entry=>entry.id));
+  const contactImageIds = targets.filter(x=>x.type === "contact" && x.payload?.id).map(x=>x.payload.id);
+  trashData = trashData.filter(entry=>!removing.has(entry.id));
   try{
     await saveTrash();
     contactImageIds.forEach(id=>deleteContactCardImageKey(id));
@@ -1073,7 +1091,7 @@ async function moveDealToTrash(areaKey,id){
   const previousStage = stageData[areaKey];
   const previousTrash = [...trashData];
   try{
-    const entry={id:uid(),type:"deal",label:found.item.title||"영업 항목",deletedAt:nowIso(),payload:deepCopy(found.item),meta:{areaKey}};
+    const entry={id:uid(),type:"deal",label:found.item.title||"영업 항목",deletedAt:nowIso(),deletedBy:trashActor(),payload:deepCopy(found.item),meta:{areaKey}};
     const key="tinico:stage:"+areaKey;
     const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key,value:stageData[areaKey].filter(x=>x.id!==id)}]);
     trashData=result.records["tinico:trash"].value;stageData[areaKey]=result.records[key].value;
@@ -1098,7 +1116,7 @@ async function moveContactsToTrash(ids){
   try{
     /* 연락처 수만큼 전체 휴지통을 반복 업로드하지 않도록 한 번에 담아 1회만 저장.
        명함 원본은 별도 키에 남아 있으므로 휴지통에는 썸네일까지만 보관 */
-    const entries = targets.map(ct=>({id:uid(), type:"contact", label:ct.name || ct.company || "연락처", deletedAt:nowIso(), payload:deepCopy({...ct, cardImage:undefined}), meta:{}}));
+    const entries = targets.map(ct=>({id:uid(), type:"contact", label:ct.name || ct.company || "연락처", deletedAt:nowIso(), deletedBy:trashActor(), payload:deepCopy({...ct, cardImage:undefined}), meta:{}}));
     const result=await storageTransaction([{key:"tinico:trash",value:[...entries,...trashData].slice(0,200)},{key:"tinico:contacts",value:stripContactImages(contactsData.filter(c=>!idSet.has(c.id)))}]);
     trashData=result.records["tinico:trash"].value;contactsData=result.records["tinico:contacts"].value;
     selectedContactIds.clear();
@@ -1119,8 +1137,9 @@ function applyTrashCollapsed(){
   const button = document.getElementById("settings-trash-collapse");
   if(!wrap || !button) return;
   const collapsed = !!appSettings.trashCollapsed;
+  const count = visibleTrashEntries().length;
   wrap.hidden = collapsed;
-  button.textContent = collapsed ? (trashData.length ? `펼치기 · ${trashData.length}개` : "펼치기") : "접기";
+  button.textContent = collapsed ? (count ? `펼치기 · ${count}개` : "펼치기") : "접기";
   button.setAttribute("aria-expanded", String(!collapsed));
 }
 async function toggleTrashCollapsed(){
@@ -1139,13 +1158,25 @@ async function toggleTrashCollapsed(){
 }
 function renderTrash(){
   const wrap = document.getElementById("settings-trash-list");
+  const note = document.getElementById("trash-scope-note");
+  const visible = visibleTrashEntries();
+  if(note){
+    const scoped = memberAccountsEnabled && currentMember && !adminSessionActive();
+    note.hidden = !scoped;
+    if(scoped) note.textContent = `내가 지운 항목만 보입니다. 전체를 보려면 위의 관리자 백업·복원을 활성화하세요. (전체 ${trashData.length}건 중 ${visible.length}건)`;
+  }
   if(!wrap) return;
   wrap.innerHTML = "";
-  if(!trashData.length){ wrap.innerHTML = '<div class="tn-empty-compact">휴지통이 비어 있습니다.</div>'; applyTrashCollapsed(); return; }
-  trashData.slice(0,50).forEach(entry=>{
+  if(!visible.length){
+    wrap.innerHTML = `<div class="tn-empty-compact">${trashData.length ? "내가 지운 항목이 없습니다." : "휴지통이 비어 있습니다."}</div>`;
+    applyTrashCollapsed();
+    return;
+  }
+  visible.slice(0,50).forEach(entry=>{
     const row = document.createElement("div"); row.className = "tn-trash-row";
     const typeLabel = {deal:"영업 항목",contact:"연락처",group:"그룹",roadmap:"영업지원 실행과제"}[entry.type] || entry.type;
-    row.innerHTML = `<div><div class="tn-trash-title">${escapeHtml(entry.label)}</div><div class="tn-trash-meta">${escapeHtml(typeLabel)} · ${escapeHtml(formatDateTime(entry.deletedAt))}</div></div><div class="tn-trash-actions"><button class="tn-btn small" data-restore-trash="${escapeHtml(entry.id)}">복구</button><button class="tn-btn small danger" data-delete-trash="${escapeHtml(entry.id)}">영구 삭제</button></div>`;
+    const who = canSeeAllTrash() && entry.deletedBy && entry.deletedBy.name ? " · " + escapeHtml(entry.deletedBy.name) : "";
+    row.innerHTML = `<div><div class="tn-trash-title">${escapeHtml(entry.label)}</div><div class="tn-trash-meta">${escapeHtml(typeLabel)} · ${escapeHtml(formatDateTime(entry.deletedAt))}${who}</div></div><div class="tn-trash-actions"><button class="tn-btn small" data-restore-trash="${escapeHtml(entry.id)}">복구</button><button class="tn-btn small danger" data-delete-trash="${escapeHtml(entry.id)}">영구 삭제</button></div>`;
     wrap.appendChild(row);
   });
   applyTrashCollapsed();
@@ -1711,7 +1742,7 @@ function storedAreaValue(a){return {
   };}
 async function moveGroupToTrash(area){
   const key="tinico:stage:"+area.key;
-  const entry={id:uid(),type:"group",label:area.title,deletedAt:nowIso(),payload:deepCopy({area,items:stageData[area.key]||[]}),meta:{}};
+  const entry={id:uid(),type:"group",label:area.title,deletedAt:nowIso(),deletedBy:trashActor(),payload:deepCopy({area,items:stageData[area.key]||[]}),meta:{}};
   const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key:"tinico:areas",value:AREAS.filter(item=>item.key!==area.key).map(storedAreaValue)},{key,value:null,remove:true}]);
   trashData=result.records["tinico:trash"].value;AREAS=result.records["tinico:areas"].value.map(normalizeArea);delete stageData[area.key];
   showUndo(`${area.title}을(를) 휴지통으로 이동했습니다.`,entry.id);
@@ -2727,7 +2758,7 @@ function buildStageView(area){
       <button class="tn-btn primary small" id="add-${areaKeyAttr}">항목 추가</button>
     </div>
     <div class="tn-table-wrap">
-      <table class="tn-table tn-simple-pipeline-table" style="min-width:820px;">
+      <table class="tn-table tn-simple-pipeline-table" style="min-width:900px;">
         <thead>
           <tr>
             <th>고객사 / 영업 건</th>
@@ -2735,7 +2766,7 @@ function buildStageView(area){
             <th style="width:138px;">예상 매출(백만)</th>
             <th style="width:160px;">다음 연락일</th>
             <th style="width:220px;">다음에 할 일</th>
-            <th style="width:52px;"></th>
+            <th style="width:132px;"></th>
           </tr>
         </thead>
         <tbody id="grid-${areaKeyAttr}"></tbody>
@@ -3340,6 +3371,7 @@ function renderSettings(){
   renderMemberSettings();
   renderAuditTable();
   renderTrash();
+  if(canViewAudit() && !auditState.loaded && !auditState.loading) loadAuditPage({silent:true});
 }
 
 function manualLines(content){ return String(content || "").split(/\r?\n/).map(x=>x.trim()).filter(Boolean); }
@@ -3764,7 +3796,7 @@ async function deleteRoadmapTask(id){
   const item=roadmapData.find(x=>x.id===id); if(!item)return;
   if(!confirm(`"${item.title}" 실행과제를 휴지통으로 이동할까요?`))return;
   try{
-    const entry={id:uid(),type:"roadmap",label:item.title||"영업지원 실행과제",deletedAt:nowIso(),payload:deepCopy(item),meta:{}};
+    const entry={id:uid(),type:"roadmap",label:item.title||"영업지원 실행과제",deletedAt:nowIso(),deletedBy:trashActor(),payload:deepCopy(item),meta:{}};
     const result=await storageTransaction([{key:"tinico:trash",value:[entry,...trashData].slice(0,200)},{key:"tinico:stage:roadmap",value:roadmapData.filter(x=>x.id!==id)}]);
     trashData=result.records["tinico:trash"].value;roadmapData=result.records["tinico:stage:roadmap"].value;
     showUndo(`${entry.label}을(를) 휴지통으로 이동했습니다.`,entry.id);renderTrash();
@@ -5957,6 +5989,7 @@ let memberAccountsEnabled = false;
 let currentMember = null;
 let memberToken = readSavedMemberToken();
 let memberDirectory = [];
+let memberDirectoryPromise = null;
 let memberGatePromise = null, resolveMemberGate = null;
 let adminMemberList = [];
 let memberAdminError = "";
@@ -6030,32 +6063,43 @@ async function fetchMemberDirectory(){
 async function fillMemberLoginOptions(){
   const select = document.getElementById("member-login-name");
   if(!select) return;
+  /* 목록을 동시에 여러 번 불러오면 고르던 이름이 지워진다. 한 번만 요청해 함께 쓴다. */
+  if(!memberDirectoryPromise){
+    memberDirectoryPromise = fetchMemberDirectory().finally(()=>{ memberDirectoryPromise = null; });
+  }
   let loaded = false;
-  try{ memberDirectory = await fetchMemberDirectory(); loaded = true; }
+  try{ memberDirectory = await memberDirectoryPromise; loaded = true; }
   catch(error){ memberDirectory = []; }
+  if(!loaded){
+    /* 새로 고치지 못했다면 이미 떠 있는 목록은 그대로 둔다 */
+    if(!select.options.length){
+      const status = document.getElementById("member-login-status");
+      if(status){
+        status.textContent = "사용자 목록을 불러오지 못했습니다. 네트워크를 확인한 뒤 화면을 새로고침해 주세요.";
+        status.classList.add("error");
+      }
+    }
+    return;
+  }
   const previous = select.value;
-  select.innerHTML = "";
-  memberDirectory.forEach(member=>{
-    const option = document.createElement("option");
-    option.value = member.id;
-    option.textContent = `${member.name} · ${MEMBER_ROLE_LABELS[member.role] || member.role}`;
-    select.appendChild(option);
-  });
-  if(previous && memberDirectory.some(member=>member.id === previous)) select.value = previous;
+  const next = memberDirectory.map(member=>member.id).join("\u0000");
+  const current = [...select.options].map(option=>option.value).join("\u0000");
+  if(next !== current){
+    select.innerHTML = "";
+    memberDirectory.forEach(member=>{
+      const option = document.createElement("option");
+      option.value = member.id;
+      option.textContent = `${member.name} · ${MEMBER_ROLE_LABELS[member.role] || member.role}`;
+      select.appendChild(option);
+    });
+    if(previous && memberDirectory.some(member=>member.id === previous)) select.value = previous;
+  }
   /* 관리자가 사용자를 모두 지우거나 중지했으면 서버도 로그인을 요구하지 않는다.
      고를 이름이 없는 화면에 갇히지 않도록 그대로 닫고 넘어간다. */
-  if(loaded && !memberDirectory.length){
+  if(!memberDirectory.length){
     memberAccountsEnabled = false;
     updateMemberUi();
     hideMemberGate(true);
-    return;
-  }
-  if(!loaded){
-    const status = document.getElementById("member-login-status");
-    if(status){
-      status.textContent = "사용자 목록을 불러오지 못했습니다. 네트워크를 확인한 뒤 화면을 새로고침해 주세요.";
-      status.classList.add("error");
-    }
   }
 }
 function showMemberGate(message){
@@ -6092,7 +6136,12 @@ async function submitMemberLogin(event){
   const password = document.getElementById("member-login-password");
   const status = document.getElementById("member-login-status");
   const submit = document.getElementById("member-login-submit");
-  const memberId = select ? select.value : "";
+  let memberId = select ? select.value : "";
+  /* 목록이 아직 도착하지 않은 채로 눌렀다면 기다렸다가 한 번 더 읽는다 */
+  if(!memberId){
+    await fillMemberLoginOptions();
+    memberId = select ? select.value : "";
+  }
   if(!memberId){
     if(status){ status.textContent="사용할 이름을 고르세요."; status.classList.add("error"); }
     return;
@@ -6114,6 +6163,11 @@ async function submitMemberLogin(event){
     memberAccountsEnabled = true;
     updateMemberUi();
     hideMemberGate(true);
+    /* 보이는 범위가 사용자마다 다르므로 휴지통과 변경 이력을 다시 그린다 */
+    auditState.entries=[];auditState.total=0;auditState.loaded=false;auditState.page=1;auditState.error="";auditState.actors=[];
+    setAuditControlsEnabled(canViewAudit());
+    renderAuditTable();
+    renderTrash();
     showToast(`${currentMember.name}님으로 로그인했습니다.`, "info", 3000);
   }catch(error){
     if(status){ status.textContent = error.message || "로그인하지 못했습니다."; status.classList.add("error"); }
@@ -6121,19 +6175,110 @@ async function submitMemberLogin(event){
     if(submit){ submit.disabled = false; submit.textContent = "로그인"; }
   }
 }
+function openAccountModal(){
+  if(!currentMember) return;
+  const overlay = document.getElementById("account-overlay");
+  if(!overlay) return;
+  document.getElementById("account-sub").textContent =
+    `${currentMember.name} · ${MEMBER_ROLE_LABELS[currentMember.role] || currentMember.role}`;
+  closeAccountPasswordForm();
+  overlay.hidden = false;
+  setTimeout(()=>document.getElementById("account-password-open")?.focus(), 0);
+}
+function closeAccountModal(){
+  const overlay = document.getElementById("account-overlay");
+  if(overlay) overlay.hidden = true;
+  closeAccountPasswordForm();
+}
+function closeAccountPasswordForm(){
+  const form = document.getElementById("account-password-form");
+  const actions = document.getElementById("account-actions");
+  const closeRow = document.getElementById("account-close-row");
+  const status = document.getElementById("account-password-status");
+  if(form){
+    form.hidden = true;
+    ["account-current-password","account-new-password","account-new-password-confirm"].forEach(id=>{
+      const input = document.getElementById(id);
+      if(input) input.value = "";
+    });
+  }
+  if(actions) actions.hidden = false;
+  if(closeRow) closeRow.hidden = false;
+  if(status){ status.textContent = ""; status.className = "tn-admin-status"; }
+}
+function openAccountPasswordForm(){
+  const form = document.getElementById("account-password-form");
+  const actions = document.getElementById("account-actions");
+  const closeRow = document.getElementById("account-close-row");
+  if(form) form.hidden = false;
+  if(actions) actions.hidden = true;
+  if(closeRow) closeRow.hidden = true;
+  setTimeout(()=>document.getElementById("account-current-password")?.focus(), 0);
+}
+async function submitAccountPassword(event){
+  if(event) event.preventDefault();
+  const status = document.getElementById("account-password-status");
+  const save = document.getElementById("account-password-save");
+  const current = document.getElementById("account-current-password").value;
+  const next = document.getElementById("account-new-password").value;
+  const confirmValue = document.getElementById("account-new-password-confirm").value;
+  const fail = (message)=>{ if(status){ status.textContent = message; status.className = "tn-admin-status error"; } };
+  if(next.length < 6){ fail("새 비밀번호는 6자 이상으로 정해 주세요."); return; }
+  if(next !== confirmValue){ fail("새 비밀번호가 서로 다릅니다."); return; }
+  if(save){ save.disabled = true; save.textContent = "변경 중…"; }
+  try{
+    const response = await fetch(CLOUD_API_BASE + "/auth/password", {
+      method:"POST",
+      headers: cloudRequestHeaders({"Content-Type":"application/json"}),
+      cache:"no-store",
+      body: JSON.stringify({currentPassword: current, newPassword: next})
+    });
+    let payload = {};
+    try{ payload = await response.json(); }catch(error){}
+    if(!response.ok) throw cloudError(payload.message || "비밀번호를 바꾸지 못했습니다.", payload.error || "server");
+    closeAccountModal();
+    showToast("비밀번호를 바꿨습니다. 다음 로그인부터 새 비밀번호를 사용하세요.", "info", 5000);
+  }catch(error){
+    fail(error.message || "비밀번호를 바꾸지 못했습니다.");
+  }finally{
+    if(save){ save.disabled = false; save.textContent = "비밀번호 변경"; }
+  }
+}
+
+/* 처음 주소로 다시 여는 것과 같게 — 보던 화면(#해시)까지 지워 로그인 화면부터 시작한다.
+   테스트에서 대신 끼워 넣을 수 있도록 함수로 분리해 둔다. */
+function reloadApp(){ location.replace(location.pathname + location.search); }
+/* 사용자를 바꿀 때는 관리자 인증, 불러온 목록, 편집 중이던 내용, AI 대화가
+   다음 사람에게 그대로 넘어가면 안 된다. 메모리에 남은 상태를 하나씩 지우는 대신
+   화면을 처음부터 다시 열어 확실하게 끊는다. */
 function signOutMember(){
+  const unsaved = [...dealDrafts.values(), ...contactDrafts.values()].some(draft=>draftDirty(draft) || draft.saving);
+  if(unsaved && !confirm("저장하지 않은 변경이 있습니다. 사용자를 바꾸면 이 내용은 사라집니다. 계속할까요?")) return;
+  lockAdmin();
+  adminMemberList = [];
+  memberAdminError = "";
+  auditState.entries = []; auditState.total = 0; auditState.loaded = false; auditState.page = 1; auditState.error = "";
+  aiChatHistories = {};
   memberToken = "";
   saveMemberToken("");
   currentMember = null;
   updateMemberUi();
-  if(memberAccountsEnabled) showMemberGate("다른 사용자로 로그인하세요.");
+  reloadApp();
 }
 /* 이 화면의 버튼은 init()이 사용자 확인을 기다리기 전에 먼저 연결해야 한다.
    기다리는 동안에는 아래쪽 이벤트 연결 코드에 닿지 못해 로그인 버튼이 죽는다. */
 function setupMemberGateUi(){
   document.getElementById("member-login-form")?.addEventListener("submit", submitMemberLogin);
   document.getElementById("member-login-cancel")?.addEventListener("click", ()=>hideMemberGate(false));
-  document.getElementById("tn-user-chip")?.addEventListener("click", signOutMember);
+  document.getElementById("tn-user-chip")?.addEventListener("click", openAccountModal);
+  document.getElementById("account-close")?.addEventListener("click", closeAccountModal);
+  document.getElementById("account-logout")?.addEventListener("click", ()=>{ closeAccountModal(); signOutMember(); });
+  document.getElementById("account-password-open")?.addEventListener("click", openAccountPasswordForm);
+  document.getElementById("account-password-cancel")?.addEventListener("click", closeAccountPasswordForm);
+  document.getElementById("account-password-form")?.addEventListener("submit", submitAccountPassword);
+  document.getElementById("account-overlay")?.addEventListener("click", (event)=>{
+    if(event.target.id === "account-overlay") closeAccountModal();
+  });
 }
 async function ensureMemberSession(){
   if(!memberAccountsEnabled || currentMember){ updateMemberUi(); return true; }
@@ -6261,10 +6406,31 @@ async function deleteMemberFromModal(){
    설정 > 변경 이력
    crm_audit_log 에 이미 쌓이고 있던 기록을 백업 파일을 열지 않고 화면에서 본다.
    ========================================================================= */
-const auditState = {page:1, size:20, total:0, entries:[], screens:[], loading:false, loaded:false, error:"", pending:false};
+const auditState = {page:1, size:20, total:0, entries:[], screens:[], actors:[], scope:"mine", loading:false, loaded:false, error:"", pending:false};
+/* 관리자 인증을 마쳤으면 전체를, 로그인만 한 사용자는 자기 기록을 볼 수 있다 */
+function canViewAudit(){ return adminSessionActive() || (memberAccountsEnabled && !!currentMember); }
 function auditControls(){
-  return ["audit-search","audit-screen","audit-action","audit-range","audit-page-size","settings-audit-refresh"]
+  return ["audit-search","audit-screen","audit-action","audit-range","audit-actor","audit-page-size","settings-audit-refresh"]
     .map(id=>document.getElementById(id)).filter(Boolean);
+}
+/* 관리자 인증 유무와 상관없이 쓸 수 있는 조회 — 범위는 서버가 정한다 */
+async function auditApiRequest(path){
+  await ensureCloudConnection();
+  const headers = cloudRequestHeaders();
+  if(adminSessionActive()) headers["Authorization"] = "Bearer " + adminSessionToken;
+  let response;
+  try{
+    response = await fetch(CLOUD_API_BASE + path, {headers, cache:"no-store"});
+  }catch(error){
+    throw cloudError("변경 이력을 불러오지 못했습니다. 네트워크 상태를 확인해 주세요.","network");
+  }
+  let payload = {};
+  try{ payload = await response.json(); }catch(error){}
+  if(!response.ok){
+    if(payload.error === "invalid_or_expired_admin_session" && adminSessionActive()) lockAdmin();
+    throw cloudError(payload.message || "변경 이력을 불러오지 못했습니다.", payload.error || "server");
+  }
+  return payload;
 }
 function setAuditControlsEnabled(enabled){
   auditControls().forEach(el=>{ el.disabled = !enabled; });
@@ -6277,7 +6443,7 @@ function auditRangeFrom(){
   return from.toISOString();
 }
 async function loadAuditPage(options){
-  if(!adminSessionActive()) return;
+  if(!canViewAudit()) return;
   /* 조회 중에 조건이 또 바뀌면 요청을 버리지 말고 끝난 뒤 한 번 더 돌린다 */
   if(auditState.loading){ auditState.pending = true; return; }
   const silent = !!(options && options.silent);
@@ -6288,16 +6454,20 @@ async function loadAuditPage(options){
   const q = document.getElementById("audit-search")?.value.trim();
   const screen = document.getElementById("audit-screen")?.value;
   const action = document.getElementById("audit-action")?.value;
+  const actor = adminSessionActive() ? document.getElementById("audit-actor")?.value : "";
   const from = auditRangeFrom();
   if(q) params.set("q", q);
   if(screen) params.set("screen", screen);
   if(action) params.set("action", action);
+  if(actor) params.set("actorId", actor);
   if(from) params.set("from", from);
   try{
-    const payload = await adminApiRequest("/admin/audit?" + params.toString());
+    const payload = await auditApiRequest("/audit?" + params.toString());
     auditState.entries = payload.entries || [];
     auditState.total = Number(payload.total || 0);
     auditState.screens = payload.screens || [];
+    auditState.actors = payload.actors || [];
+    auditState.scope = payload.scope || "all";
     auditState.loaded = true;
     auditState.error = "";
   }catch(error){
@@ -6308,7 +6478,10 @@ async function loadAuditPage(options){
   }finally{
     auditState.loading = false;
   }
+  /* 응답을 기다리는 동안 화면이 닫혔으면 여기서 멈춘다 */
+  if(typeof document === "undefined" || !document.getElementById) return;
   renderAuditScreenOptions();
+  renderAuditActorOptions();
   renderAuditTable();
   if(auditState.pending){ auditState.pending = false; await loadAuditPage(options); }
 }
@@ -6325,6 +6498,21 @@ function renderAuditScreenOptions(){
   });
   if(previous && auditState.screens.some(entry=>entry.screen === previous)) select.value = previous;
 }
+function renderAuditActorOptions(){
+  const select = document.getElementById("audit-actor");
+  if(!select) return;
+  /* 사용자 선택은 전체를 볼 수 있을 때만 의미가 있다 */
+  select.hidden = auditState.scope !== "all" || !auditState.actors.length;
+  const previous = select.value;
+  select.innerHTML = '<option value="">모든 사용자</option>';
+  auditState.actors.forEach(actor=>{
+    const option = document.createElement("option");
+    option.value = actor.id;
+    option.textContent = `${actor.name} (${actor.count})`;
+    select.appendChild(option);
+  });
+  if(previous && auditState.actors.some(actor=>actor.id === previous)) select.value = previous;
+}
 function auditChangeSummary(entry){
   const fields = Array.isArray(entry.changedFields) ? entry.changedFields : [];
   /* 새로 만들거나 지운 기록은 항목 전체가 바뀐 것이라 필드를 늘어놓아도 읽히지 않는다 */
@@ -6334,14 +6522,23 @@ function auditChangeSummary(entry){
 function renderAuditTable(){
   const tbody = document.getElementById("audit-tbody");
   const state = document.getElementById("settings-audit-state");
+  const note = document.getElementById("audit-scope-note");
+  const viewable = canViewAudit();
+  const mineOnly = viewable && !adminSessionActive();
+  if(note){
+    note.hidden = !mineOnly;
+    if(mineOnly) note.textContent = "내가 남긴 기록만 보입니다. 다른 사용자의 기록까지 보려면 위의 관리자 백업·복원을 활성화하세요.";
+  }
   if(state){
-    if(!adminSessionActive()) state.textContent = "관리자 인증 후 화면·동작·사용자별 변경 기록을 조회할 수 있습니다.";
+    if(!viewable) state.textContent = "관리자 인증 후 화면·동작·사용자별 변경 기록을 조회할 수 있습니다.";
     else if(auditState.error) state.textContent = auditState.error;
-    else state.textContent = auditState.loaded ? `조건에 맞는 기록 ${auditState.total.toLocaleString("ko-KR")}건` : "새로고침을 눌러 기록을 불러오세요.";
+    else state.textContent = auditState.loaded
+      ? `${mineOnly ? "내 기록" : "전체"} 중 조건에 맞는 기록 ${auditState.total.toLocaleString("ko-KR")}건`
+      : "새로고침을 눌러 기록을 불러오세요.";
   }
   if(!tbody) return;
   tbody.innerHTML = "";
-  if(!adminSessionActive()){
+  if(!viewable){
     tbody.innerHTML = '<tr><td colspan="6" class="tn-empty-compact">관리자 인증이 필요합니다.</td></tr>';
     document.getElementById("audit-pager").hidden = true;
     return;
@@ -7419,7 +7616,7 @@ async function init(){
   /* ---- 변경 이력 ---- */
   document.getElementById("settings-audit-refresh").addEventListener("click", ()=>{auditState.page=1;loadAuditPage();});
   document.getElementById("audit-search").addEventListener("input", debounce(()=>{auditState.page=1;loadAuditPage();}, 350));
-  ["audit-screen","audit-action","audit-range"].forEach(id=>{
+  ["audit-screen","audit-action","audit-range","audit-actor"].forEach(id=>{
     document.getElementById(id).addEventListener("change", ()=>{auditState.page=1;loadAuditPage();});
   });
   document.getElementById("audit-page-size").addEventListener("change", (e)=>{

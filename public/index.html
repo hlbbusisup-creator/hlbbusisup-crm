@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260911h">
+<link rel="stylesheet" href="styles.css?v=20260911k">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F5F3F2;padding:22px 14px 40px;">
@@ -214,7 +214,7 @@
               <th style="width:138px;">예상 매출(백만)</th>
               <th style="width:160px;">다음 연락일</th>
               <th style="width:220px;">다음에 할 일</th>
-              <th style="width:52px;"></th>
+              <th style="width:132px;"></th>
             </tr>
           </thead>
           <tbody id="pipe-tbody"></tbody>
@@ -562,7 +562,9 @@
             <select class="tn-contact-sort" id="audit-range" disabled>
               <option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option><option value="">전체 기간</option>
             </select>
+            <select class="tn-contact-sort" id="audit-actor" disabled hidden><option value="">모든 사용자</option></select>
           </div>
+          <div class="tn-scope-note" id="audit-scope-note" hidden></div>
           <div class="tn-table-wrap">
             <table class="tn-table" style="min-width:760px;">
               <thead><tr><th style="width:168px;">시각</th><th style="width:124px;">화면</th><th style="width:64px;">동작</th><th>대상 · 변경 내용</th><th style="width:104px;">사용자</th><th style="width:58px;"></th></tr></thead>
@@ -590,6 +592,7 @@
               <button class="tn-btn small danger" id="settings-trash-empty" type="button">휴지통 비우기</button>
             </div>
           </div>
+          <div class="tn-scope-note" id="trash-scope-note" hidden></div>
           <div class="tn-trash-list" id="settings-trash-list"></div>
         </section>
       </div>
@@ -1114,6 +1117,34 @@
     </div>
   </div>
 
+  <!-- ============ 내 계정 ============ -->
+  <div class="tn-modal-overlay" id="account-overlay" hidden>
+    <div class="tn-modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
+      <div class="tn-modal-title" id="account-title">내 계정</div>
+      <div class="tn-modal-hint" id="account-sub">로그인한 사용자 정보입니다.</div>
+      <div class="tn-account-actions" id="account-actions">
+        <button class="tn-btn" id="account-password-open" type="button">비밀번호 변경</button>
+        <button class="tn-btn danger" id="account-logout" type="button">로그아웃</button>
+      </div>
+      <form id="account-password-form" hidden>
+        <label for="account-current-password">기존 비밀번호</label>
+        <input type="password" id="account-current-password" autocomplete="current-password" maxlength="200" placeholder="비밀번호를 정한 적이 없다면 비워 두세요">
+        <label for="account-new-password">새 비밀번호</label>
+        <input type="password" id="account-new-password" autocomplete="new-password" maxlength="200" placeholder="6자 이상">
+        <label for="account-new-password-confirm">새 비밀번호 확인</label>
+        <input type="password" id="account-new-password-confirm" autocomplete="new-password" maxlength="200" placeholder="같은 비밀번호를 한 번 더">
+        <div class="tn-admin-status" id="account-password-status" role="status" aria-live="polite"></div>
+        <div class="tn-modal-actions">
+          <button class="tn-modal-btn" id="account-password-cancel" type="button">취소</button>
+          <button class="tn-modal-btn save" id="account-password-save" type="submit">비밀번호 변경</button>
+        </div>
+      </form>
+      <div class="tn-modal-actions" id="account-close-row">
+        <button class="tn-modal-btn" id="account-close" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ 사용자 편집 ============ -->
   <div class="tn-modal-overlay" id="member-modal-overlay" hidden>
     <div class="tn-modal" role="dialog" aria-modal="true" aria-labelledby="member-modal-title">
@@ -1171,6 +1202,6 @@
 
 </div>
 
-<script src="app.js?v=20260911h"></script>
+<script src="app.js?v=20260911k"></script>
 </body>
 </html>
