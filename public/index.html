@@ -6,7 +6,7 @@
 <title>HLB-현장지원팀 CRM</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tessdata.projectnaptha.com" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20260911c">
+<link rel="stylesheet" href="styles.css?v=20260911f">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body style="margin:0;background:#F5F3F2;padding:22px 14px 40px;">
@@ -34,6 +34,26 @@
     </section>
   </div>
 
+  <div class="tn-cloud-gate" id="member-gate" hidden>
+    <section class="tn-cloud-card" role="dialog" aria-modal="true" aria-labelledby="member-gate-title">
+      <div class="tn-cloud-icon" aria-hidden="true">ID</div>
+      <div class="tn-cloud-title" id="member-gate-title">사용자 확인</div>
+      <div class="tn-cloud-copy">이 CRM은 사용자별로 작업 기록을 남깁니다. 이름을 고르고 비밀번호를 입력하세요.</div>
+      <form class="tn-cloud-form" id="member-login-form">
+        <label class="tn-cloud-label" for="member-login-name">이름</label>
+        <select class="tn-cloud-input" id="member-login-name" required></select>
+        <label class="tn-cloud-label" for="member-login-password">비밀번호</label>
+        <input class="tn-cloud-input" id="member-login-password" type="password" autocomplete="current-password" maxlength="200" placeholder="비밀번호를 정하지 않았다면 비워 두세요">
+        <div class="tn-cloud-status" id="member-login-status" aria-live="polite"></div>
+        <div class="tn-cloud-actions">
+          <button class="tn-btn" id="member-login-cancel" type="button" hidden>취소</button>
+          <button class="tn-btn primary" id="member-login-submit" type="submit">로그인</button>
+        </div>
+      </form>
+      <div class="tn-cloud-note"><b>안내</b><br>로그인 정보는 이 브라우저에만 저장되며, 저장·수정·삭제한 내용은 설정 &gt; 변경 이력에 사용자 이름과 함께 남습니다.</div>
+    </section>
+  </div>
+
   <!-- ============ 상단 네비게이션 ============ -->
   <div class="tn-topbar">
     <button class="tn-home-logo" id="tn-home-logo" type="button" aria-label="대시보드로 이동" title="대시보드로 이동">
@@ -48,6 +68,11 @@
         <span class="tn-cloud-db-state" id="cloud-db-state">확인 중</span>
       </button>
       <span class="tn-today-chip" id="tn-today-chip"></span>
+      <button class="tn-top-tool" id="tn-search-open" type="button" title="전체 검색 (Ctrl+K)">전체 <span>검색</span></button>
+      <button class="tn-user-chip" id="tn-user-chip" type="button" title="사용자 전환" hidden>
+        <span class="tn-user-chip-name" id="tn-user-chip-name"></span>
+        <span class="tn-user-chip-role" id="tn-user-chip-role"></span>
+      </button>
       <button class="tn-top-tool on" id="top-beginner-toggle" type="button" title="초보 모드 전환" hidden>초보 <span>모드</span></button>
       <button class="tn-top-tool" id="top-help-btn" type="button" title="사용 안내 열기">사용 안내</button>
     </div>
@@ -149,6 +174,8 @@
             <button type="button" id="pipe-view-table">목록</button>
           </div>
           <button class="tn-btn tn-simple-hidden-control" id="importance-config-btn" aria-hidden="true">중요도 기준</button>
+          <button class="tn-btn" id="pipe-export-btn" type="button">Excel 내보내기</button>
+          <button class="tn-btn" id="pipe-import-btn" type="button">Excel 가져오기</button>
           <button class="tn-btn primary" id="pipe-new-deal">새 항목</button>
         </div>
       </div>
@@ -210,6 +237,46 @@
       </nav>
 
       <div class="tn-kanban-hint" id="pipe-hint"></div>
+      <input type="file" id="pipe-import-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+    </div>
+
+    <!-- ============ 활동 ============ -->
+    <div class="tn-view" id="view-activity">
+      <div class="tn-module-head">
+        <div>
+          <div class="tn-module-title">활동</div>
+          <div class="tn-module-sub">전화·메일·미팅 기록을 기간별로 모아 보고, 접촉이 끊긴 영업건을 찾습니다.</div>
+        </div>
+        <div class="tn-module-actions">
+          <span class="tn-count" id="activity-total"></span>
+          <button class="tn-btn" id="activity-export-btn" type="button">CSV 내보내기</button>
+        </div>
+      </div>
+
+      <div class="tn-task-summary" id="activity-summary"></div>
+
+      <div class="tn-contacts-toolbar">
+        <input type="text" class="tn-contact-search" id="activity-search" placeholder="고객사·영업건·내용·결과 검색">
+        <select class="tn-contact-sort" id="activity-range">
+          <option value="week">이번 주</option>
+          <option value="lastweek">지난 주</option>
+          <option value="month">이번 달</option>
+          <option value="quarter">최근 3개월</option>
+          <option value="all">전체</option>
+        </select>
+        <select class="tn-contact-sort" id="activity-type-filter"><option value="">모든 유형</option></select>
+        <select class="tn-contact-sort" id="activity-owner-filter"><option value="">모든 담당자</option></select>
+      </div>
+
+      <div class="tn-activity-layout">
+        <section class="tn-activity-timeline" id="activity-timeline"></section>
+        <aside class="tn-activity-side">
+          <div class="tn-activity-side-title">유형별 활동</div>
+          <div class="tn-activity-breakdown" id="activity-breakdown"></div>
+          <div class="tn-activity-side-title">접촉이 끊긴 영업건</div>
+          <div class="tn-activity-stale" id="activity-stale"></div>
+        </aside>
+      </div>
     </div>
 
     <!-- ============ STAGE VIEWS (동적 생성) ============ -->
@@ -240,6 +307,7 @@
         </select>
         <button class="tn-btn" id="contact-csv-upload-btn">CSV 업로드</button>
         <button class="tn-btn" id="contact-export-btn">CSV 내보내기</button>
+        <button class="tn-btn" id="contact-dedupe-btn" type="button">중복 정리</button>
         <button class="tn-btn danger" id="contact-bulk-delete-btn" disabled>선택 삭제</button>
       </div>
 
@@ -466,6 +534,52 @@
             <button class="tn-btn small" id="settings-backup-import" type="button">복원하기</button>
           </div>
           <input type="file" id="settings-backup-input" accept=".xlsx,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/json" hidden>
+        </section>
+
+        <section class="tn-settings-panel">
+          <div class="tn-settings-head"><div>
+            <div class="tn-admin-title-row"><div class="tn-settings-title">사용자</div><span class="tn-settings-badge" id="settings-members-state">사용 안 함</span></div>
+            <div class="tn-settings-sub">누가 무엇을 바꿨는지 남기고 편집·열람 권한을 나눕니다. 위의 <b>관리자 백업·복원</b>을 활성화하면 사용할 수 있습니다.</div>
+          </div>
+          <button class="tn-btn small" id="settings-member-add" type="button" disabled>사용자 추가</button>
+          </div>
+          <div class="tn-settings-list" id="settings-member-list"></div>
+        </section>
+
+        <section class="tn-settings-panel tn-settings-wide">
+          <div class="tn-settings-head">
+            <div><div class="tn-settings-title">변경 이력</div><div class="tn-settings-sub" id="settings-audit-state">관리자 인증 후 화면·동작·사용자별 변경 기록을 조회할 수 있습니다.</div></div>
+            <div class="tn-settings-head-actions">
+              <button class="tn-btn small" id="settings-audit-refresh" type="button" disabled>새로고침</button>
+            </div>
+          </div>
+          <div class="tn-contacts-toolbar tn-audit-toolbar">
+            <input type="text" class="tn-contact-search" id="audit-search" placeholder="대상 이름·요약·사용자 검색" disabled>
+            <select class="tn-contact-sort" id="audit-screen" disabled><option value="">모든 화면</option></select>
+            <select class="tn-contact-sort" id="audit-action" disabled>
+              <option value="">모든 동작</option><option value="입력">입력</option><option value="수정">수정</option><option value="삭제">삭제</option><option value="복원">복원</option>
+            </select>
+            <select class="tn-contact-sort" id="audit-range" disabled>
+              <option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option><option value="">전체 기간</option>
+            </select>
+          </div>
+          <div class="tn-table-wrap">
+            <table class="tn-table" style="min-width:760px;">
+              <thead><tr><th style="width:168px;">시각</th><th style="width:124px;">화면</th><th style="width:64px;">동작</th><th>대상 · 변경 내용</th><th style="width:104px;">사용자</th><th style="width:58px;"></th></tr></thead>
+              <tbody id="audit-tbody"></tbody>
+            </table>
+          </div>
+          <nav class="tn-pager" id="audit-pager" aria-label="변경 이력 페이지 이동" hidden>
+            <button class="tn-pager-btn" id="audit-page-first" type="button" aria-label="첫 페이지">&laquo;</button>
+            <button class="tn-pager-btn" id="audit-page-prev" type="button" aria-label="이전 페이지">&lsaquo;</button>
+            <div class="tn-pager-numbers" id="audit-page-numbers"></div>
+            <button class="tn-pager-btn" id="audit-page-next" type="button" aria-label="다음 페이지">&rsaquo;</button>
+            <button class="tn-pager-btn" id="audit-page-last" type="button" aria-label="마지막 페이지">&raquo;</button>
+            <select class="tn-pager-size" id="audit-page-size" aria-label="한 페이지에 표시할 줄 수">
+              <option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+            </select>
+            <span class="tn-pager-range" id="audit-page-range" aria-live="polite"></span>
+          </nav>
         </section>
 
         <section class="tn-settings-panel">
@@ -903,6 +1017,7 @@
         <div><label>다음 액션일</label><input type="date" id="activity-next-date"></div>
       </div>
       <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="activity-ai-summary" type="button" title="입력한 내용으로 결과·다음 할 일 초안을 만듭니다">AI 요약 작성</button>
         <button class="tn-modal-btn" id="activity-cancel" type="button">취소</button>
         <button class="tn-modal-btn save" id="activity-save" type="button">활동 저장</button>
       </div>
@@ -987,8 +1102,75 @@
     </div>
   </div>
 
+  <!-- ============ 전체 검색 ============ -->
+  <div class="tn-search-overlay" id="global-search-overlay" hidden>
+    <div class="tn-search-panel" role="dialog" aria-modal="true" aria-label="전체 검색">
+      <div class="tn-search-head">
+        <input type="text" id="global-search-input" placeholder="회사·담당자·영업건·지원 업무·일정·매뉴얼 검색" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="global-search-results" aria-autocomplete="list">
+        <button class="tn-btn small" id="global-search-close" type="button">닫기</button>
+      </div>
+      <div class="tn-search-results" id="global-search-results" role="listbox" aria-label="검색 결과"></div>
+      <div class="tn-search-foot">↑ ↓ 이동 · Enter 열기 · Esc 닫기</div>
+    </div>
+  </div>
+
+  <!-- ============ 사용자 편집 ============ -->
+  <div class="tn-modal-overlay" id="member-modal-overlay" hidden>
+    <div class="tn-modal" role="dialog" aria-modal="true" aria-labelledby="member-modal-title">
+      <div class="tn-modal-title" id="member-modal-title">사용자 추가</div>
+      <div class="tn-modal-hint">이름을 파이프라인·지원 업무의 담당자 이름과 같게 쓰면 &quot;내 담당&quot; 필터가 바로 맞습니다.</div>
+      <label for="member-modal-name">이름</label>
+      <input type="text" id="member-modal-name" maxlength="60" placeholder="예: 김현장">
+      <label for="member-modal-email">이메일 (선택)</label>
+      <input type="text" id="member-modal-email" maxlength="160" placeholder="예: field@hlb.co.kr">
+      <div class="tn-criteria-grid">
+        <div><label for="member-modal-role">권한</label><select id="member-modal-role">
+          <option value="admin">관리자 · 모든 작업</option>
+          <option value="editor" selected>편집자 · 입력과 수정</option>
+          <option value="viewer">열람자 · 보기만</option>
+        </select></div>
+        <div><label for="member-modal-disabled">사용 여부</label><select id="member-modal-disabled">
+          <option value="false">사용</option><option value="true">사용 중지</option>
+        </select></div>
+      </div>
+      <label for="member-modal-password">비밀번호</label>
+      <input type="password" id="member-modal-password" maxlength="200" autocomplete="new-password" placeholder="6자 이상 · 비워 두면 바꾸지 않습니다">
+      <div class="tn-admin-status" id="member-modal-status" role="status" aria-live="polite"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn danger" id="member-modal-delete" type="button" hidden>삭제</button>
+        <button class="tn-modal-btn" id="member-modal-cancel" type="button">취소</button>
+        <button class="tn-modal-btn save" id="member-modal-save" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 변경 이력 상세 ============ -->
+  <div class="tn-modal-overlay" id="audit-detail-overlay" hidden>
+    <div class="tn-modal wide" role="dialog" aria-modal="true" aria-labelledby="audit-detail-title">
+      <div class="tn-modal-title" id="audit-detail-title">변경 상세</div>
+      <div class="tn-modal-hint" id="audit-detail-sub"></div>
+      <div class="tn-table-wrap">
+        <table class="tn-table"><thead><tr><th style="width:170px;">항목</th><th>이전</th><th>이후</th></tr></thead><tbody id="audit-detail-tbody"></tbody></table>
+      </div>
+      <div class="tn-modal-actions"><button class="tn-modal-btn" id="audit-detail-close" type="button">닫기</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 중복 연락처 정리 ============ -->
+  <div class="tn-modal-overlay" id="dedupe-overlay" hidden>
+    <div class="tn-modal wide" role="dialog" aria-modal="true" aria-labelledby="dedupe-title">
+      <div class="tn-modal-title" id="dedupe-title">중복 연락처 정리</div>
+      <div class="tn-modal-hint" id="dedupe-hint">이름·연락처·이메일이 겹치는 연락처를 묶었습니다. 남길 대표를 고르면 나머지 값은 빈칸만 채워 합치고, 합쳐진 연락처는 휴지통으로 갑니다.</div>
+      <div class="tn-dedupe-list" id="dedupe-list"></div>
+      <div class="tn-modal-actions">
+        <button class="tn-modal-btn" id="dedupe-close" type="button">닫기</button>
+        <button class="tn-modal-btn save" id="dedupe-merge-all" type="button">선택한 그룹 모두 병합</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<script src="app.js?v=20260911c"></script>
+<script src="app.js?v=20260911f"></script>
 </body>
 </html>

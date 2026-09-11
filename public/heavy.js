@@ -1214,11 +1214,15 @@ function backupWorkbookSheets(backup){
 
 async function buildBackupWorkbook(backup){
   const sheets=backupWorkbookSheets(backup);
-  const order=[
+  return buildSheetWorkbook([
     {name:BACKUP_SHEETS.info,rows:sheets.info},
     {name:BACKUP_SHEETS.records,rows:sheets.records},
     {name:BACKUP_SHEETS.audit,rows:sheets.audit}
-  ];
+  ]);
+}
+
+/* 시트 이름과 표(2차원 배열)만 주면 .xlsx 파일(Blob)을 만든다 */
+async function buildSheetWorkbook(order){
   const encoder=new TextEncoder();
   const file=(name,text)=>({name,data:encoder.encode(text)});
   const sheetTags=order.map((sheet,index)=>`<sheet name="${xmlEscape(sheet.name)}" sheetId="${index+1}" r:id="rId${index+1}"/>`).join("");

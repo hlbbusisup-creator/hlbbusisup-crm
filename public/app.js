@@ -15,6 +15,7 @@ function normalizeStage(s){
 const MODULES = [
   {key:"home",     label:"대시보드"},
   {key:"pipeline", label:"파이프라인"},
+  {key:"activity", label:"활동"},
   {key:"roadmap",  label:"지원 업무"},
   {key:"contacts", label:"연락처"},
   {key:"calendar", label:"캘린더"},
@@ -433,7 +434,7 @@ async function verifyCloudAccessKey(candidate){
   try{
     response=await fetch(CLOUD_API_BASE+"/session",{
       method:"GET",
-      headers:{"X-CRM-Key":candidate},
+      headers:memberToken?{"X-CRM-Key":candidate,"X-CRM-User":memberToken}:{"X-CRM-Key":candidate},
       cache:"no-store",
       signal:controller.signal
     });
@@ -459,6 +460,7 @@ async function activateCloudAccessKey(candidate){
   cloudReady=true;
   setCloudConnectionState("ready","연결됨");
   hideCloudGate();
+  applySessionMemberInfo(session);
   completeCloudConnection();
   return session;
 }
@@ -533,7 +535,7 @@ async function cloudStorageRequest(method,key,value,allowRetry){
     try{
       const options={
         method,
-        headers:{"X-CRM-Key":cloudAccessKey},
+        headers:cloudRequestHeaders(),
         cache:"no-store",
         signal:controller.signal
       };
@@ -561,6 +563,21 @@ async function cloudStorageRequest(method,key,value,allowRetry){
     cloudReady=false;
     await ensureCloudConnection({forcePrompt:true,clearKey:true,message:"연결키가 변경되었거나 만료되었습니다. 새 CRM_ACCESS_KEY를 입력하세요."});
     return cloudStorageRequest(method,key,value,false);
+  }
+  /* 사용자 계정을 쓰는 작업공간에서 로그인이 풀렸거나 열람 권한일 때 */
+  if(response.status===403){
+    let denial={};
+    try{denial=await response.clone().json();}catch(e){}
+    if(denial.error==="member_session_required"&&retry){
+      memberToken="";saveMemberToken("");currentMember=null;memberAccountsEnabled=true;updateMemberUi();
+      const signedIn=await showMemberGate("저장하려면 사용자 로그인이 필요합니다.");
+      if(signedIn)return cloudStorageRequest(method,key,value,false);
+    }
+    if(denial.error==="member_read_only"){
+      memberAccountsEnabled=true;
+      if(currentMember)currentMember={...currentMember,role:"viewer"};
+      updateMemberUi();
+    }
   }
   if(!response.ok){
     let payload={};
@@ -638,6 +655,8 @@ async function flushBootWrites(){
   const queued = bootWrites;
   bootWrites = null;
   if(!queued || !queued.length) return;
+  /* 열람 권한은 서버가 저장을 거부하므로 정규화 저장도 시도하지 않는다 */
+  if(!canEditData()) return;
   /* 같은 키를 여러 번 담았으면 마지막 값만 보낸다 (한 요청에 같은 키를 두 번 담을 수 없다) */
   const merged = new Map();
   queued.forEach(entry=>merged.set(entry.key, entry));
@@ -756,6 +775,15 @@ function updateAdminUi(){
   }
   if(actions)actions.hidden=!unlocked;
   if(lockedNote)lockedNote.hidden=unlocked;
+  setAuditControlsEnabled(unlocked);
+  const memberAddButton=document.getElementById("settings-member-add");
+  if(memberAddButton)memberAddButton.disabled=!unlocked;
+  if(!unlocked){
+    adminMemberList=[];
+    auditState.entries=[];auditState.total=0;auditState.loaded=false;auditState.page=1;auditState.error="";memberAdminError="";
+    renderMemberSettings();
+    renderAuditTable();
+  }
   if(backupStatus){
     if(!unlocked)backupStatus.textContent="관리자 인증 후 전체 데이터와 변경 로그를 내려받을 수 있습니다.";
     else if(adminLastBackupAt)backupStatus.textContent=`마지막 내려받기: ${formatDateTime(adminLastBackupAt)} · 데이터와 변경 로그 포함`;
@@ -819,6 +847,9 @@ async function authenticateAdmin(code){
   clearTimeout(adminSessionTimer);
   adminSessionTimer=setTimeout(lockAdmin,Math.max(0,adminSessionExpiresAt-Date.now()));
   updateAdminUi();
+  /* 인증이 끝나면 사용자 목록과 변경 이력을 바로 쓸 수 있게 준비한다 (실패해도 조용히 두고, 새로고침 버튼으로 다시 시도한다) */
+  refreshMemberAdminList({silent:true});
+  loadAuditPage({silent:true});
   return payload;
 }
 async function submitAdminAuthentication(event){
@@ -1441,6 +1472,7 @@ function showView(key){
   if(target) target.classList.add("active");
   updateNavActive(key);
   if(key === "pipeline") renderPipeline();
+  if(key === "activity") renderActivityView();
   if(key === "roadmap") renderRoadmap();
   if(key === "calendar"){ renderCalendar(); if(googleCalendarAccessToken) loadGoogleCalendarEvents(false,false); }
   if(key === "home") applyDashboardCollapse();
@@ -2171,7 +2203,7 @@ async function commitContactDraft(id){
   finally{draft.saving=false;if(selectedContactId===id){if(draft.message==="저장됨")renderContactDrawer(false);updateEditStatus("contact",draft);if(draft.syncPending)document.getElementById("contact-drawer-save").disabled=false;}}
 }
 function updateDealActionButtons(draft){
-  document.querySelectorAll('#deal-drawer-body [data-add-activity],#deal-drawer-body [data-add-support-task],#deal-drawer-body [data-ai-analyze],#deal-drawer-body [data-convert-support]').forEach(button=>{
+  document.querySelectorAll('#deal-drawer-body [data-add-activity],#deal-drawer-body [data-add-support-task],#deal-drawer-body [data-ai-analyze],#deal-drawer-body [data-convert-support],#deal-drawer-body [data-next-action]').forEach(button=>{
     button.disabled=draft.isNew||draft.saving||draftDirty(draft);
     button.title=button.disabled?"항목을 먼저 저장해 주세요.":"";
   });
@@ -2389,7 +2421,7 @@ function renderDealDrawer(resetScroll){
     </section>
 
     <section class="tn-drawer-section">
-      <div class="tn-section-head"><div><div class="tn-drawer-section-title" style="margin:0;">활동 기록</div><div class="tn-drawer-group-hint">전화, 이메일, 미팅 결과를 시간순으로 남깁니다.</div></div><button class="tn-btn primary small" data-add-activity type="button">활동 추가</button></div>
+      <div class="tn-section-head"><div><div class="tn-drawer-section-title" style="margin:0;">활동 기록</div><div class="tn-drawer-group-hint">전화, 이메일, 미팅 결과를 시간순으로 남깁니다.</div></div><button class="tn-btn small" data-next-action type="button" title="단계와 최근 접촉을 보고 다음에 할 일을 제안합니다">다음 액션 추천</button><button class="tn-btn primary small" data-add-activity type="button">활동 추가</button></div>
       <div class="tn-activity-list" data-activity-list></div>
     </section>
 
@@ -2644,6 +2676,7 @@ function renderDealDrawer(resetScroll){
   });
   body.querySelector("[data-toggle-advanced]").addEventListener("click",()=>{});
   body.querySelector("[data-add-activity]").addEventListener("click",()=>openActivityModal(drawerAreaKey,item.id));
+  body.querySelector("[data-next-action]").addEventListener("click",()=>applyAiNextAction(drawerAreaKey,item.id));
   body.querySelector("[data-add-support-task]").addEventListener("click",()=>openRoadmapModal("",{relatedAreaKey:drawerAreaKey,relatedDealId:item.id,inheritOwner:true,owner:"",purpose:"",nextAction:"",dueDate:""}));
   areaSel.addEventListener("change",async()=>{});
   body.querySelector("[data-ai-analyze]").addEventListener("click",()=>openAiForDeal(drawerAreaKey,item.id));
@@ -3304,6 +3337,8 @@ function renderSettings(){
   });
   updateBeginnerControls();
   updateAdminUi();
+  renderMemberSettings();
+  renderAuditTable();
   renderTrash();
 }
 
@@ -3994,7 +4029,7 @@ function updateContactBulkDeleteButton(){
   const btn = document.getElementById("contact-bulk-delete-btn");
   if(!btn) return;
   const n = selectedContactIds.size;
-  btn.disabled = n === 0;
+  btn.disabled = n === 0 || !canEditData();
   btn.textContent = n ? `선택 ${n}명 삭제` : "선택 삭제";
 }
 
@@ -5909,6 +5944,1128 @@ function renderHome(){
 }
 
 /* ---------- 초기화 ---------- */
+/* =========================================================================
+   사용자 계정 · 권한
+   접속키(CRM_ACCESS_KEY)는 작업공간의 문이고, 사용자 로그인은 그 안에서
+   "누가" 작업하는지 구분하는 두 번째 문이다. 사용자를 한 명도 만들지 않은
+   작업공간은 예전과 똑같이 접속키만으로 모든 작업이 가능하다.
+   ========================================================================= */
+const MEMBER_TOKEN_STORAGE_KEY = "tinico:member:token";
+const MEMBER_ROLE_LABELS = {admin:"관리자", editor:"편집자", viewer:"열람자"};
+const MEMBER_ROLE_HINTS = {admin:"모든 작업", editor:"입력과 수정", viewer:"보기만"};
+let memberAccountsEnabled = false;
+let currentMember = null;
+let memberToken = readSavedMemberToken();
+let memberDirectory = [];
+let memberGatePromise = null, resolveMemberGate = null;
+let adminMemberList = [];
+let memberAdminError = "";
+let editingMemberId = "";
+
+function readSavedMemberToken(){ try{ return localStorage.getItem(MEMBER_TOKEN_STORAGE_KEY) || ""; }catch(e){ return ""; } }
+function saveMemberToken(value){
+  try{
+    if(value) localStorage.setItem(MEMBER_TOKEN_STORAGE_KEY, value);
+    else localStorage.removeItem(MEMBER_TOKEN_STORAGE_KEY);
+  }catch(e){}
+}
+/* 서버가 최종 판단하지만, 화면에서도 미리 막아 헛수고를 줄인다 */
+function canEditData(){ return !(memberAccountsEnabled && currentMember && currentMember.role === "viewer"); }
+function requireEditPermission(){
+  if(canEditData()) return true;
+  showToast("열람 권한이어서 변경할 수 없습니다. 관리자에게 편집 권한을 요청하세요.");
+  return false;
+}
+function cloudRequestHeaders(extra){
+  const headers = {"X-CRM-Key": cloudAccessKey, ...(extra || {})};
+  if(memberToken) headers["X-CRM-User"] = memberToken;
+  return headers;
+}
+function applySessionMemberInfo(session){
+  memberAccountsEnabled = !!(session && session.memberAccountsEnabled);
+  currentMember = (session && session.member) || null;
+  /* 사용자 계정을 쓰는데 토큰이 더는 유효하지 않으면 남겨 두지 않는다 */
+  if(memberAccountsEnabled && !currentMember && memberToken){ memberToken = ""; saveMemberToken(""); }
+  if(!memberAccountsEnabled && memberToken){ memberToken = ""; saveMemberToken(""); }
+  updateMemberUi();
+}
+/* 열람 권한일 때 눌러도 소용없는 입력 버튼들 */
+const WRITE_CONTROL_IDS = ["pipe-new-deal","pipe-import-btn","roadmap-add-btn","contact-scan-btn","contact-upload-btn",
+  "contact-manual-btn","contact-csv-upload-btn","contact-dedupe-btn","calendar-add","area-add-btn",
+  "settings-stage-add","settings-bucket-add","settings-group-add","manual-add-btn","manual-reset-btn",
+  "settings-trash-empty","settings-clear-seed"];
+function applyWritePermissionUi(){
+  const readOnly = !canEditData();
+  WRITE_CONTROL_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.disabled = readOnly;
+    if(readOnly) el.title = "열람 권한이어서 변경할 수 없습니다.";
+    else if(el.title === "열람 권한이어서 변경할 수 없습니다.") el.removeAttribute("title");
+  });
+  updateContactBulkDeleteButton();
+}
+function updateMemberUi(){
+  const chip = document.getElementById("tn-user-chip");
+  if(chip){
+    chip.hidden = !memberAccountsEnabled;
+    chip.dataset.role = currentMember ? currentMember.role : "";
+    const name = document.getElementById("tn-user-chip-name");
+    const role = document.getElementById("tn-user-chip-role");
+    if(name) name.textContent = currentMember ? currentMember.name : "로그인 필요";
+    if(role) role.textContent = currentMember ? (MEMBER_ROLE_LABELS[currentMember.role] || currentMember.role) : "";
+    chip.title = currentMember
+      ? `${currentMember.name} · ${MEMBER_ROLE_LABELS[currentMember.role] || currentMember.role} · 누르면 다른 사용자로 전환합니다.`
+      : "사용자 로그인";
+  }
+  applyWritePermissionUi();
+}
+async function fetchMemberDirectory(){
+  const response = await fetch(CLOUD_API_BASE + "/members", {headers: cloudRequestHeaders(), cache:"no-store"});
+  if(!response.ok) throw cloudError("사용자 목록을 불러오지 못했습니다.","server");
+  const payload = await response.json();
+  memberAccountsEnabled = !!payload.enabled;
+  return payload.members || [];
+}
+async function fillMemberLoginOptions(){
+  const select = document.getElementById("member-login-name");
+  if(!select) return;
+  try{ memberDirectory = await fetchMemberDirectory(); }
+  catch(error){ memberDirectory = []; }
+  const previous = select.value;
+  select.innerHTML = "";
+  memberDirectory.forEach(member=>{
+    const option = document.createElement("option");
+    option.value = member.id;
+    option.textContent = `${member.name} · ${MEMBER_ROLE_LABELS[member.role] || member.role}`;
+    select.appendChild(option);
+  });
+  if(previous && memberDirectory.some(member=>member.id === previous)) select.value = previous;
+}
+function showMemberGate(message){
+  const gate = document.getElementById("member-gate");
+  if(!gate) return Promise.resolve(false);
+  const status = document.getElementById("member-login-status");
+  const cancel = document.getElementById("member-login-cancel");
+  const password = document.getElementById("member-login-password");
+  if(password) password.value = "";
+  if(cancel) cancel.hidden = !currentMember;
+  if(status){
+    status.textContent = message || "이름을 고르고 비밀번호를 입력하세요.";
+    status.classList.toggle("error", !!message);
+  }
+  gate.hidden = false;
+  fillMemberLoginOptions();
+  setTimeout(()=>document.getElementById("member-login-name")?.focus(), 30);
+  if(!memberGatePromise) memberGatePromise = new Promise(resolve=>{ resolveMemberGate = resolve; });
+  return memberGatePromise;
+}
+function hideMemberGate(result){
+  const gate = document.getElementById("member-gate");
+  if(gate) gate.hidden = true;
+  const password = document.getElementById("member-login-password");
+  if(password) password.value = "";
+  const resolve = resolveMemberGate;
+  memberGatePromise = null;
+  resolveMemberGate = null;
+  if(resolve) resolve(result);
+}
+async function submitMemberLogin(event){
+  event.preventDefault();
+  const select = document.getElementById("member-login-name");
+  const password = document.getElementById("member-login-password");
+  const status = document.getElementById("member-login-status");
+  const submit = document.getElementById("member-login-submit");
+  const memberId = select ? select.value : "";
+  if(!memberId){
+    if(status){ status.textContent="사용할 이름을 고르세요."; status.classList.add("error"); }
+    return;
+  }
+  if(submit){ submit.disabled = true; submit.textContent = "확인 중…"; }
+  try{
+    const response = await fetch(CLOUD_API_BASE + "/auth/login", {
+      method:"POST",
+      headers:{"X-CRM-Key":cloudAccessKey, "Content-Type":"application/json"},
+      cache:"no-store",
+      body: JSON.stringify({memberId, password: password ? password.value : ""})
+    });
+    let payload = {};
+    try{ payload = await response.json(); }catch(e){}
+    if(!response.ok) throw cloudError(payload.message || "로그인하지 못했습니다.", payload.error || "auth");
+    memberToken = payload.token;
+    saveMemberToken(memberToken);
+    currentMember = payload.member;
+    memberAccountsEnabled = true;
+    updateMemberUi();
+    hideMemberGate(true);
+    showToast(`${currentMember.name}님으로 로그인했습니다.`, "info", 3000);
+  }catch(error){
+    if(status){ status.textContent = error.message || "로그인하지 못했습니다."; status.classList.add("error"); }
+  }finally{
+    if(submit){ submit.disabled = false; submit.textContent = "로그인"; }
+  }
+}
+function signOutMember(){
+  memberToken = "";
+  saveMemberToken("");
+  currentMember = null;
+  updateMemberUi();
+  if(memberAccountsEnabled) showMemberGate("다른 사용자로 로그인하세요.");
+}
+async function ensureMemberSession(){
+  if(!memberAccountsEnabled || currentMember){ updateMemberUi(); return true; }
+  return showMemberGate("");
+}
+
+/* ---- 설정 > 사용자 (관리자 인증 후) ---- */
+function renderMemberSettings(){
+  const list = document.getElementById("settings-member-list");
+  const state = document.getElementById("settings-members-state");
+  const addButton = document.getElementById("settings-member-add");
+  const unlocked = adminSessionActive();
+  if(addButton) addButton.disabled = !unlocked;
+  if(state){
+    const active = adminMemberList.filter(member=>!member.disabled).length;
+    state.textContent = memberAccountsEnabled ? `사용 중 · ${active}명` : "사용 안 함";
+    state.dataset.state = memberAccountsEnabled ? "on" : "";
+  }
+  if(!list) return;
+  list.innerHTML = "";
+  if(!unlocked){
+    list.innerHTML = '<div class="tn-empty-compact">관리자 인증 후 사용자 목록을 볼 수 있습니다.</div>';
+    return;
+  }
+  if(!adminMemberList.length){
+    list.innerHTML = memberAdminError
+      ? '<div class="tn-empty-compact">' + escapeHtml(memberAdminError) + '</div>'
+      : '<div class="tn-empty-compact">등록된 사용자가 없습니다. 사용자를 한 명이라도 추가하면 그때부터 로그인과 권한 구분이 시작됩니다.</div>';
+    return;
+  }
+  adminMemberList.forEach(member=>{
+    const row = document.createElement("div");
+    row.className = "tn-settings-row";
+    row.innerHTML = `<div class="tn-settings-row-main">
+        <span class="tn-role-chip" data-role="${escapeHtml(member.role)}">${escapeHtml(MEMBER_ROLE_LABELS[member.role] || member.role)}</span>
+        <span class="tn-settings-row-title">${escapeHtml(member.name)}</span>
+      </div>
+      <div class="tn-settings-row-sub">${escapeHtml([member.email || "이메일 없음", member.hasPassword ? "비밀번호 설정됨" : "비밀번호 없음", member.disabled ? "사용 중지" : "사용 중"].join(" · "))}</div>
+      <div class="tn-settings-row-actions"><button class="tn-btn small" type="button" data-edit-member="${escapeHtml(member.id)}">수정</button></div>`;
+    list.appendChild(row);
+  });
+}
+async function refreshMemberAdminList(options){
+  if(!adminSessionActive()) return;
+  const silent = !!(options && options.silent);
+  try{
+    const payload = await adminApiRequest("/admin/members");
+    adminMemberList = payload.members || [];
+    memberAccountsEnabled = adminMemberList.some(member=>!member.disabled);
+    memberAdminError = "";
+  }catch(error){
+    adminMemberList = [];
+    memberAdminError = error.message || "사용자 목록을 불러오지 못했습니다.";
+    /* 인증 직후 자동으로 당겨 오는 경우까지 오류를 띄우면 방해만 된다 */
+    if(!silent){ console.error("member list failed", error); showToast(memberAdminError); }
+  }
+  renderMemberSettings();
+  updateMemberUi();
+}
+function openMemberModal(id){
+  editingMemberId = id || "";
+  const member = adminMemberList.find(entry=>entry.id === editingMemberId);
+  document.getElementById("member-modal-title").textContent = member ? "사용자 수정" : "사용자 추가";
+  document.getElementById("member-modal-name").value = member ? member.name : "";
+  document.getElementById("member-modal-email").value = member ? (member.email || "") : "";
+  document.getElementById("member-modal-role").value = member ? member.role : "editor";
+  document.getElementById("member-modal-disabled").value = member && member.disabled ? "true" : "false";
+  document.getElementById("member-modal-password").value = "";
+  document.getElementById("member-modal-password").placeholder = member
+    ? "6자 이상 · 비워 두면 바꾸지 않습니다"
+    : "6자 이상 · 비워 두면 비밀번호 없이 이름만으로 들어옵니다";
+  const status = document.getElementById("member-modal-status");
+  if(status){ status.textContent = ""; status.className = "tn-admin-status"; }
+  document.getElementById("member-modal-delete").hidden = !member;
+  document.getElementById("member-modal-overlay").hidden = false;
+  setTimeout(()=>document.getElementById("member-modal-name").focus(), 0);
+}
+function closeMemberModal(){
+  document.getElementById("member-modal-overlay").hidden = true;
+  editingMemberId = "";
+}
+async function saveMemberModal(){
+  const status = document.getElementById("member-modal-status");
+  const name = document.getElementById("member-modal-name").value.trim();
+  if(!name){
+    if(status){ status.textContent = "이름을 입력하세요."; status.className = "tn-admin-status error"; }
+    return;
+  }
+  const body = {
+    name,
+    email: document.getElementById("member-modal-email").value.trim(),
+    role: document.getElementById("member-modal-role").value,
+    disabled: document.getElementById("member-modal-disabled").value === "true"
+  };
+  const password = document.getElementById("member-modal-password").value;
+  if(password || !editingMemberId) body.password = password;
+  try{
+    if(editingMemberId) await adminApiRequest("/admin/members/" + encodeURIComponent(editingMemberId), {method:"PATCH", body});
+    else await adminApiRequest("/admin/members", {method:"POST", body});
+  }catch(error){
+    if(status){ status.textContent = error.message || "저장하지 못했습니다."; status.className = "tn-admin-status error"; }
+    return;
+  }
+  closeMemberModal();
+  await refreshMemberAdminList();
+  showToast("사용자 정보를 저장했습니다.", "info", 3000);
+}
+async function deleteMemberFromModal(){
+  if(!editingMemberId) return;
+  const member = adminMemberList.find(entry=>entry.id === editingMemberId);
+  if(!confirm(`'${member ? member.name : "이 사용자"}'를 삭제할까요? 이미 남은 변경 이력의 이름은 그대로 유지됩니다.`)) return;
+  try{
+    await adminApiRequest("/admin/members/" + encodeURIComponent(editingMemberId), {method:"DELETE"});
+  }catch(error){
+    showToast(error.message || "삭제하지 못했습니다.");
+    return;
+  }
+  const removedSelf = currentMember && currentMember.id === editingMemberId;
+  closeMemberModal();
+  await refreshMemberAdminList();
+  if(removedSelf) signOutMember();
+}
+
+/* =========================================================================
+   설정 > 변경 이력
+   crm_audit_log 에 이미 쌓이고 있던 기록을 백업 파일을 열지 않고 화면에서 본다.
+   ========================================================================= */
+const auditState = {page:1, size:20, total:0, entries:[], screens:[], loading:false, loaded:false, error:"", pending:false};
+function auditControls(){
+  return ["audit-search","audit-screen","audit-action","audit-range","audit-page-size","settings-audit-refresh"]
+    .map(id=>document.getElementById(id)).filter(Boolean);
+}
+function setAuditControlsEnabled(enabled){
+  auditControls().forEach(el=>{ el.disabled = !enabled; });
+}
+function auditRangeFrom(){
+  const days = Number(document.getElementById("audit-range")?.value || "");
+  if(!days) return "";
+  const from = new Date();
+  from.setDate(from.getDate() - days);
+  return from.toISOString();
+}
+async function loadAuditPage(options){
+  if(!adminSessionActive()) return;
+  /* 조회 중에 조건이 또 바뀌면 요청을 버리지 말고 끝난 뒤 한 번 더 돌린다 */
+  if(auditState.loading){ auditState.pending = true; return; }
+  const silent = !!(options && options.silent);
+  auditState.loading = true;
+  const params = new URLSearchParams();
+  params.set("limit", String(auditState.size));
+  params.set("offset", String((auditState.page - 1) * auditState.size));
+  const q = document.getElementById("audit-search")?.value.trim();
+  const screen = document.getElementById("audit-screen")?.value;
+  const action = document.getElementById("audit-action")?.value;
+  const from = auditRangeFrom();
+  if(q) params.set("q", q);
+  if(screen) params.set("screen", screen);
+  if(action) params.set("action", action);
+  if(from) params.set("from", from);
+  try{
+    const payload = await adminApiRequest("/admin/audit?" + params.toString());
+    auditState.entries = payload.entries || [];
+    auditState.total = Number(payload.total || 0);
+    auditState.screens = payload.screens || [];
+    auditState.loaded = true;
+    auditState.error = "";
+  }catch(error){
+    auditState.entries = [];
+    auditState.total = 0;
+    auditState.error = error.message || "변경 이력을 불러오지 못했습니다.";
+    if(!silent){ console.error("audit query failed", error); showToast(auditState.error); }
+  }finally{
+    auditState.loading = false;
+  }
+  renderAuditScreenOptions();
+  renderAuditTable();
+  if(auditState.pending){ auditState.pending = false; await loadAuditPage(options); }
+}
+function renderAuditScreenOptions(){
+  const select = document.getElementById("audit-screen");
+  if(!select) return;
+  const previous = select.value;
+  select.innerHTML = '<option value="">모든 화면</option>';
+  auditState.screens.forEach(entry=>{
+    const option = document.createElement("option");
+    option.value = entry.screen;
+    option.textContent = `${entry.screen} (${entry.count})`;
+    select.appendChild(option);
+  });
+  if(previous && auditState.screens.some(entry=>entry.screen === previous)) select.value = previous;
+}
+function auditChangeSummary(entry){
+  const fields = Array.isArray(entry.changedFields) ? entry.changedFields : [];
+  /* 새로 만들거나 지운 기록은 항목 전체가 바뀐 것이라 필드를 늘어놓아도 읽히지 않는다 */
+  if(entry.action !== "수정" || !fields.length) return entry.summary || "";
+  return fields.slice(0, 4).map(field=>field.label || field.field).join(", ") + (fields.length > 4 ? ` 외 ${fields.length - 4}개` : "");
+}
+function renderAuditTable(){
+  const tbody = document.getElementById("audit-tbody");
+  const state = document.getElementById("settings-audit-state");
+  if(state){
+    if(!adminSessionActive()) state.textContent = "관리자 인증 후 화면·동작·사용자별 변경 기록을 조회할 수 있습니다.";
+    else if(auditState.error) state.textContent = auditState.error;
+    else state.textContent = auditState.loaded ? `조건에 맞는 기록 ${auditState.total.toLocaleString("ko-KR")}건` : "새로고침을 눌러 기록을 불러오세요.";
+  }
+  if(!tbody) return;
+  tbody.innerHTML = "";
+  if(!adminSessionActive()){
+    tbody.innerHTML = '<tr><td colspan="6" class="tn-empty-compact">관리자 인증이 필요합니다.</td></tr>';
+    document.getElementById("audit-pager").hidden = true;
+    return;
+  }
+  if(!auditState.entries.length){
+    tbody.innerHTML = `<tr><td colspan="6" class="tn-empty-compact">${escapeHtml(auditState.error || (auditState.loaded ? "조건에 맞는 변경 기록이 없습니다." : "새로고침을 눌러 기록을 불러오세요."))}</td></tr>`;
+    document.getElementById("audit-pager").hidden = true;
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  auditState.entries.forEach(entry=>{
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${escapeHtml(String(entry.eventAtKST || entry.eventAt || "").replace(" KST",""))}</td>
+      <td>${escapeHtml(entry.screen || "")}</td>
+      <td><span class="tn-audit-action" data-action="${escapeHtml(entry.action || "")}">${escapeHtml(entry.action || "")}</span></td>
+      <td><div class="tn-settings-row-title">${escapeHtml(entry.entityLabel || entry.entityType || "")}</div><div class="tn-audit-summary">${escapeHtml(auditChangeSummary(entry))}</div></td>
+      <td>${escapeHtml(entry.actorName || "-")}</td>
+      <td><button class="tn-btn small" type="button" data-audit-detail="${escapeHtml(entry.eventId)}">상세</button></td>`;
+    fragment.appendChild(row);
+  });
+  tbody.appendChild(fragment);
+  renderAuditPager();
+}
+function auditPageCount(){ return Math.max(1, Math.ceil(auditState.total / auditState.size)); }
+function goToAuditPage(page){
+  const next = Math.max(1, Math.min(auditPageCount(), Number(page) || 1));
+  if(next === auditState.page) return;
+  auditState.page = next;
+  loadAuditPage();
+}
+function renderAuditPager(){
+  const pager = document.getElementById("audit-pager");
+  if(!pager) return;
+  pager.hidden = false;
+  const pages = auditPageCount();
+  const numbers = document.getElementById("audit-page-numbers");
+  numbers.innerHTML = "";
+  contactPagerNumbers(auditState.page, pages).forEach(entry=>{
+    if(entry === "gap"){
+      const gap = document.createElement("span");
+      gap.className = "tn-pager-gap";
+      gap.textContent = "…";
+      gap.setAttribute("aria-hidden","true");
+      numbers.appendChild(gap);
+      return;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "tn-pager-btn" + (entry === auditState.page ? " active" : "");
+    button.textContent = String(entry);
+    if(entry === auditState.page) button.setAttribute("aria-current","page");
+    button.addEventListener("click", ()=>goToAuditPage(entry));
+    numbers.appendChild(button);
+  });
+  document.getElementById("audit-page-first").disabled = auditState.page <= 1;
+  document.getElementById("audit-page-prev").disabled = auditState.page <= 1;
+  document.getElementById("audit-page-next").disabled = auditState.page >= pages;
+  document.getElementById("audit-page-last").disabled = auditState.page >= pages;
+  const range = document.getElementById("audit-page-range");
+  if(range){
+    const from = auditState.total ? (auditState.page - 1) * auditState.size + 1 : 0;
+    const to = Math.min(auditState.total, auditState.page * auditState.size);
+    range.textContent = auditState.total ? `${from}–${to} / 전체 ${auditState.total.toLocaleString("ko-KR")}건` : "표시할 기록이 없습니다.";
+  }
+}
+function auditDetailText(value){
+  if(value === null || value === undefined) return "(없음)";
+  if(typeof value === "object") return JSON.stringify(value, null, 2);
+  return String(value);
+}
+function openAuditDetail(eventId){
+  const entry = auditState.entries.find(item=>item.eventId === eventId);
+  if(!entry) return;
+  document.getElementById("audit-detail-sub").textContent =
+    `${entry.eventAtKST || entry.eventAt} · ${entry.screen} · ${entry.action} · ${entry.entityLabel || entry.entityType}${entry.actorName ? " · " + entry.actorName : ""}`;
+  const tbody = document.getElementById("audit-detail-tbody");
+  tbody.innerHTML = "";
+  const fields = Array.isArray(entry.changedFields) ? entry.changedFields : [];
+  if(!fields.length){
+    tbody.innerHTML = `<tr><td colspan="3" class="tn-empty-compact">${escapeHtml(entry.summary || "변경 항목이 기록되지 않았습니다.")}</td></tr>`;
+  }else{
+    fields.forEach(field=>{
+      const row = tbody.insertRow();
+      row.insertCell().textContent = field.label || field.field;
+      row.insertCell().innerHTML = `<div class="tn-audit-detail-value">${escapeHtml(auditDetailText(field.before))}</div>`;
+      row.insertCell().innerHTML = `<div class="tn-audit-detail-value">${escapeHtml(auditDetailText(field.after))}</div>`;
+    });
+  }
+  document.getElementById("audit-detail-overlay").hidden = false;
+}
+
+/* =========================================================================
+   전체 검색 (Ctrl/⌘ + K)
+   화면마다 흩어진 검색창을 하나로 모아 회사명 하나로 전부 찾는다.
+   ========================================================================= */
+let searchMatches = [], searchActiveIndex = 0;
+function collectSearchMatches(query){
+  const q = String(query || "").trim().toLowerCase();
+  if(q.length < 1) return [];
+  const out = [];
+  const hit = (...values)=>values.filter(Boolean).join(" ").toLowerCase().includes(q);
+  const push = (group, title, sub, run)=>out.push({group, title, sub, run});
+  allDeals().forEach(({area, item})=>{
+    if(hit(item.title, item.company, item.contactName, item.internalOwner, item.action, item.tag, area.title))
+      push("영업 항목", item.title, `${area.title} · ${normalizeStage(item.stage)}${item.internalOwner ? " · " + item.internalOwner : ""}`,
+        ()=>{ showView("pipeline"); openDealDrawer(area.key, item.id); });
+  });
+  contactsData.forEach(ct=>{
+    if(hit(ct.name, ct.company, ct.department, ct.jobTitle, ct.email, contactPrimaryPhone(ct), ct.memo))
+      push("연락처", ct.name || ct.company || "이름 없음",
+        [ct.company, ct.jobTitle, contactPrimaryPhone(ct)].filter(Boolean).join(" · ") || "상세 없음",
+        ()=>{ showView("contacts"); openContactDetail(ct); });
+  });
+  roadmapData.forEach(task=>{
+    if(hit(task.title, task.purpose, task.owner, task.deliverable, task.notes))
+      push("지원 업무", task.title, `${task.status} · 담당 ${effectiveSupportTaskOwner(task) || "미지정"} · ${supportTaskDueText(task)}`,
+        ()=>{ showView("roadmap"); openRoadmapModal(task.id); });
+  });
+  calendarEntries.forEach(event=>{
+    if(hit(event.title, event.description, event.location, event.owner))
+      push("일정", event.title, `${event.date}${event.startTime ? " " + event.startTime : ""}${event.location ? " · " + event.location : ""}`,
+        ()=>{ showView("calendar"); openCalendarEventModal(event.id); });
+  });
+  manualSections.forEach(section=>{
+    if(hit(section.title, section.category, section.content))
+      push("매뉴얼", section.title, section.category || "매뉴얼", ()=>{
+        showView("settings");
+        setSettingsMode("manual");
+        const input = document.getElementById("manual-search");
+        if(input){ input.value = section.title; renderManualSettings(); }
+      });
+  });
+  return out.slice(0, 40);
+}
+function renderGlobalSearch(query){
+  const container = document.getElementById("global-search-results");
+  if(!container) return;
+  searchMatches = collectSearchMatches(query);
+  searchActiveIndex = 0;
+  container.innerHTML = "";
+  if(!String(query || "").trim()){
+    container.innerHTML = '<div class="tn-search-empty">고객사·담당자·영업건·지원 업무·일정·매뉴얼을 한 번에 찾습니다.</div>';
+    return;
+  }
+  if(!searchMatches.length){
+    container.innerHTML = '<div class="tn-search-empty">검색 결과가 없습니다.</div>';
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  let lastGroup = "";
+  searchMatches.forEach((match, index)=>{
+    if(match.group !== lastGroup){
+      lastGroup = match.group;
+      const head = document.createElement("div");
+      head.className = "tn-search-group";
+      head.textContent = match.group;
+      fragment.appendChild(head);
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "tn-search-item" + (index === 0 ? " active" : "");
+    button.dataset.index = String(index);
+    button.setAttribute("role", "option");
+    button.innerHTML = `<span class="tn-search-item-badge">${escapeHtml(match.group)}</span>
+      <span class="tn-search-item-body"><span class="tn-search-item-title">${escapeHtml(match.title)}</span><span class="tn-search-item-sub">${escapeHtml(match.sub)}</span></span>`;
+    button.addEventListener("click", ()=>runSearchMatch(index));
+    fragment.appendChild(button);
+  });
+  container.appendChild(fragment);
+}
+function highlightSearchMatch(index){
+  const container = document.getElementById("global-search-results");
+  if(!container || !searchMatches.length) return;
+  searchActiveIndex = (index + searchMatches.length) % searchMatches.length;
+  container.querySelectorAll(".tn-search-item").forEach(item=>{
+    const active = Number(item.dataset.index) === searchActiveIndex;
+    item.classList.toggle("active", active);
+    if(active && typeof item.scrollIntoView === "function") item.scrollIntoView({block:"nearest"});
+  });
+}
+function runSearchMatch(index){
+  const match = searchMatches[index];
+  if(!match) return;
+  globalSearchClose();
+  match.run();
+}
+function globalSearchOpen(){
+  const overlay = document.getElementById("global-search-overlay");
+  const input = document.getElementById("global-search-input");
+  if(!overlay) return;
+  overlay.hidden = false;
+  if(input){ input.value = ""; input.focus(); }
+  renderGlobalSearch("");
+}
+function globalSearchClose(){
+  const overlay = document.getElementById("global-search-overlay");
+  if(overlay) overlay.hidden = true;
+}
+
+/* =========================================================================
+   활동 화면
+   활동은 지금까지 항목 상세에서만 볼 수 있었다. 기간별로 모아 보고
+   접촉이 끊긴 영업건을 찾는다.
+   ========================================================================= */
+const ACTIVITY_STALE_DAYS = 14;
+function activityRangeStart(range){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  if(range === "all") return "";
+  if(range === "month") return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0,10);
+  if(range === "quarter"){ const d = new Date(today); d.setMonth(d.getMonth() - 3); return d.toISOString().slice(0,10); }
+  /* 주는 월요일 시작 */
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  if(range === "lastweek"){ const d = new Date(weekStart); d.setDate(d.getDate() - 7); return d.toISOString().slice(0,10); }
+  return weekStart.toISOString().slice(0,10);
+}
+function activityRangeEnd(range){
+  if(range !== "lastweek") return "";
+  const start = new Date(activityRangeStart("lastweek"));
+  start.setDate(start.getDate() + 6);
+  return start.toISOString().slice(0,10);
+}
+function collectActivityEntries(){
+  const rows = [];
+  allDeals().forEach(({area, item})=>{
+    (item.activities || []).forEach(activity=>{
+      rows.push({area, item, activity, date: activityDateValue(activity).slice(0,10), owner: String(item.internalOwner || "").trim() || "미지정"});
+    });
+  });
+  return rows.sort((left, right)=>right.date.localeCompare(left.date));
+}
+function filteredActivityEntries(){
+  const range = document.getElementById("activity-range")?.value || "week";
+  const type = document.getElementById("activity-type-filter")?.value || "";
+  const owner = document.getElementById("activity-owner-filter")?.value || "";
+  const query = (document.getElementById("activity-search")?.value || "").trim().toLowerCase();
+  const from = activityRangeStart(range);
+  const to = activityRangeEnd(range);
+  return collectActivityEntries().filter(row=>{
+    if(from && row.date < from) return false;
+    if(to && row.date > to) return false;
+    if(type && row.activity.type !== type) return false;
+    if(owner && row.owner !== owner) return false;
+    if(query){
+      const haystack = [row.item.title, row.item.company, row.activity.content, row.activity.result, row.activity.nextAction, row.owner, row.area.title]
+        .filter(Boolean).join(" ").toLowerCase();
+      if(!haystack.includes(query)) return false;
+    }
+    return true;
+  });
+}
+function updateActivityFilterOptions(){
+  const rows = collectActivityEntries();
+  const typeSelect = document.getElementById("activity-type-filter");
+  const ownerSelect = document.getElementById("activity-owner-filter");
+  const fill = (select, values, allLabel)=>{
+    if(!select) return;
+    const previous = select.value;
+    select.innerHTML = `<option value="">${allLabel}</option>`;
+    values.forEach(value=>{
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+    if(previous && values.includes(previous)) select.value = previous;
+  };
+  fill(typeSelect, [...new Set(rows.map(row=>row.activity.type).filter(Boolean))].sort(), "모든 유형");
+  fill(ownerSelect, [...new Set(rows.map(row=>row.owner))].sort(), "모든 담당자");
+}
+function activityStaleDeals(){
+  const today = todayStr();
+  const limit = new Date(today);
+  limit.setDate(limit.getDate() - ACTIVITY_STALE_DAYS);
+  const threshold = limit.toISOString().slice(0,10);
+  return allDeals()
+    .filter(({item, stage})=>!isClosedStage(stage))
+    .map(({area, item})=>{
+      const last = [item.lastContact || "", ...(item.activities || []).map(activity=>activityDateValue(activity).slice(0,10))]
+        .filter(Boolean).sort().at(-1) || "";
+      return {area, item, last};
+    })
+    .filter(row=>!row.last || row.last < threshold)
+    .sort((left, right)=>(left.last || "").localeCompare(right.last || ""))
+    .slice(0, 12);
+}
+function renderActivitySummary(rows){
+  const container = document.getElementById("activity-summary");
+  if(!container) return;
+  const companies = new Set(rows.map(row=>row.item.company || row.item.title));
+  const followUps = rows.filter(row=>row.activity.nextDate).length;
+  const cards = [
+    ["활동 기록", String(rows.length)],
+    ["접촉한 영업건", String(new Set(rows.map(row=>row.item.id)).size)],
+    ["접촉한 고객사", String(companies.size)],
+    ["후속 일정 지정", String(followUps)]
+  ];
+  container.innerHTML = cards.map(([label, value])=>
+    `<div class="tn-task-summary-card"><div class="tn-task-summary-label">${escapeHtml(label)}</div><div class="tn-task-summary-value">${escapeHtml(value)}</div></div>`
+  ).join("");
+}
+function renderActivityBreakdown(rows){
+  const container = document.getElementById("activity-breakdown");
+  if(!container) return;
+  const counts = new Map();
+  rows.forEach(row=>counts.set(row.activity.type, (counts.get(row.activity.type) || 0) + 1));
+  if(!counts.size){ container.innerHTML = '<div class="tn-empty-compact">기간 내 활동이 없습니다.</div>'; return; }
+  const max = Math.max(...counts.values());
+  container.innerHTML = [...counts.entries()].sort((left, right)=>right[1] - left[1]).map(([type, count])=>
+    `<div class="tn-activity-bar"><span>${escapeHtml(type)}</span><span class="tn-activity-bar-track"><i style="width:${Math.round(count / max * 100)}%"></i></span><b>${count}</b></div>`
+  ).join("");
+}
+function renderActivityStale(){
+  const container = document.getElementById("activity-stale");
+  if(!container) return;
+  const rows = activityStaleDeals();
+  container.innerHTML = "";
+  if(!rows.length){ container.innerHTML = '<div class="tn-empty-compact">2주 이상 접촉이 끊긴 영업건이 없습니다.</div>'; return; }
+  rows.forEach(row=>{
+    const button = document.createElement("button");
+    button.type = "button";
+    const gap = row.last ? Math.abs(daysUntil(row.last)) : null;
+    button.innerHTML = `<div class="tn-activity-stale-title">${escapeHtml(row.item.title)}</div>
+      <div class="tn-activity-stale-sub">${row.last ? `${gap}일 전 접촉 (${escapeHtml(row.last)})` : "접촉 기록 없음"}</div>`;
+    button.addEventListener("click", ()=>{ showView("pipeline"); openDealDrawer(row.area.key, row.item.id); });
+    container.appendChild(button);
+  });
+}
+function renderActivityTimeline(rows){
+  const container = document.getElementById("activity-timeline");
+  if(!container) return;
+  container.innerHTML = "";
+  if(!rows.length){
+    container.innerHTML = '<div class="tn-activity-empty">선택한 기간에 기록된 활동이 없습니다. 항목 상세에서 <b>활동 추가</b>로 기록해 주세요.</div>';
+    return;
+  }
+  const byDate = new Map();
+  rows.forEach(row=>{
+    if(!byDate.has(row.date)) byDate.set(row.date, []);
+    byDate.get(row.date).push(row);
+  });
+  const fragment = document.createDocumentFragment();
+  [...byDate.entries()].forEach(([date, dayRows])=>{
+    const section = document.createElement("div");
+    section.className = "tn-activity-day";
+    const head = document.createElement("div");
+    head.className = "tn-activity-day-head";
+    head.innerHTML = `<span class="tn-activity-day-date">${escapeHtml(date || "날짜 없음")}</span><span class="tn-activity-day-count">${dayRows.length}건</span>`;
+    section.appendChild(head);
+    dayRows.forEach(row=>{
+      const line = document.createElement("div");
+      line.className = "tn-activity-row";
+      line.innerHTML = `<span class="tn-activity-type">${escapeHtml(row.activity.type)}</span>
+        <div class="tn-activity-main">
+          <button class="tn-activity-deal" type="button">${escapeHtml(row.item.title)}</button>
+          <div class="tn-activity-content">${escapeHtml(row.activity.content || "내용 없음")}</div>
+          ${row.activity.result ? `<div class="tn-activity-result">결과: ${escapeHtml(row.activity.result)}</div>` : ""}
+          ${row.activity.nextAction ? `<div class="tn-activity-next">다음: ${escapeHtml(row.activity.nextAction)}${row.activity.nextDate ? ` (${escapeHtml(row.activity.nextDate)})` : ""}</div>` : ""}
+        </div>
+        <span class="tn-activity-owner">${escapeHtml(row.owner)}</span>`;
+      line.querySelector(".tn-activity-deal").addEventListener("click", ()=>{ showView("pipeline"); openDealDrawer(row.area.key, row.item.id); });
+      section.appendChild(line);
+    });
+    fragment.appendChild(section);
+  });
+  container.appendChild(fragment);
+}
+function renderActivityView(){
+  updateActivityFilterOptions();
+  const rows = filteredActivityEntries();
+  const total = document.getElementById("activity-total");
+  if(total) total.textContent = `${rows.length}건`;
+  renderActivitySummary(rows);
+  renderActivityTimeline(rows);
+  renderActivityBreakdown(rows);
+  renderActivityStale();
+}
+function exportActivitiesCsv(){
+  const rows = filteredActivityEntries();
+  if(!rows.length){ showToast("내보낼 활동이 없습니다."); return; }
+  const header = ["활동일","유형","그룹","영업건","고객사","내부 담당자","활동 내용","결과","다음에 할 일","다음 액션일"];
+  const lines = [header.map(csvEscape).join(","), ...rows.map(row=>[
+    row.date, row.activity.type, row.area.title, row.item.title, row.item.company || "",
+    row.owner, row.activity.content || "", row.activity.result || "", row.activity.nextAction || "", row.activity.nextDate || ""
+  ].map(csvEscape).join(","))];
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {type:"text/csv;charset=utf-8;"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `hlb_crm_activities_${todayStr()}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(()=>{ URL.revokeObjectURL(link.href); link.remove(); }, 500);
+  showToast(`활동 ${rows.length}건을 CSV로 내보냈습니다.`, "info", 3500);
+}
+
+/* =========================================================================
+   중복 연락처 정리
+   리멤버 CSV를 여러 번 올리면 같은 사람이 쌓인다. 이름+연락처·이메일로
+   묶어 대표를 고르고 빈 칸만 채워 합친다.
+   ========================================================================= */
+let dedupeGroups = [];
+function contactDuplicateKeys(contact){
+  const keys = [];
+  const email = normalizedIdentity(contact.email);
+  const phone = normalizedIdentity(contactPrimaryPhone(contact));
+  const name = normalizedIdentity(contact.name);
+  if(email) keys.push("email:" + email);
+  if(phone) keys.push("phone:" + phone);
+  if(name && normalizedIdentity(contact.company)) keys.push("name:" + name + "|" + normalizedIdentity(contact.company));
+  return keys;
+}
+/* 같은 키를 공유하면 한 덩어리로 본다 (A-B가 전화로, B-C가 메일로 같으면 셋이 한 사람) */
+function contactDuplicateGroups(){
+  const parent = new Map();
+  const find = (id)=>{ while(parent.get(id) !== id) { parent.set(id, parent.get(parent.get(id))); id = parent.get(id); } return id; };
+  const union = (a, b)=>{ const ra = find(a), rb = find(b); if(ra !== rb) parent.set(ra, rb); };
+  contactsData.forEach(contact=>parent.set(contact.id, contact.id));
+  const byKey = new Map();
+  contactsData.forEach(contact=>{
+    contactDuplicateKeys(contact).forEach(key=>{
+      if(byKey.has(key)) union(byKey.get(key), contact.id);
+      else byKey.set(key, contact.id);
+    });
+  });
+  const groups = new Map();
+  contactsData.forEach(contact=>{
+    const root = find(contact.id);
+    if(!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(contact);
+  });
+  return [...groups.values()]
+    .filter(group=>group.length > 1)
+    .map(group=>group.slice().sort((left, right)=>String(right.createdAt || "").localeCompare(String(left.createdAt || ""))))
+    .sort((left, right)=>right.length - left.length);
+}
+function contactDedupeMeta(contact){
+  return [contact.company, contact.department, contact.jobTitle, contactPrimaryPhone(contact), contact.email,
+    contact.createdAt ? `등록 ${contact.createdAt}` : ""].filter(Boolean).join(" · ") || "추가 정보 없음";
+}
+function renderDedupeGroups(){
+  const container = document.getElementById("dedupe-list");
+  const hint = document.getElementById("dedupe-hint");
+  if(!container) return;
+  dedupeGroups = contactDuplicateGroups();
+  container.innerHTML = "";
+  if(hint) hint.textContent = dedupeGroups.length
+    ? "이름·연락처·이메일이 겹치는 연락처를 묶었습니다. 남길 대표를 고르면 나머지 값은 빈칸만 채워 합치고, 합쳐진 연락처는 휴지통으로 갑니다."
+    : "중복으로 보이는 연락처가 없습니다.";
+  if(!dedupeGroups.length){
+    container.innerHTML = '<div class="tn-dedupe-empty">중복으로 보이는 연락처가 없습니다.</div>';
+    return;
+  }
+  dedupeGroups.forEach((group, index)=>{
+    const box = document.createElement("div");
+    box.className = "tn-dedupe-group";
+    const head = document.createElement("div");
+    head.className = "tn-dedupe-group-head";
+    head.innerHTML = `<span class="tn-dedupe-group-title">${escapeHtml(group[0].name || group[0].company || "이름 없음")}</span>
+      <span class="tn-dedupe-group-sub">${group.length}건</span>
+      <button class="tn-btn small primary" type="button" data-merge-group="${index}">이 그룹 병합</button>`;
+    box.appendChild(head);
+    group.forEach((contact, order)=>{
+      const option = document.createElement("label");
+      option.className = "tn-dedupe-option";
+      option.innerHTML = `<input type="radio" name="dedupe-${index}" value="${escapeHtml(contact.id)}"${order === 0 ? " checked" : ""}>
+        <span><span class="tn-dedupe-name">${escapeHtml(contact.name || "이름 없음")}</span>
+        <span class="tn-dedupe-meta">${escapeHtml(contactDedupeMeta(contact))}</span></span>`;
+      box.appendChild(option);
+    });
+    container.appendChild(box);
+  });
+}
+function openDedupeModal(){
+  if(!requireEditPermission()) return;
+  renderDedupeGroups();
+  document.getElementById("dedupe-overlay").hidden = false;
+}
+function closeDedupeModal(){ document.getElementById("dedupe-overlay").hidden = true; }
+function selectedDedupePrimary(index){
+  const checked = document.querySelector(`#dedupe-list input[name="dedupe-${index}"]:checked`);
+  return checked ? checked.value : (dedupeGroups[index] ? dedupeGroups[index][0].id : "");
+}
+async function mergeDedupeGroups(indexes){
+  if(!requireEditPermission()) return;
+  const removeIds = [];
+  let mergedGroups = 0;
+  indexes.forEach(index=>{
+    const group = dedupeGroups[index];
+    if(!group || group.length < 2) return;
+    const primaryId = selectedDedupePrimary(index);
+    const primary = contactsData.find(contact=>contact.id === primaryId) || group[0];
+    group.forEach(contact=>{
+      if(contact.id === primary.id) return;
+      mergeImportedContact(primary, contact);
+      removeIds.push(contact.id);
+    });
+    mergedGroups++;
+  });
+  if(!removeIds.length){ showToast("병합할 중복 연락처가 없습니다."); return; }
+  try{
+    await saveContacts();
+    await moveContactsToTrash(removeIds);
+  }catch(error){
+    console.error("dedupe merge failed", error);
+    showToast(error?.message || "중복 정리 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.");
+    return;
+  }
+  renderDedupeGroups();
+  renderContacts();
+  renderHome();
+  showToast(`${mergedGroups}개 그룹 · 연락처 ${removeIds.length}건을 병합했습니다.`, "info", 4000);
+}
+
+/* =========================================================================
+   파이프라인 Excel 내보내기 · 가져오기
+   연락처에만 있던 일괄 편집을 영업 항목에도 제공한다.
+   ========================================================================= */
+const PIPELINE_SHEET_NAME = "영업항목";
+const PIPELINE_SHEET_HEADERS = ["항목ID","그룹키","그룹","고객사/영업건","고객사","단계","분류","예상매출(백만)","확률(%)",
+  "내부 담당자","고객 담당자","고객 연락처","고객 이메일","다음 연락일","다음에 할 일","최근 접촉일","태그","메모"];
+function pipelineExportRows(list){
+  return list.map(({area, item})=>[
+    item.id, area.key, area.title, item.title, item.company || "", normalizeStage(item.stage),
+    (bucketMetaByKey(itemBucketKey(item, area)) || {}).label || "",
+    item.amount ?? "", item.prob ?? "", item.internalOwner || "", item.contactName || "",
+    item.contactPhone || "", item.contactEmail || "", item.nextAction || "", item.action || "",
+    item.lastContact || "", item.tag || "", item.memo || ""
+  ].map(value=>value === null || value === undefined ? "" : String(value)));
+}
+async function exportPipelineWorkbook(){
+  const list = pipeDeals();
+  if(!list.length){ showToast("내보낼 영업 항목이 없습니다."); return; }
+  await withHeavyFeatures(async ()=>{
+    try{
+      const blob = await buildSheetWorkbook([{name:PIPELINE_SHEET_NAME, rows:[PIPELINE_SHEET_HEADERS, ...pipelineExportRows(list)]}]);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `hlb_crm_pipeline_${todayStr()}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(()=>{ URL.revokeObjectURL(link.href); link.remove(); }, 500);
+      showToast(`영업 항목 ${list.length}건을 Excel로 내보냈습니다. 항목ID를 지우지 않으면 다시 가져올 때 같은 항목을 수정합니다.`, "info", 6000);
+    }catch(error){
+      console.error("pipeline export failed", error);
+      showToast(error?.message || "Excel 파일을 만들지 못했습니다.");
+    }
+  });
+}
+function pipelineRowToDeal(headers, values){
+  const get = (label)=>{
+    const index = headers.indexOf(label);
+    return index < 0 ? "" : String(values[index] ?? "").trim();
+  };
+  return {
+    id: get("항목ID"),
+    areaKey: get("그룹키"),
+    areaTitle: get("그룹"),
+    title: get("고객사/영업건"),
+    company: get("고객사"),
+    stage: get("단계"),
+    amount: get("예상매출(백만)"),
+    prob: get("확률(%)"),
+    internalOwner: get("내부 담당자"),
+    contactName: get("고객 담당자"),
+    contactPhone: get("고객 연락처"),
+    contactEmail: get("고객 이메일"),
+    nextAction: get("다음 연락일"),
+    action: get("다음에 할 일"),
+    lastContact: get("최근 접촉일"),
+    tag: get("태그"),
+    memo: get("메모")
+  };
+}
+async function importPipelineWorkbook(file){
+  if(!requireEditPermission()) return;
+  await withHeavyFeatures(async ()=>{
+    let rows;
+    try{
+      const sheets = await workbookSheetRows(await file.arrayBuffer());
+      rows = sheets.get(PIPELINE_SHEET_NAME) || [...sheets.values()][0];
+    }catch(error){
+      console.error("pipeline import read failed", error);
+      showToast(error?.message || "Excel 파일을 읽지 못했습니다.");
+      return;
+    }
+    if(!rows || rows.length < 2){ showToast("데이터 행이 없습니다. CRM에서 내보낸 Excel 파일인지 확인해 주세요."); return; }
+    const headers = rows[0].map(value=>String(value ?? "").trim());
+    if(!headers.includes("고객사/영업건")){ showToast("'고객사/영업건' 열이 없습니다. CRM에서 내보낸 Excel 파일인지 확인해 주세요."); return; }
+    const touched = new Set();
+    let added = 0, updated = 0, skipped = 0;
+    for(const values of rows.slice(1)){
+      const parsed = pipelineRowToDeal(headers, values);
+      if(!parsed.title){ skipped++; continue; }
+      const area = findAreaByKey(parsed.areaKey) || AREAS.find(entry=>entry.title === parsed.areaTitle) || AREAS[0];
+      if(!area){ skipped++; continue; }
+      const patch = {
+        title: parsed.title,
+        company: parsed.company,
+        stage: STAGE_OPTIONS.includes(parsed.stage) ? parsed.stage : "",
+        amount: parsed.amount === "" ? null : Number(parsed.amount),
+        prob: parsed.prob === "" ? null : Number(parsed.prob),
+        internalOwner: parsed.internalOwner,
+        contactName: parsed.contactName,
+        contactPhone: parsed.contactPhone,
+        contactEmail: parsed.contactEmail,
+        nextAction: parsed.nextAction,
+        action: parsed.action,
+        lastContact: parsed.lastContact,
+        tag: parsed.tag,
+        memo: parsed.memo
+      };
+      const existing = parsed.id ? findDeal(area.key, parsed.id) : null;
+      if(existing){
+        Object.entries(patch).forEach(([key, value])=>{
+          if(value === "" || value === null || (typeof value === "number" && Number.isNaN(value))) return;
+          existing.item[key] = value;
+        });
+        touched.add(area.key);
+        updated++;
+      }else{
+        const created = normalizeItem({
+          id: uid(),
+          ...Object.fromEntries(Object.entries(patch).filter(([, value])=>value !== "" && value !== null && !(typeof value === "number" && Number.isNaN(value))))
+        });
+        if(!created.stage) created.stage = STAGE_OPTIONS[0] || "리드";
+        (stageData[area.key] = stageData[area.key] || []).push(created);
+        touched.add(area.key);
+        added++;
+      }
+    }
+    if(!touched.size){ showToast(`가져올 행이 없습니다. (건너뜀 ${skipped}건)`); return; }
+    try{
+      await storageTransaction([...touched].map(areaKey=>({key:"tinico:stage:" + areaKey, value:stageData[areaKey]})));
+    }catch(error){
+      console.error("pipeline import save failed", error);
+      showToast(error?.message || "가져온 내용을 저장하지 못했습니다. 화면을 새로고침한 뒤 다시 시도해 주세요.");
+      return;
+    }
+    [...touched].forEach(areaKey=>{ const area = findAreaByKey(areaKey); if(area) renderStageBody(area); });
+    renderPipeline(true);
+    renderHome();
+    showToast(`Excel 가져오기 완료: 신규 ${added}건, 수정 ${updated}건, 건너뜀 ${skipped}건.`, "info", 6000);
+  });
+}
+
+/* =========================================================================
+   AI 비서 확장 — 활동 요약 초안과 다음 액션 추천
+   외부 모델을 호출하지 않고, 지금 화면에 있는 데이터와 단계별 기준으로
+   초안을 만든다. 사용자가 고쳐 쓰는 것을 전제로 한다.
+   ========================================================================= */
+const AI_ACTIVITY_RESULT_RULES = [
+  [/거절|취소|중단|반려|보류/, "고객이 보류·중단 의사를 밝힘. 사유와 재확인 시점 확인 필요"],
+  [/견적|단가|가격|비용/, "견적 조건을 검토 중. 금액·납기 회신 예정"],
+  [/샘플|시험|테스트|평가/, "샘플·시험 진행 중. 결과 회신 예정"],
+  [/계약|발주|수주|구매/, "계약·발주 절차 진행. 내부 승인 일정 확인 필요"],
+  [/검토|확인|회신|답변/, "고객 내부 검토 중. 회신 예정"],
+  [/미팅|방문|면담|회의/, "미팅에서 요구사항을 공유받음. 후속 자료 정리 필요"]
+];
+const AI_NEXT_ACTION_BY_STAGE = {
+  "리드":"적용 목적·예상 물량·의사결정 담당자를 확인하고 첫 상담 일정을 잡기",
+  "상담":"요구 규격과 샘플 조건을 정리해 제안 범위를 확정하기",
+  "제안":"제안·견적 수신 여부와 이견을 확인하고 답변 기한을 받기",
+  "협상":"가격·납기 조건을 확정하고 최종 승인자와 발주 목표일을 확인하기",
+  "보류":"보류 사유를 확인하고 재확인 날짜를 정하기",
+  "수주":"납품 일정과 후속 발주 가능성을 확인하기",
+  "실주":"실주 사유와 재접촉 가능 시점을 기록하기"
+};
+function aiActivityResultDraft(type, content){
+  const text = String(content || "");
+  const rule = AI_ACTIVITY_RESULT_RULES.find(([pattern])=>pattern.test(text));
+  if(rule) return rule[1];
+  return `${type} 내용 공유 완료. 고객 회신 대기`;
+}
+function aiNextActionDraft(item, type, content){
+  const stage = normalizeStage(item.stage);
+  const text = String(content || "");
+  if(/샘플|시험|테스트/.test(text)) return "시험·샘플 결과 회신 여부 확인";
+  if(/견적|단가|가격/.test(text)) return "견적 조건에 대한 고객 의견 확인";
+  if(/자료|카탈로그|소개서|제안서/.test(text)) return "전달한 자료의 검토 결과 확인";
+  return AI_NEXT_ACTION_BY_STAGE[stage] || "다음 연락 목적과 기한을 정하기";
+}
+function aiSuggestedNextDate(days){
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0,10);
+}
+/* 활동 모달의 "AI 요약 작성" — 결과·다음 할 일·다음 액션일 빈칸을 채운다 */
+function fillActivitySummaryDraft(){
+  if(!activityDealRef) return;
+  const found = findDeal(activityDealRef.areaKey, activityDealRef.id);
+  if(!found) return;
+  const type = document.getElementById("activity-type").value;
+  const content = document.getElementById("activity-content").value.trim();
+  if(!content){ showToast("먼저 활동 내용을 입력하면 요약 초안을 만들 수 있습니다."); return; }
+  const result = document.getElementById("activity-result");
+  const nextAction = document.getElementById("activity-next-action");
+  const nextDate = document.getElementById("activity-next-date");
+  let filled = 0;
+  if(result && !result.value.trim()){ result.value = aiActivityResultDraft(type, content); filled++; }
+  if(nextAction && !nextAction.value.trim()){ nextAction.value = aiNextActionDraft(found.item, type, content); filled++; }
+  if(nextDate && !nextDate.value){ nextDate.value = aiSuggestedNextDate(isClosedStage(found.item.stage) ? 14 : 7); filled++; }
+  showToast(filled ? "AI 초안을 채웠습니다. 실제 상황에 맞게 고쳐 주세요." : "이미 입력된 항목은 덮어쓰지 않습니다. 비운 뒤 다시 눌러 보세요.", "info", 4500);
+}
+/* 항목 상세의 "다음 액션 추천" — 무엇을 언제 할지 제안하고 원하면 바로 넣는다 */
+function aiNextActionRecommendation(areaKey, id){
+  const found = findDeal(areaKey, id);
+  if(!found) return null;
+  const item = found.item;
+  const stage = normalizeStage(item.stage);
+  const last = [item.lastContact || "", ...(item.activities || []).map(activity=>activityDateValue(activity).slice(0,10))]
+    .filter(Boolean).sort().at(-1) || "";
+  const gap = last ? Math.abs(daysUntil(last)) : null;
+  const latest = (item.activities || [])[0];
+  const action = latest ? aiNextActionDraft(item, latest.type, latest.content) : (AI_NEXT_ACTION_BY_STAGE[stage] || "다음 연락 목적과 기한을 정하기");
+  const urgent = gap === null || gap >= ACTIVITY_STALE_DAYS || (item.nextAction && daysUntil(item.nextAction) < 0);
+  const reasons = [
+    `현재 단계 ${stage}`,
+    last ? `마지막 접촉 ${last} (${gap}일 전)` : "접촉 기록 없음",
+    item.nextAction ? `등록된 다음 연락일 ${item.nextAction}` : "다음 연락일 미지정"
+  ];
+  return {action, date: aiSuggestedNextDate(urgent ? 2 : 7), reasons, urgent};
+}
+async function applyAiNextAction(areaKey, id){
+  if(!requireEditPermission()) return;
+  const found = findDeal(areaKey, id);
+  const suggestion = aiNextActionRecommendation(areaKey, id);
+  if(!found || !suggestion) return;
+  const message = [`추천 다음 액션:`, `· 할 일: ${suggestion.action}`, `· 권장 일자: ${suggestion.date}`, "", "판단 근거:",
+    ...suggestion.reasons.map(reason=>`· ${reason}`), "", "이 내용을 항목에 넣을까요?"].join("\n");
+  if(!confirm(message)) return;
+  const previous = {action: found.item.action, nextAction: found.item.nextAction};
+  found.item.action = suggestion.action;
+  found.item.nextAction = suggestion.date;
+  const saved = await saveOrRollback(
+    ()=>saveArea(areaKey),
+    ()=>{ found.item.action = previous.action; found.item.nextAction = previous.nextAction; },
+    "다음 액션 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요."
+  );
+  if(!saved) return;
+  renderStageBody(found.area);
+  renderPipeline(true);
+  renderHome();
+  if(selectedDealRef && selectedDealRef.id === id) renderDealDrawer(false);
+  showToast("추천 다음 액션을 반영했습니다.", "info", 3500);
+}
+
 async function init(){
   buildNav();
   setupCloudStorageUi();
@@ -5916,6 +7073,7 @@ async function init(){
   document.getElementById("tn-today-chip").textContent = `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
 
   await ensureCloudConnection();
+  await ensureMemberSession();
   beginBootWrites();
   /* 서로 독립적인 데이터를 병렬로 불러와 부팅 시 서버 왕복 대기를 최소화
      (중요도 설정은 분류(버킷) 정의를 참조하므로 그 둘만 순서 유지) */
@@ -6221,6 +7379,91 @@ async function init(){
     toggleAiChat(true);
   });
 
+  /* ---- 사용자 계정 ---- */
+  document.getElementById("member-login-form").addEventListener("submit", submitMemberLogin);
+  document.getElementById("member-login-cancel").addEventListener("click", ()=>hideMemberGate(false));
+  document.getElementById("tn-user-chip").addEventListener("click", signOutMember);
+  document.getElementById("settings-member-add").addEventListener("click", ()=>openMemberModal(""));
+  document.getElementById("settings-member-list").addEventListener("click", (e)=>{
+    const edit=e.target.closest("[data-edit-member]");
+    if(edit) openMemberModal(edit.dataset.editMember);
+  });
+  document.getElementById("member-modal-cancel").addEventListener("click", closeMemberModal);
+  document.getElementById("member-modal-save").addEventListener("click", saveMemberModal);
+  document.getElementById("member-modal-delete").addEventListener("click", deleteMemberFromModal);
+  document.getElementById("member-modal-overlay").addEventListener("click", (e)=>{
+    if(e.target.id==="member-modal-overlay") closeMemberModal();
+  });
+
+  /* ---- 변경 이력 ---- */
+  document.getElementById("settings-audit-refresh").addEventListener("click", ()=>{auditState.page=1;loadAuditPage();});
+  document.getElementById("audit-search").addEventListener("input", debounce(()=>{auditState.page=1;loadAuditPage();}, 350));
+  ["audit-screen","audit-action","audit-range"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", ()=>{auditState.page=1;loadAuditPage();});
+  });
+  document.getElementById("audit-page-size").addEventListener("change", (e)=>{
+    auditState.size=Number(e.target.value)||20;auditState.page=1;loadAuditPage();
+  });
+  document.getElementById("audit-page-first").addEventListener("click", ()=>goToAuditPage(1));
+  document.getElementById("audit-page-prev").addEventListener("click", ()=>goToAuditPage(auditState.page-1));
+  document.getElementById("audit-page-next").addEventListener("click", ()=>goToAuditPage(auditState.page+1));
+  document.getElementById("audit-page-last").addEventListener("click", ()=>goToAuditPage(auditPageCount()));
+  document.getElementById("audit-tbody").addEventListener("click", (e)=>{
+    const detail=e.target.closest("[data-audit-detail]");
+    if(detail) openAuditDetail(detail.dataset.auditDetail);
+  });
+  document.getElementById("audit-detail-close").addEventListener("click", ()=>{document.getElementById("audit-detail-overlay").hidden=true;});
+  document.getElementById("audit-detail-overlay").addEventListener("click", (e)=>{
+    if(e.target.id==="audit-detail-overlay") e.currentTarget.hidden=true;
+  });
+
+  /* ---- 전체 검색 ---- */
+  document.getElementById("tn-search-open").addEventListener("click", globalSearchOpen);
+  document.getElementById("global-search-close").addEventListener("click", globalSearchClose);
+  document.getElementById("global-search-overlay").addEventListener("click", (e)=>{
+    if(e.target.id==="global-search-overlay") globalSearchClose();
+  });
+  document.getElementById("global-search-input").addEventListener("input", debounce((e)=>renderGlobalSearch(e.target.value), 140));
+  document.getElementById("global-search-input").addEventListener("keydown", (e)=>{
+    if(e.key==="ArrowDown"){e.preventDefault();highlightSearchMatch(searchActiveIndex+1);}
+    else if(e.key==="ArrowUp"){e.preventDefault();highlightSearchMatch(searchActiveIndex-1);}
+    else if(e.key==="Enter"){e.preventDefault();runSearchMatch(searchActiveIndex);}
+    else if(e.key==="Escape"){e.preventDefault();globalSearchClose();}
+  });
+  window.addEventListener("keydown", (e)=>{
+    if((e.ctrlKey||e.metaKey) && (e.key==="k"||e.key==="K")){
+      e.preventDefault();
+      if(document.getElementById("global-search-overlay").hidden) globalSearchOpen(); else globalSearchClose();
+    }
+  });
+
+  /* ---- 활동 화면 ---- */
+  document.getElementById("activity-search").addEventListener("input", debounce(renderActivityView, 200));
+  ["activity-range","activity-type-filter","activity-owner-filter"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", renderActivityView);
+  });
+  document.getElementById("activity-export-btn").addEventListener("click", exportActivitiesCsv);
+  document.getElementById("activity-ai-summary").addEventListener("click", fillActivitySummaryDraft);
+
+  /* ---- 연락처 중복 정리 ---- */
+  document.getElementById("contact-dedupe-btn").addEventListener("click", openDedupeModal);
+  document.getElementById("dedupe-close").addEventListener("click", closeDedupeModal);
+  document.getElementById("dedupe-overlay").addEventListener("click", (e)=>{
+    if(e.target.id==="dedupe-overlay") closeDedupeModal();
+  });
+  document.getElementById("dedupe-list").addEventListener("click", (e)=>{
+    const merge=e.target.closest("[data-merge-group]");
+    if(merge) mergeDedupeGroups([Number(merge.dataset.mergeGroup)]);
+  });
+  document.getElementById("dedupe-merge-all").addEventListener("click", ()=>mergeDedupeGroups(dedupeGroups.map((_,index)=>index)));
+
+  /* ---- 파이프라인 Excel ---- */
+  document.getElementById("pipe-export-btn").addEventListener("click", exportPipelineWorkbook);
+  document.getElementById("pipe-import-btn").addEventListener("click", ()=>document.getElementById("pipe-import-input").click());
+  document.getElementById("pipe-import-input").addEventListener("change", async (e)=>{
+    const file=e.target.files[0]; e.target.value=""; if(file) await importPipelineWorkbook(file);
+  });
+
   document.getElementById("area-add-btn").addEventListener("click", ()=>openAreaModal("add"));
   document.getElementById("area-modal-cancel").addEventListener("click", closeAreaModal);
   document.getElementById("area-modal-save").addEventListener("click", saveAreaModal);
@@ -6231,6 +7474,7 @@ async function init(){
 
   updateBeginnerControls();
   applyDashboardCollapse();
+  updateMemberUi();
   renderSettings();
   renderHome();
   routeFromHash();
