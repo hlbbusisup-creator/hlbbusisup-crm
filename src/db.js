@@ -3,6 +3,7 @@ import pg from "pg";
 import { buildAuditEntries } from "./audit.js";
 import { randomUUID } from "node:crypto";
 import { initialDocument, publicDocument, applyChange, validateTransaction, requestFingerprint, concurrencyError } from "./concurrency.js";
+import { hashMemberPassword, memberPasswordMatches } from "./members.js";
 
 const { Pool } = pg;
 const schemaUrl = new URL("../schema.sql", import.meta.url);
@@ -57,6 +58,8 @@ function mapAuditRows(rows) {
   return rows.map((row) => ({
     eventId: row.event_id,
     eventAt: row.event_at,
+    actorId: row.actor_id ?? null,
+    actorName: row.actor_name ?? null,
     screen: row.screen,
     action: row.action,
     entityType: row.entity_type,
@@ -75,6 +78,8 @@ async function insertAuditRows(client, workspaceId, entries) {
   const payload = entries.map((entry) => ({
     event_id: entry.eventId,
     event_at: entry.eventAt,
+    actor_id: entry.actorId ?? null,
+    actor_name: entry.actorName ?? null,
     screen: entry.screen,
     action: entry.action,
     entity_type: entry.entityType,
@@ -89,10 +94,10 @@ async function insertAuditRows(client, workspaceId, entries) {
   await client.query(
     [
       "INSERT INTO crm_audit_log",
-      "(workspace_id, event_id, event_at, screen, action, entity_type, entity_id, entity_label, storage_key, changed_fields, before_value, after_value, summary)",
-      "SELECT $1, item.event_id, item.event_at, item.screen, item.action, item.entity_type, item.entity_id, item.entity_label, item.storage_key, item.changed_fields, item.before_value, item.after_value, item.summary",
+      "(workspace_id, event_id, event_at, actor_id, actor_name, screen, action, entity_type, entity_id, entity_label, storage_key, changed_fields, before_value, after_value, summary)",
+      "SELECT $1, item.event_id, item.event_at, item.actor_id, item.actor_name, item.screen, item.action, item.entity_type, item.entity_id, item.entity_label, item.storage_key, item.changed_fields, item.before_value, item.after_value, item.summary",
       "FROM jsonb_to_recordset($2::jsonb) AS item(",
-      "event_id TEXT, event_at TIMESTAMPTZ, screen TEXT, action TEXT, entity_type TEXT, entity_id TEXT, entity_label TEXT, storage_key TEXT,",
+      "event_id TEXT, event_at TIMESTAMPTZ, actor_id TEXT, actor_name TEXT, screen TEXT, action TEXT, entity_type TEXT, entity_id TEXT, entity_label TEXT, storage_key TEXT,",
       "changed_fields JSONB, before_value JSONB, after_value JSONB, summary TEXT)",
       "ON CONFLICT (workspace_id, event_id) DO NOTHING"
     ].join(" "),
@@ -129,10 +134,10 @@ export function createPostgresRepository(pool) {
     const items = await client.query("SELECT item_id AS id, version, value, deleted FROM crm_item WHERE workspace_id = $1 AND storage_key = $2", [workspaceId, key]);
     return { key, ...meta.rows[0], value: row?.value ?? null, revision: Number(row?.revision || 0), updatedAt: row?.updated_at || null, items: items.rows };
   }
-  async function persistDocument(client, workspaceId, doc, previous) {
+  async function persistDocument(client, workspaceId, doc, previous, actor) {
     await persistItems(client, workspaceId, doc, previous);
     await client.query("INSERT INTO crm_kv (workspace_id, storage_key, value, revision, updated_at) VALUES ($1, $2, $3::jsonb, $4, $5) ON CONFLICT (workspace_id, storage_key) DO UPDATE SET value = EXCLUDED.value, revision = EXCLUDED.revision, updated_at = EXCLUDED.updated_at", [workspaceId, doc.key, JSON.stringify(doc.value), doc.revision, doc.updatedAt]);
-    await insertAuditRows(client, workspaceId, buildAuditEntries({ storageKey: doc.key, beforeValue: previous.value, afterValue: doc.value }));
+    await insertAuditRows(client, workspaceId, buildAuditEntries({ storageKey: doc.key, beforeValue: previous.value, afterValue: doc.value, actor }));
   }
   return {
     concurrent: true,
@@ -146,7 +151,7 @@ export function createPostgresRepository(pool) {
         return publicDocument(doc, generation);
       } catch (error) { await rollbackAndRelease(client, error); throw error; }
     },
-    async saveConcurrent(workspaceId, body) {
+    async saveConcurrent(workspaceId, body, actor) {
       validateTransaction(body);
       const client = await pool.connect();
       try {
@@ -195,7 +200,7 @@ export function createPostgresRepository(pool) {
         }
         const records = {};
         for (const [key, { before, after }] of changed) {
-          await persistDocument(client, workspaceId, after, before);
+          await persistDocument(client, workspaceId, after, before, actor);
           records[key] = publicDocument(after, generation);
         }
         const result = { status: "saved", records };
@@ -240,7 +245,7 @@ export function createPostgresRepository(pool) {
       };
     },
 
-    async setWithAudit(workspaceId, storageKey, value, expectedRevision) {
+    async setWithAudit(workspaceId, storageKey, value, expectedRevision, actor) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -269,7 +274,7 @@ export function createPostgresRepository(pool) {
           ].join(" "),
           [workspaceId, storageKey, JSON.stringify(value)]
         );
-        const auditEntries = buildAuditEntries({ storageKey, beforeValue, afterValue: value });
+        const auditEntries = buildAuditEntries({ storageKey, beforeValue, afterValue: value, actor });
         await insertAuditRows(client, workspaceId, auditEntries);
         await client.query("COMMIT");
         client.release();
@@ -292,7 +297,7 @@ export function createPostgresRepository(pool) {
       return result.rowCount > 0;
     },
 
-    async deleteWithAudit(workspaceId, storageKey) {
+    async deleteWithAudit(workspaceId, storageKey, actor) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -312,7 +317,8 @@ export function createPostgresRepository(pool) {
         const auditEntries = buildAuditEntries({
           storageKey,
           beforeValue: previousResult.rows[0].value,
-          afterValue: null
+          afterValue: null,
+          actor
         });
         await insertAuditRows(client, workspaceId, auditEntries);
         await client.query("COMMIT");
@@ -335,7 +341,7 @@ export function createPostgresRepository(pool) {
     async exportAudit(workspaceId) {
       const result = await pool.query(
         [
-          "SELECT event_id, event_at, screen, action, entity_type, entity_id, entity_label, storage_key,",
+          "SELECT event_id, event_at, actor_id, actor_name, screen, action, entity_type, entity_id, entity_label, storage_key,",
           "changed_fields, before_value, after_value, summary",
           "FROM crm_audit_log WHERE workspace_id = $1 ORDER BY event_at, event_id"
         ].join(" "),
@@ -354,7 +360,7 @@ export function createPostgresRepository(pool) {
         );
         const auditResult = await client.query(
           [
-            "SELECT event_id, event_at, screen, action, entity_type, entity_id, entity_label, storage_key,",
+            "SELECT event_id, event_at, actor_id, actor_name, screen, action, entity_type, entity_id, entity_label, storage_key,",
             "changed_fields, before_value, after_value, summary",
             "FROM crm_audit_log WHERE workspace_id = $1 ORDER BY event_at, event_id"
           ].join(" "),
@@ -406,6 +412,125 @@ export function createPostgresRepository(pool) {
         await rollbackAndRelease(client, error);
         throw error;
       }
+    },
+
+    /* 설정 > 변경 이력 화면이 쓰는 조회. 값 전체(before/after)는 무거워 목록에서는 빼고,
+       화면·동작·사용자·기간·검색어로 좁힌 뒤 페이지 단위로 가져온다. */
+    async queryAudit(workspaceId, filters = {}) {
+      const where = ["workspace_id = $1"];
+      const params = [workspaceId];
+      const push = (sql, value) => { params.push(value); where.push(sql.split("$n").join("$" + params.length)); };
+      if (filters.screen) push("screen = $n", String(filters.screen));
+      if (filters.action) push("action = $n", String(filters.action));
+      if (filters.actorId) push("actor_id = $n", String(filters.actorId));
+      if (filters.storageKey) push("storage_key = $n", String(filters.storageKey));
+      if (filters.from) push("event_at >= $n", new Date(filters.from).toISOString());
+      if (filters.to) push("event_at <= $n", new Date(filters.to).toISOString());
+      if (filters.q) push("(entity_label ILIKE $n OR summary ILIKE $n OR COALESCE(actor_name, '') ILIKE $n)", "%" + String(filters.q) + "%");
+      const clause = where.join(" AND ");
+      const limit = Math.min(200, Math.max(1, Number(filters.limit) || 20));
+      const offset = Math.max(0, Number(filters.offset) || 0);
+      const totalResult = await pool.query("SELECT COUNT(*)::bigint AS total FROM crm_audit_log WHERE " + clause, params);
+      const rowsResult = await pool.query(
+        [
+          "SELECT event_id, event_at, actor_id, actor_name, screen, action, entity_type, entity_id, entity_label, storage_key,",
+          "changed_fields, NULL::jsonb AS before_value, NULL::jsonb AS after_value, summary",
+          "FROM crm_audit_log WHERE " + clause,
+          "ORDER BY event_at DESC, event_id DESC",
+          "LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2)
+        ].join(" "),
+        [...params, limit, offset]
+      );
+      const screensResult = await pool.query(
+        "SELECT screen, COUNT(*)::bigint AS count FROM crm_audit_log WHERE workspace_id = $1 GROUP BY screen ORDER BY screen",
+        [workspaceId]
+      );
+      return {
+        total: Number(totalResult.rows[0].total),
+        limit,
+        offset,
+        entries: mapAuditRows(rowsResult.rows),
+        screens: screensResult.rows.map((row) => ({ screen: row.screen, count: Number(row.count) }))
+      };
+    },
+
+    /* ---- 사용자 계정 ---- */
+    async listMembers(workspaceId) {
+      const result = await pool.query(
+        "SELECT member_id, name, email, role, disabled, password_hash, created_at, updated_at FROM crm_member WHERE workspace_id = $1 ORDER BY name, member_id",
+        [workspaceId]
+      );
+      return result.rows.map((row) => ({
+        id: row.member_id,
+        name: row.name,
+        email: row.email,
+        role: row.role,
+        disabled: row.disabled,
+        hasPassword: !!row.password_hash,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+    },
+
+    async countActiveMembers(workspaceId) {
+      const result = await pool.query("SELECT COUNT(*)::bigint AS total FROM crm_member WHERE workspace_id = $1 AND disabled = FALSE", [workspaceId]);
+      return Number(result.rows[0].total);
+    },
+
+    async createMember(workspaceId, member) {
+      const { hash, salt } = member.password ? hashMemberPassword(member.password) : { hash: null, salt: null };
+      await pool.query(
+        "INSERT INTO crm_member (workspace_id, member_id, name, email, role, password_hash, password_salt, disabled) VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE)",
+        [workspaceId, member.id, member.name, member.email || "", member.role || "editor", hash, salt]
+      );
+      return (await this.listMembers(workspaceId)).find((row) => row.id === member.id) || null;
+    },
+
+    async updateMember(workspaceId, memberId, changes) {
+      const sets = [];
+      const params = [workspaceId, memberId];
+      const push = (column, value) => { params.push(value); sets.push(column + " = $" + params.length); };
+      if (changes.name !== undefined) push("name", changes.name);
+      if (changes.email !== undefined) push("email", changes.email);
+      if (changes.role !== undefined) push("role", changes.role);
+      if (changes.disabled !== undefined) push("disabled", changes.disabled);
+      if (changes.password !== undefined) {
+        if (changes.password) {
+          const { hash, salt } = hashMemberPassword(changes.password);
+          push("password_hash", hash);
+          push("password_salt", salt);
+        } else {
+          sets.push("password_hash = NULL", "password_salt = NULL");
+        }
+      }
+      if (!sets.length) return (await this.listMembers(workspaceId)).find((row) => row.id === memberId) || null;
+      sets.push("updated_at = NOW()");
+      const result = await pool.query(
+        "UPDATE crm_member SET " + sets.join(", ") + " WHERE workspace_id = $1 AND member_id = $2",
+        params
+      );
+      if (!result.rowCount) return null;
+      return (await this.listMembers(workspaceId)).find((row) => row.id === memberId) || null;
+    },
+
+    async deleteMember(workspaceId, memberId) {
+      const result = await pool.query("DELETE FROM crm_member WHERE workspace_id = $1 AND member_id = $2", [workspaceId, memberId]);
+      return result.rowCount > 0;
+    },
+
+    /* 비밀번호 대조는 저장소 안에서만 한다 — 해시와 소금이 바깥으로 나가지 않는다 */
+    async verifyMemberPassword(workspaceId, memberId, password) {
+      const result = await pool.query(
+        "SELECT member_id, name, email, role, disabled, password_hash, password_salt FROM crm_member WHERE workspace_id = $1 AND member_id = $2",
+        [workspaceId, memberId]
+      );
+      if (!result.rowCount) return null;
+      const row = result.rows[0];
+      if (row.disabled) return null;
+      /* 비밀번호를 아직 정하지 않은 사용자는 이름만으로 들어올 수 있다 (관리자가 나중에 지정) */
+      if (row.password_hash && !memberPasswordMatches(password, row.password_hash, row.password_salt)) return null;
+      if (!row.password_hash && String(password ?? "")) return null;
+      return { id: row.member_id, name: row.name, email: row.email, role: row.role };
     },
 
     /* 감사 로그가 무한히 쌓여 DB 용량 한도를 넘지 않도록 보존 기간이 지난 항목을 정리 */

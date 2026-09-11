@@ -12,6 +12,35 @@ const FIELD_LABELS = {
   email: "이메일",
   address: "주소",
   memo: "메모",
+  mobilePhone: "휴대전화",
+  businessPhone: "회사 전화",
+  fax: "팩스",
+  department: "부서",
+  jobTitle: "직책",
+  website: "홈페이지",
+  birthday: "생일",
+  registrar: "등록 경로",
+  createdAt: "등록일",
+  updatedAt: "수정일",
+  cardThumb: "명함 미리보기",
+  cardImage: "명함 이미지",
+  fav: "즐겨찾기",
+  group: "그룹",
+  tags: "태그",
+  contactRole: "고객 담당자 직함",
+  contactPhone: "고객 담당자 연락처",
+  contactEmail: "고객 담당자 메일",
+  lastContact: "최근 접촉일",
+  tag: "태그",
+  desc: "설명",
+  goal: "목표",
+  competitor: "경쟁사",
+  closeAmount: "확정 금액",
+  closeDate: "확정일",
+  closeReason: "확정 사유",
+  deliveryDate: "납품일",
+  reopenDate: "재검토일",
+  internalNote: "내부 메모",
   stage: "영업 단계",
   amount: "예상 매출",
   prob: "성사 확률",
@@ -69,7 +98,8 @@ const EXACT_DESCRIPTORS = new Map([
   ["tinico:importance:config", { screen: "설정", entityType: "중요도 기준", labelFields: [] }],
   ["tinico:app:settings", { screen: "설정", entityType: "사용 환경", labelFields: [] }],
   ["tinico:trash", { screen: "설정 > 휴지통", entityType: "휴지통 항목", labelFields: ["label", "type"] }],
-  ["tinico:ai:personas", { screen: "AI 지식 도우미", entityType: "AI 담당자", labelFields: ["name", "title"] }]
+  ["tinico:ai:personas", { screen: "AI 지식 도우미", entityType: "AI 담당자", labelFields: ["name", "title"] }],
+  ["tinico:members", { screen: "설정 > 사용자", entityType: "사용자", labelFields: ["name", "email"] }]
 ]);
 
 function isObject(value) {
@@ -171,7 +201,7 @@ function changesFor(beforeValue, afterValue) {
   }];
 }
 
-function makeEntry({ descriptor, storageKey, action, identity, label, beforeValue, afterValue, eventAt, eventIdFactory }) {
+function makeEntry({ descriptor, storageKey, action, identity, label, beforeValue, afterValue, eventAt, eventIdFactory, actor }) {
   const changes = changesFor(beforeValue, afterValue);
   if (action === "수정" && !changes.length) return null;
   /* 복원 시 검증 한도(entityId·entityLabel 500자, summary 2000자)를 넘긴 항목이 백업을 통째로 복원 불가로 만들지 않도록 잘라서 기록 */
@@ -179,6 +209,8 @@ function makeEntry({ descriptor, storageKey, action, identity, label, beforeValu
   return {
     eventId: eventIdFactory(),
     eventAt,
+    actorId: actor?.id ? String(actor.id).slice(0, 120) : null,
+    actorName: actor?.name ? String(actor.name).slice(0, 120) : null,
     screen: descriptor.screen,
     action,
     entityType: descriptor.entityType,
@@ -208,7 +240,9 @@ export function buildAuditEntries({
   beforeValue,
   afterValue,
   eventAt = new Date().toISOString(),
-  eventIdFactory = () => crypto.randomUUID()
+  eventIdFactory = () => crypto.randomUUID(),
+  /* 사용자 계정을 쓰는 작업공간에서는 누가 바꿨는지 함께 남긴다 (쓰지 않으면 null) */
+  actor = null
 }) {
   if (!shouldAudit(storageKey) || valuesMatch(beforeValue, afterValue)) return [];
   const descriptor = descriptorFor(storageKey);
@@ -230,7 +264,8 @@ export function buildAuditEntries({
         beforeValue: previous,
         afterValue: item,
         eventAt,
-        eventIdFactory
+        eventIdFactory,
+        actor
       });
       if (entry) entries.push(entry);
     }
@@ -246,7 +281,8 @@ export function buildAuditEntries({
         beforeValue: item,
         afterValue: null,
         eventAt,
-        eventIdFactory
+        eventIdFactory,
+        actor
       });
       if (entry) entries.push(entry);
     }
@@ -268,16 +304,19 @@ export function buildAuditEntries({
     beforeValue,
     afterValue,
     eventAt,
-    eventIdFactory
+    eventIdFactory,
+    actor
   });
   return entry ? [entry] : [];
 }
 
-export function createRestoreAuditEntry({ backupExportedAt, recordCount, auditLogCount, eventAt = new Date().toISOString() }) {
+export function createRestoreAuditEntry({ backupExportedAt, recordCount, auditLogCount, eventAt = new Date().toISOString(), actor = null }) {
   const backupTime = String(backupExportedAt || "확인 불가");
   return {
     eventId: crypto.randomUUID(),
     eventAt,
+    actorId: actor?.id ? String(actor.id).slice(0, 120) : null,
+    actorName: actor?.name ? String(actor.name).slice(0, 120) : null,
     screen: "설정 > 관리자",
     action: "복원",
     entityType: "전체 백업",

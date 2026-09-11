@@ -6,6 +6,7 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { buildAuditEntries, createRestoreAuditEntry } from "./audit.js";
+import { canWrite, createMemberSessionToken, readMemberSessionToken, normalizeMemberInput } from "./members.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultPublicDir = path.resolve(moduleDir, "../public");
@@ -179,6 +180,8 @@ function normalizeBackupPayload(backup, workspaceId) {
       entityId: entry.entityId === null || entry.entityId === undefined ? null : cleanText(entry.entityId, "데이터 ID", 500),
       entityLabel: cleanText(entry.entityLabel, "데이터 이름", 500),
       storageKey: cleanText(entry.storageKey, "로그 저장 키", 240),
+      actorId: entry.actorId ? cleanText(entry.actorId, "작업자 ID", 120) : null,
+      actorName: entry.actorName ? cleanText(entry.actorName, "작업자", 120) : null,
       changedFields: Array.isArray(entry.changedFields) ? entry.changedFields : [],
       beforeValue: entry.beforeValue ?? null,
       afterValue: entry.afterValue ?? null,
@@ -299,6 +302,13 @@ export function createApp({
     legacyHeaders: false
   });
 
+  const memberLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: Number(process.env.CRM_MEMBER_LOGIN_LIMIT || 40),
+    standardHeaders: "draft-8",
+    legacyHeaders: false
+  });
+
   const requireAdminSession = (req, res, next) => {
     const authorization = String(req.get("authorization") || "");
     const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
@@ -309,6 +319,48 @@ export function createApp({
     next();
   };
 
+  /* 사용자 목록은 쓰기마다 필요하지만 자주 바뀌지 않는다. 30초만 기억하고,
+     관리자가 사용자를 바꾸면 즉시 버린다. */
+  let memberCache = { at: 0, list: null };
+  const invalidateMemberCache = () => { memberCache = { at: 0, list: null }; };
+  async function memberList() {
+    if (typeof repository.listMembers !== "function") return [];
+    if (memberCache.list && Date.now() - memberCache.at < 30_000) return memberCache.list;
+    const list = await repository.listMembers(workspaceId);
+    memberCache = { at: Date.now(), list };
+    return list;
+  }
+  async function memberAccountsEnabled() {
+    return (await memberList()).some((member) => !member.disabled);
+  }
+  /* 토큰은 누구인지만 증명한다. 권한과 사용 여부는 항상 최신 목록에서 다시 읽는다. */
+  async function activeMember(req) {
+    const claimed = readMemberSessionToken({ token: req.get("x-crm-user"), accessKey, workspaceId });
+    if (!claimed) return null;
+    const live = (await memberList()).find((member) => member.id === claimed.id);
+    if (!live || live.disabled) return null;
+    return { id: live.id, name: live.name, role: live.role };
+  }
+  const requireWritePermission = async (req, res, next) => {
+    try {
+      const member = await activeMember(req);
+      req.member = member;
+      if (!(await memberAccountsEnabled())) return next();
+      if (!member) {
+        res.status(403).json({ error: "member_session_required", message: "사용자 로그인이 필요합니다. 이름을 고르고 비밀번호를 입력해 주세요." });
+        return;
+      }
+      if (!canWrite(member.role)) {
+        res.status(403).json({ error: "member_read_only", message: "열람 권한이어서 저장할 수 없습니다. 관리자에게 편집 권한을 요청하세요." });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+  const auditActor = (req) => (req.member ? { id: req.member.id, name: req.member.name } : null);
+
   function revisionConflictError(currentRevision) {
     const error = new Error("revision_conflict");
     error.code = "revision_conflict";
@@ -316,9 +368,9 @@ export function createApp({
     return error;
   }
 
-  async function setStorageWithAudit(storageKey, value, baseRevision) {
+  async function setStorageWithAudit(storageKey, value, baseRevision, actor) {
     if (typeof repository.setWithAudit === "function") {
-      return repository.setWithAudit(workspaceId, storageKey, value, baseRevision);
+      return repository.setWithAudit(workspaceId, storageKey, value, baseRevision, actor);
     }
     const previous = await repository.get(workspaceId, storageKey);
     /* 다른 기기·탭이 먼저 저장했으면 덮어쓰지 않고 충돌을 알림 */
@@ -330,15 +382,16 @@ export function createApp({
       await repository.appendAudit(workspaceId, buildAuditEntries({
         storageKey,
         beforeValue: previous?.value ?? null,
-        afterValue: value
+        afterValue: value,
+        actor
       }));
     }
     return result;
   }
 
-  async function deleteStorageWithAudit(storageKey) {
+  async function deleteStorageWithAudit(storageKey, actor) {
     if (typeof repository.deleteWithAudit === "function") {
-      return repository.deleteWithAudit(workspaceId, storageKey);
+      return repository.deleteWithAudit(workspaceId, storageKey, actor);
     }
     const previous = await repository.get(workspaceId, storageKey);
     const deleted = await repository.delete(workspaceId, storageKey);
@@ -346,17 +399,158 @@ export function createApp({
       await repository.appendAudit(workspaceId, buildAuditEntries({
         storageKey,
         beforeValue: previous?.value ?? null,
-        afterValue: null
+        afterValue: null,
+        actor
       }));
     }
     return { deleted, auditCount: 0 };
   }
 
   app.use("/api", apiLimiter);
-  app.get("/api/session", requireAccessKey, async (_req, res, next) => {
+  app.get("/api/session", requireAccessKey, async (req, res, next) => {
     try {
       await repository.health();
-      res.json({ status: "ok", workspaceId, database: "connected" });
+      const member = await activeMember(req);
+      res.json({
+        status: "ok",
+        workspaceId,
+        database: "connected",
+        memberAccountsEnabled: await memberAccountsEnabled(),
+        member: member || null
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /* 로그인 화면이 이름 목록을 채울 때 쓰는 최소 정보 (이메일·해시는 내려보내지 않는다) */
+  app.get("/api/members", requireAccessKey, async (_req, res, next) => {
+    try {
+      const members = (await memberList())
+        .filter((member) => !member.disabled)
+        .map((member) => ({ id: member.id, name: member.name, role: member.role, hasPassword: member.hasPassword }));
+      res.set("Cache-Control", "no-store").json({ members, enabled: members.length > 0 });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/auth/login", requireAccessKey, memberLoginLimiter, async (req, res, next) => {
+    try {
+      if (typeof repository.verifyMemberPassword !== "function") {
+        res.status(501).json({ error: "members_unsupported", message: "이 서버는 사용자 계정을 지원하지 않습니다." });
+        return;
+      }
+      const member = await repository.verifyMemberPassword(workspaceId, String(req.body?.memberId || ""), String(req.body?.password ?? ""));
+      if (!member) {
+        res.status(403).set("Cache-Control", "no-store").json({ error: "invalid_member_login", message: "이름 또는 비밀번호가 맞지 않습니다." });
+        return;
+      }
+      const configured = Number(process.env.CRM_MEMBER_SESSION_HOURS || 12);
+      const hours = Number.isFinite(configured) ? Math.min(720, Math.max(1, configured)) : 12;
+      const session = createMemberSessionToken({ accessKey, workspaceId, member, lifetimeMinutes: hours * 60 });
+      res.set("Cache-Control", "no-store").json({ status: "ok", member, ...session });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/admin/members", requireAccessKey, requireAdminSession, async (_req, res, next) => {
+    try {
+      res.set("Cache-Control", "no-store").json({ members: await memberList() });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/admin/members", requireAccessKey, requireAdminSession, async (req, res, next) => {
+    try {
+      if (typeof repository.createMember !== "function") {
+        res.status(501).json({ error: "members_unsupported", message: "이 서버는 사용자 계정을 지원하지 않습니다." });
+        return;
+      }
+      const input = normalizeMemberInput(req.body);
+      const existing = await memberList();
+      if (existing.some((member) => member.name === input.name)) {
+        res.status(409).json({ error: "duplicate_member", message: "같은 이름의 사용자가 이미 있습니다." });
+        return;
+      }
+      if (existing.length >= 200) {
+        res.status(413).json({ error: "too_many_members", message: "사용자는 200명까지 만들 수 있습니다." });
+        return;
+      }
+      const member = await repository.createMember(workspaceId, { id: crypto.randomUUID(), role: "editor", email: "", ...input });
+      invalidateMemberCache();
+      res.status(201).set("Cache-Control", "no-store").json({ status: "created", member });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.patch("/api/admin/members/:id", requireAccessKey, requireAdminSession, async (req, res, next) => {
+    try {
+      if (typeof repository.updateMember !== "function") {
+        res.status(501).json({ error: "members_unsupported", message: "이 서버는 사용자 계정을 지원하지 않습니다." });
+        return;
+      }
+      const input = normalizeMemberInput(req.body, { requireName: false });
+      const members = await memberList();
+      if (input.name && members.some((member) => member.name === input.name && member.id !== req.params.id)) {
+        res.status(409).json({ error: "duplicate_member", message: "같은 이름의 사용자가 이미 있습니다." });
+        return;
+      }
+      const member = await repository.updateMember(workspaceId, String(req.params.id), input);
+      invalidateMemberCache();
+      if (!member) {
+        res.status(404).json({ error: "member_not_found", message: "사용자를 찾을 수 없습니다." });
+        return;
+      }
+      res.set("Cache-Control", "no-store").json({ status: "updated", member });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/admin/members/:id", requireAccessKey, requireAdminSession, async (req, res, next) => {
+    try {
+      if (typeof repository.deleteMember !== "function") {
+        res.status(501).json({ error: "members_unsupported", message: "이 서버는 사용자 계정을 지원하지 않습니다." });
+        return;
+      }
+      const deleted = await repository.deleteMember(workspaceId, String(req.params.id));
+      invalidateMemberCache();
+      if (!deleted) {
+        res.status(404).json({ error: "member_not_found", message: "사용자를 찾을 수 없습니다." });
+        return;
+      }
+      res.set("Cache-Control", "no-store").json({ status: "deleted" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /* 설정 > 변경 이력: 백업 파일을 열지 않고 화면에서 바로 본다 */
+  app.get("/api/admin/audit", requireAccessKey, requireAdminSession, async (req, res, next) => {
+    try {
+      if (typeof repository.queryAudit !== "function") {
+        res.status(501).json({ error: "audit_query_unsupported", message: "이 서버는 변경 이력 조회를 지원하지 않습니다." });
+        return;
+      }
+      const result = await repository.queryAudit(workspaceId, {
+        screen: req.query.screen,
+        action: req.query.action,
+        actorId: req.query.actorId,
+        storageKey: req.query.storageKey,
+        from: req.query.from,
+        to: req.query.to,
+        q: req.query.q,
+        limit: req.query.limit,
+        offset: req.query.offset
+      });
+      res.set("Cache-Control", "no-store").json({
+        ...result,
+        entries: result.entries.map((entry) => ({ ...entry, eventAtKST: kstDateTime(new Date(entry.eventAt)) }))
+      });
     } catch (error) {
       next(error);
     }
@@ -392,12 +586,12 @@ export function createApp({
     }
   });
 
-  app.put("/api/storage/:key", requireAccessKey, async (req, res, next) => {
+  app.put("/api/storage/:key", requireAccessKey, requireWritePermission, async (req, res, next) => {
     const storageKey = readStorageKey(req, res);
     if (!storageKey) return;
     if (repository.concurrent) {
       if (!req.body?.changes) return res.status(428).json({ error: "version_required", message: "저장 방식이 변경되었습니다. 입력 내용을 복사한 뒤 페이지를 다시 열어 주세요." });
-      try { return res.json(await repository.saveConcurrent(workspaceId, req.body)); }
+      try { return res.json(await repository.saveConcurrent(workspaceId, req.body, auditActor(req))); }
       catch (error) { return next(error); }
     }
     if (!Object.prototype.hasOwnProperty.call(req.body || {}, "value")) {
@@ -414,7 +608,7 @@ export function createApp({
       }
     }
     try {
-      const result = await setStorageWithAudit(storageKey, req.body.value, baseRevision);
+      const result = await setStorageWithAudit(storageKey, req.body.value, baseRevision, auditActor(req));
       res.json({ status: "saved", ...result });
     } catch (error) {
       if (error && error.code === "revision_conflict") {
@@ -429,12 +623,12 @@ export function createApp({
     }
   });
 
-  app.delete("/api/storage/:key", requireAccessKey, async (req, res, next) => {
+  app.delete("/api/storage/:key", requireAccessKey, requireWritePermission, async (req, res, next) => {
     const storageKey = readStorageKey(req, res);
     if (!storageKey) return;
     if (repository.concurrent) return res.status(428).json({ error: "version_required", message: "버전 검사가 포함된 저장 요청으로 삭제해야 합니다." });
     try {
-      const result = await deleteStorageWithAudit(storageKey);
+      const result = await deleteStorageWithAudit(storageKey, auditActor(req));
       res.json({ status: "deleted", ...result });
     } catch (error) {
       next(error);
@@ -483,7 +677,8 @@ export function createApp({
       const restoreEntry = createRestoreAuditEntry({
         backupExportedAt: normalized.exportedAt,
         recordCount: normalized.records.length,
-        auditLogCount: normalized.auditLogs.length
+        auditLogCount: normalized.auditLogs.length,
+        actor: await activeMember(req)
       });
       const result = await repository.restoreSnapshot(
         workspaceId,
