@@ -1881,7 +1881,8 @@ const MANUAL_MIGRATION_KEYS = [
   "tinico:manual:migration:contact_paging_csv_202609_v1",
   "tinico:manual:migration:deal_contact_combo_202609_v1",
   "tinico:manual:migration:deal_contact_multi_202609_v1",
-  "tinico:manual:migration:xlsx_backup_trash_fold_202609_v1"
+  "tinico:manual:migration:xlsx_backup_trash_fold_202609_v1",
+  "tinico:manual:migration:team_name_202609_v1"
 ];
 async function loadManualSections(){
   /* 어떤 매뉴얼 마이그레이션이 끝났는지는 키 하나에 모아 둔다.
@@ -2100,6 +2101,20 @@ async function loadManualSections(){
       updatedIds.push(id);
     });
     markMigrationApplied(xlsxBackupMigrationKey,{appliedAt:nowIso(),updatedIds});
+  }
+  const teamNameMigrationKey="tinico:manual:migration:team_name_202609_v1";
+  if(!migrationFlags.get(teamNameMigrationKey)){
+    /* 예전 제품 이름(티니코·tiniko)이 남아 있는 매뉴얼을 현재 팀 이름으로 바꾼다.
+       저장 키에 쓰는 'tinico'(c)와는 철자가 달라 데이터가 건드려지지 않는다. */
+    const renameTeam=(text)=>String(text ?? "").replace(/티니코/g,"현장지원팀").replace(/tiniko/gi,"현장지원팀");
+    const updatedIds=[];
+    data.forEach(section=>{
+      const next={title:renameTeam(section.title),category:renameTeam(section.category),content:renameTeam(section.content)};
+      if(next.title===section.title&&next.category===section.category&&next.content===section.content)return;
+      section.title=next.title;section.category=next.category;section.content=next.content;
+      updatedIds.push(section.id);
+    });
+    markMigrationApplied(teamNameMigrationKey,{appliedAt:nowIso(),updatedIds});
   }
   const cloudManualDef=DEFAULT_MANUAL_SECTIONS.find(item=>item.id==="manual_cloud_db");
   if(cloudManualDef&&!data.some(item=>item.id==="manual_cloud_db")){
@@ -6089,7 +6104,7 @@ async function fillMemberLoginOptions(){
     memberDirectory.forEach(member=>{
       const option = document.createElement("option");
       option.value = member.id;
-      option.textContent = `${member.name} · ${MEMBER_ROLE_LABELS[member.role] || member.role}`;
+      option.textContent = member.name;
       select.appendChild(option);
     });
     if(previous && memberDirectory.some(member=>member.id === previous)) select.value = previous;
@@ -7290,8 +7305,6 @@ async function init(){
   buildNav();
   setupCloudStorageUi();
   setupMemberGateUi();
-  const d = new Date();
-  document.getElementById("tn-today-chip").textContent = `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
 
   await ensureCloudConnection();
   await ensureMemberSession();

@@ -40,7 +40,6 @@
 #tn-root .tn-tab:hover{color:var(--ink-900);}
 #tn-root .tn-tab.active{color:var(--ink-900); border-bottom-color:var(--ink-900);}
 #tn-root .tn-topbar-right{margin-left:auto;}
-#tn-root .tn-today-chip{font-size:12px; color:var(--ink-300); white-space:nowrap;}
 #tn-root .tn-cloud-db-button{
   appearance:none; border:1px solid #BBF7D0; background:#F0FDF4; color:#166534;
   border-radius:999px; min-height:30px; padding:5px 10px; display:inline-flex;
@@ -883,7 +882,6 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
 #tn-root .tn-home-logo:hover{background:var(--paper-0);}
 #tn-root .tn-home-logo:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 #tn-root .tn-home-logo img{display:block;width:126px;height:45px;object-fit:contain;object-position:left center;}
-#tn-root .tn-home-logo-crm{font-size:10px;font-weight:800;color:var(--ink-300);letter-spacing:.08em;border-left:1px solid var(--line-200);padding-left:8px;}
 #tn-root .tn-dashboard-panel{border:1px solid var(--line-200);border-radius:9px;background:#fff;padding:15px 17px;margin-bottom:22px;}
 #tn-root .tn-dashboard-panel .tn-navgrid{margin:12px 0 0;}
 #tn-root .tn-section-actions{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
@@ -924,7 +922,6 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
   #tn-root .tn-data-boundary-guide{grid-template-columns:1fr;}
   #tn-root .tn-boundary-arrow{display:none;}
   #tn-root .tn-home-logo img{width:108px;height:40px;}
-  #tn-root .tn-home-logo-crm{display:none;}
 }
 @media(max-width:520px){
   #tn-root .tn-topbar{height:58px;padding:0 12px;}
@@ -939,9 +936,8 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
    간편 모드: 50대·CRM 초보 사용자를 위한 큰 글자와 필수 기능 중심 화면
    ====================================================================== */
 #tn-root{max-width:1260px;line-height:1.65;font-size:16px;border-radius:14px;}
-#tn-root .tn-topbar{height:66px;padding:0 26px;gap:24px;}
+#tn-root .tn-topbar{height:66px;padding:0 22px;gap:12px;}
 #tn-root .tn-tab{font-size:16px;padding:0 18px;font-weight:700;}
-#tn-root .tn-today-chip{font-size:14px;}
 #tn-root .tn-body{padding:32px 30px 54px;}
 #tn-root .tn-module-head{margin-bottom:24px;align-items:center;}
 #tn-root .tn-module-title{font-size:25px;font-weight:800;}
@@ -1240,7 +1236,6 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
 #tn-root .tn-btn,#tn-root .tn-modal-btn,#tn-root .tn-table th{font-weight:700;}
 #tn-root .tn-summary-value,#tn-root .tn-kpi-value{font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}
 #tn-root input[type=number]{font-variant-numeric:tabular-nums;}
-#tn-root .tn-home-logo-crm{color:var(--ink-700);font-weight:800;}
 #tn-root .tn-tab:hover,#tn-root .tn-tab.active{color:var(--brand-strong);}
 #tn-root .tn-tab.active{border-bottom-color:var(--brand);}
 #tn-root .tn-btab.active{color:var(--brand-strong);border-top-color:var(--brand);}
@@ -1358,12 +1353,10 @@ footer.tn-footer{text-align:center; font-size:10.5px; color:var(--ink-300); padd
   #tn-root .tn-topbar{gap:14px;padding:0 18px;}
   #tn-root .tn-tab{font-size:14.5px;padding:0 12px;}
   #tn-root .tn-home-logo img{width:104px;height:38px;}
-  #tn-root .tn-home-logo-crm{display:none;}
 }
 @media (max-width:1160px){
   #tn-root .tn-topbar{gap:10px;padding:0 14px;}
   #tn-root .tn-tab{font-size:13.5px;padding:0 9px;}
-  #tn-root .tn-today-chip{display:none;}
   #tn-root .tn-top-tool{padding:5px 8px;}
   #tn-root .tn-user-chip{padding:4px 9px;}
   #tn-root .tn-cloud-db-state{display:none;}
