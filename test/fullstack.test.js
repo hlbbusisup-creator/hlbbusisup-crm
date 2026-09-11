@@ -862,6 +862,66 @@ test("사용자 계정: 로그인한 이름이 변경 이력에 남고 열람 �
   byId("contact-drawer-close").click();
 });
 
+test("사용자가 있으면 접속 직후 뜬 로그인 화면에서 바로 로그인된다", async (t) => {
+  /* 로그인 화면은 init()이 사용자 확인을 기다리는 동안 떠 있다. 그 시점에 이미
+     버튼이 연결되어 있지 않으면 눌러도 아무 일이 없고 화면이 영원히 닫히지 않는다. */
+  const adminSession = await (await fetch(baseUrl + "/api/admin/session", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ code: adminCode })
+  })).json();
+  const adminHeaders = { "x-crm-key": accessKey, "content-type": "application/json", authorization: "Bearer " + adminSession.token };
+  /* 비밀번호를 비워 둔 사용자 — 이름만 고르고 바로 들어오는 구성 */
+  const created = await (await fetch(baseUrl + "/api/admin/members", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ name: "첫화면로그인", role: "editor", password: "" })
+  })).json();
+  assert.equal(created.member.hasPassword, false, "비밀번호 없이 만들어져야 한다");
+  t.after(async () => {
+    await fetch(baseUrl + "/api/admin/members/" + created.member.id, { method: "DELETE", headers: adminHeaders });
+  });
+
+  const rawHtml = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const bootDom = new JSDOM(rawHtml, {
+    url: baseUrl + "/",
+    runScripts: "dangerously",
+    pretendToBeVisual: true,
+    resources: "usable",
+    virtualConsole: new VirtualConsole(),
+    beforeParse(window) {
+      window.localStorage.setItem("tinico:cloud:access-key", accessKey);
+      /* 사용자 토큰은 일부러 두지 않는다 — 접속하자마자 로그인 화면이 떠야 한다 */
+      window.fetch = (input, options) => fetch(new URL(String(input), baseUrl), options);
+      window.Response = Response; window.Headers = Headers; window.Request = Request;
+      window.AbortController = AbortController;
+      window.CompressionStream = CompressionStream;
+      window.DecompressionStream = DecompressionStream;
+      window.confirm = () => true; window.alert = () => {}; window.scrollTo = () => {};
+      window.requestAnimationFrame = (callback) => window.setTimeout(() => callback(Date.now()), 0);
+      window.HTMLElement.prototype.scrollIntoView = () => {};
+      window.URL.createObjectURL = () => "blob:boot"; window.URL.revokeObjectURL = () => {};
+      window.HTMLAnchorElement.prototype.click = function () {};
+    }
+  });
+  t.after(() => bootDom.window.close());
+  const bootDoc = bootDom.window.document;
+
+  await waitFor(async () => bootDoc.getElementById("member-gate") && !bootDoc.getElementById("member-gate").hidden, "접속 직후 사용자 확인 화면");
+  await waitFor(async () => bootDoc.querySelectorAll("#member-login-name option").length > 0, "사용자 목록 표시");
+  assert.equal(bootDoc.getElementById("member-login-password").value, "", "비밀번호는 비운 채로 시작한다");
+  assert.equal(bootDoc.querySelectorAll("#ai-persona-select option").length, 0, "로그인 전에는 화면이 아직 시작되지 않는다");
+
+  /* 사용자가 실제로 누르는 것과 같은 경로 (폼 제출 이벤트를 직접 만들지 않는다) */
+  bootDoc.getElementById("member-login-submit").click();
+
+  await waitFor(async () => bootDoc.getElementById("member-gate").hidden, "로그인 후 사용자 확인 화면 닫힘");
+  assert.equal(bootDom.window.eval("currentMember && currentMember.name"), "첫화면로그인");
+  assert.equal(bootDom.window.eval("!!localStorage.getItem('tinico:member:token')"), true, "로그인 상태가 저장되어야 한다");
+  await waitFor(async () => bootDoc.querySelectorAll("#ai-persona-select option").length > 0, "로그인 후 화면 시작");
+  assert.equal(bootDoc.getElementById("tn-user-chip-name").textContent, "첫화면로그인");
+});
+
 test("설정 > 변경 이력이 조건에 맞는 기록과 상세를 보여준다", async () => {
   doc().querySelector('#tn-tabs [data-key="settings"]').click();
   await waitFor(async () => !byId("settings-audit-refresh").disabled, "변경 이력 사용 가능");
