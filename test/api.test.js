@@ -152,7 +152,10 @@ test("authenticated session reports the selected workspace", async () => {
   assert.deepEqual(await response.json(), {
     status: "ok",
     workspaceId: "test",
-    database: "connected"
+    database: "connected",
+    /* 사용자 계정을 만들지 않은 작업공간은 예전처럼 접속키만으로 동작한다 */
+    memberAccountsEnabled: false,
+    member: null
   });
 });
 
@@ -431,4 +434,51 @@ test("without CRM_ADMIN_CODE the built-in default code still rejects other codes
       assert.deepEqual(body, { error: "invalid_admin_code" });
     }
   });
+});
+
+test("사용자 계정과 변경 이력 조회는 접속키와 관리자 인증을 모두 요구한다", async () => {
+  /* 접속키가 없으면 목록도 조회도 열리지 않는다 */
+  for (const path of ["/api/members", "/api/admin/members", "/api/admin/audit"]) {
+    const response = await fetch(baseUrl + path);
+    assert.equal(response.status, 401, path);
+  }
+
+  /* 접속키만으로는 로그인 화면용 목록까지만 볼 수 있다 */
+  const directory = await fetch(baseUrl + "/api/members", { headers: { "x-crm-key": accessKey } });
+  assert.equal(directory.status, 200);
+  assert.deepEqual(await directory.json(), { members: [], enabled: false });
+
+  /* 관리자 인증 없이 사용자 관리·변경 이력은 막힌다 */
+  for (const path of ["/api/admin/members", "/api/admin/audit"]) {
+    const response = await fetch(baseUrl + path, { headers: { "x-crm-key": accessKey } });
+    assert.equal(response.status, 403, path);
+    assert.deepEqual(await response.json(), { error: "invalid_or_expired_admin_session" });
+  }
+
+  /* 사용자 계정을 지원하지 않는 저장소에서는 501로 분명히 알린다 */
+  const admin = await createAdminSession();
+  const created = await fetch(baseUrl + "/api/admin/members", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json", authorization: "Bearer " + admin.body.token },
+    body: JSON.stringify({ name: "김현장" })
+  });
+  assert.equal(created.status, 501);
+  assert.equal((await created.json()).error, "members_unsupported");
+
+  const login = await fetch(baseUrl + "/api/auth/login", {
+    method: "POST",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ memberId: "nobody", password: "x" })
+  });
+  assert.equal(login.status, 501);
+});
+
+test("사용자를 만들지 않은 작업공간은 예전처럼 접속키만으로 저장된다", async () => {
+  const response = await fetch(baseUrl + "/api/storage/" + encodeURIComponent("tinico:members:none"), {
+    method: "PUT",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ value: { ok: true } })
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, "saved");
 });

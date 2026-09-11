@@ -1171,12 +1171,13 @@ async function importRememberCsv(dom) {
   await dom.window.eval("importContactsCsv")(file);
 }
 
-test("navigation shows 대시보드 · 파이프라인 · 지원 업무 · 연락처 · 캘린더 · 설정 in order", async (t) => {
+test("navigation shows 대시보드 · 파이프라인 · 활동 · 지원 업무 · 연락처 · 캘린더 · 설정 in order", async (t) => {
   const { dom } = await createBrowser();
   t.after(() => dom.window.close());
   const { document } = dom.window;
-  const expected = ["home", "pipeline", "roadmap", "contacts", "calendar", "settings"];
-  const expectedLabels = ["대시보드", "파이프라인", "지원 업무", "연락처", "캘린더", "설정"];
+  /* 활동 화면이 파이프라인 바로 뒤에 들어가도 기존 여섯 화면의 상대 순서는 그대로다 */
+  const expected = ["home", "pipeline", "activity", "roadmap", "contacts", "calendar", "settings"];
+  const expectedLabels = ["대시보드", "파이프라인", "활동", "지원 업무", "연락처", "캘린더", "설정"];
 
   assert.deepEqual([...document.querySelectorAll("#tn-tabs .tn-tab")].map((tab) => tab.dataset.key), expected);
   assert.deepEqual([...document.querySelectorAll("#tn-tabs .tn-tab")].map((tab) => tab.textContent), expectedLabels);

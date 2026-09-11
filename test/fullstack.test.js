@@ -52,6 +52,12 @@ const waitFor = async (check, label, timeout = 30000) => {
   }
 };
 const win = () => dom.window;
+/* DB에 값이 들어온 직후에도 화면은 저장을 마무리하는 중이라, 목록(stageData/contactsData)에
+   아직 반영되지 않았거나 닫기 버튼이 거절될 수 있다. 화면이 진정될 때까지 기다린다. */
+const settleDrafts = () => waitFor(
+  async () => win().eval("[...dealDrafts.values()].every(draft=>!draft.saving) && [...contactDrafts.values()].every(draft=>!draft.saving)"),
+  "화면 저장 마무리"
+);
 const doc = () => dom.window.document;
 const byId = (id) => doc().getElementById(id);
 const setInput = (element, value) => {
@@ -599,7 +605,295 @@ test("휴지통 비우기가 목록과 DB를 모두 비운다", async () => {
   await waitFor(async () => doc().querySelector("#settings-trash-list .tn-trash-row"), "휴지통 목록");
   byId("settings-trash-empty").click();
   await waitFor(async () => ((await stored("tinico:trash")) || []).length === 0, "휴지통 비우기");
-  assert.equal(doc().querySelectorAll("#settings-trash-list .tn-trash-row").length, 0, "화면 목록도 비어야 한다");
+  await waitFor(async () => doc().querySelectorAll("#settings-trash-list .tn-trash-row").length === 0, "휴지통 화면 목록 비우기");
+});
+
+test("전체 검색이 영업·연락처·지원 업무를 한 번에 찾아 해당 화면을 연다", async () => {
+  /* 검색 대상이 될 영업 항목 하나 */
+  doc().querySelector('#tn-tabs [data-key="pipeline"]').click();
+  byId("pipe-new-deal").click();
+  await waitFor(async () => !byId("deal-drawer").hidden, "항목 상세 열림");
+  setInput(doc().querySelector('#deal-drawer-body [data-f="title"]'), "검색대상 영업건");
+  const areaKey = win().eval("selectedDealRef.areaKey");
+  byId("deal-drawer-save").click();
+  const saved = await waitFor(async () => ((await stored("tinico:stage:" + areaKey)) || []).find((d) => d.title === "검색대상 영업건"), "검색 대상 저장");
+  await settleDrafts();
+  byId("deal-drawer-close").click();
+
+  /* Ctrl+K 로 열린다 */
+  const event = new dom.window.KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true });
+  win().dispatchEvent(event);
+  assert.equal(byId("global-search-overlay").hidden, false, "Ctrl+K 로 검색창이 열려야 한다");
+
+  setInput(byId("global-search-input"), "검색대상");
+  await waitFor(async () => doc().querySelectorAll("#global-search-results .tn-search-item").length > 0, "검색 결과");
+  const titles = [...doc().querySelectorAll("#global-search-results .tn-search-item-title")].map((el) => el.textContent);
+  assert.ok(titles.includes("검색대상 영업건"), "영업 항목이 검색되어야 한다");
+
+  /* Enter 로 첫 결과를 열면 파이프라인 화면과 항목 상세가 함께 열린다 */
+  byId("global-search-input").dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.equal(byId("global-search-overlay").hidden, true, "선택하면 검색창이 닫혀야 한다");
+  await waitFor(async () => !byId("deal-drawer").hidden, "검색 결과 열기");
+  assert.equal(win().eval("selectedDealRef.id"), saved.id, "검색한 영업 항목이 열려야 한다");
+  byId("deal-drawer-close").click();
+});
+
+test("활동: AI 요약 초안과 다음 액션 추천이 채워지고 활동 화면에 모인다", async () => {
+  doc().querySelector('#tn-tabs [data-key="pipeline"]').click();
+  byId("pipe-new-deal").click();
+  await waitFor(async () => !byId("deal-drawer").hidden, "항목 상세 열림");
+  setInput(doc().querySelector('#deal-drawer-body [data-f="title"]'), "활동기록 영업건");
+  setInput(doc().querySelector('#deal-drawer-body [data-f="internalOwner"]'), "활동담당");
+  const areaKey = win().eval("selectedDealRef.areaKey");
+  const dealKey = "tinico:stage:" + areaKey;
+  byId("deal-drawer-save").click();
+  const deal = await waitFor(async () => ((await stored(dealKey)) || []).find((d) => d.title === "활동기록 영업건"), "활동 대상 저장");
+  await settleDrafts();
+
+  /* 활동 추가 + AI 요약 초안 */
+  doc().querySelector("#deal-drawer-body [data-add-activity]").click();
+  await waitFor(async () => !byId("activity-overlay").hidden, "활동 모달");
+  setSelect(byId("activity-type"), "미팅");
+  setInput(byId("activity-content"), "샘플 시험 결과를 함께 확인했다");
+  setInput(byId("activity-result"), "");
+  setInput(byId("activity-next-action"), "");
+  byId("activity-ai-summary").click();
+  assert.ok(byId("activity-result").value.includes("샘플"), "AI 초안이 결과를 채워야 한다: " + byId("activity-result").value);
+  assert.ok(byId("activity-next-action").value.length > 0, "AI 초안이 다음 할 일을 채워야 한다");
+  assert.ok(byId("activity-next-date").value.length === 10, "AI 초안이 다음 액션일을 채워야 한다");
+
+  byId("activity-save").click();
+  await waitFor(async () => (((await stored(dealKey)) || []).find((d) => d.id === deal.id)?.activities || []).length === 1, "활동 저장");
+
+  /* 다음 액션 추천이 항목에 반영된다 */
+  await waitFor(async () => !byId("deal-drawer").hidden, "상세 복귀");
+  doc().querySelector("#deal-drawer-body [data-next-action]").click();
+  await waitFor(async () => {
+    const current = ((await stored(dealKey)) || []).find((d) => d.id === deal.id);
+    return current && current.nextAction && current.action;
+  }, "다음 액션 추천 저장");
+  const afterDeal = ((await stored(dealKey)) || []).find((d) => d.id === deal.id);
+  assert.ok(afterDeal.nextAction.length === 10, "권장 일자가 저장되어야 한다");
+  assert.ok(afterDeal.action.length > 0, "다음에 할 일이 저장되어야 한다");
+  byId("deal-drawer-close").click();
+
+  /* 활동 화면에 모여 보인다 */
+  doc().querySelector('#tn-tabs [data-key="activity"]').click();
+  setSelect(byId("activity-range"), "all");
+  await waitFor(async () => doc().querySelectorAll("#activity-timeline .tn-activity-row").length > 0, "활동 타임라인");
+  const timeline = byId("activity-timeline").textContent;
+  assert.ok(timeline.includes("활동기록 영업건"), "타임라인에 영업건 이름이 보여야 한다");
+  assert.ok(timeline.includes("샘플 시험 결과를 함께 확인했다"), "타임라인에 활동 내용이 보여야 한다");
+  assert.ok(byId("activity-summary").textContent.includes("활동 기록"), "요약 카드가 있어야 한다");
+  assert.ok(byId("activity-breakdown").textContent.includes("미팅"), "유형별 집계가 있어야 한다");
+  /* 접촉 기록이 없는 영업건은 접촉 끊김 목록에 남는다 */
+  assert.ok(byId("activity-stale").textContent.length > 0, "접촉 끊김 영역이 채워져야 한다");
+});
+
+test("연락처 중복 정리가 빈 값을 채워 합치고 중복을 휴지통으로 보낸다", async () => {
+  doc().querySelector('#tn-tabs [data-key="contacts"]').click();
+  const make = async (name, fill) => {
+    byId("contact-manual-btn").click();
+    await waitFor(async () => !byId("contact-drawer").hidden, "연락처 상세 " + name);
+    setInput(doc().querySelector('#contact-drawer-body [data-field="name"]'), name);
+    fill();
+    byId("contact-drawer-save").click();
+    const saved = await waitFor(async () => ((await stored("tinico:contacts")) || []).find((c) => c.name === name), "저장 " + name);
+    /* DB에 값이 들어온 뒤에도 화면은 저장 마무리 중이라 닫기 버튼이 거절될 수 있다 */
+    await waitFor(async () => win().eval("[...contactDrafts.values()].every(draft=>!draft.saving)"), "저장 마무리 " + name);
+    byId("contact-drawer-close").click();
+    await waitFor(async () => byId("contact-drawer").hidden, "상세 닫힘 " + name);
+    return saved;
+  };
+  /* 같은 휴대전화 번호를 쓰는 두 사람 (리멤버 CSV를 두 번 올렸을 때와 같은 상태) */
+  const primary = await make("중복검사대표", () => {
+    setInput(doc().querySelector('#contact-drawer-body [data-field="mobilePhone"]'), "010-7777-8888");
+  });
+  await make("중복검사부본", () => {
+    setInput(doc().querySelector('#contact-drawer-body [data-field="mobilePhone"]'), "010-7777-8888");
+    setInput(doc().querySelector('#contact-drawer-body [data-field="company"]'), "중복상사");
+    setInput(doc().querySelector('#contact-drawer-body [data-field="email"]'), "dup@example.com");
+  });
+
+  byId("contact-dedupe-btn").click();
+  await waitFor(async () => doc().querySelectorAll("#dedupe-list .tn-dedupe-group").length > 0, "중복 그룹");
+  /* 첫 그룹에서 회사가 비어 있는 쪽을 대표로 고른다 */
+  const radios = [...doc().querySelectorAll('#dedupe-list input[name="dedupe-0"]')];
+  const primaryRadio = radios.find((radio) => radio.value === primary.id);
+  assert.ok(primaryRadio, "대표 후보에 첫 연락처가 있어야 한다");
+  primaryRadio.checked = true;
+  doc().querySelector('#dedupe-list [data-merge-group="0"]').click();
+
+  await waitFor(async () => !((await stored("tinico:contacts")) || []).some((c) => c.name === "중복검사부본"), "중복 병합");
+  const merged = ((await stored("tinico:contacts")) || []).find((c) => c.id === primary.id);
+  assert.ok(merged, "고른 대표가 남아야 한다");
+  assert.equal(merged.company, "중복상사", "빈 회사명이 합쳐진 값으로 채워져야 한다");
+  assert.equal(merged.email, "dup@example.com", "빈 이메일이 합쳐진 값으로 채워져야 한다");
+  assert.ok(((await stored("tinico:trash")) || []).some((entry) => entry.type === "contact" && entry.label === "중복검사부본"), "합쳐진 쪽은 휴지통으로");
+  byId("dedupe-close").click();
+});
+
+test("파이프라인 Excel 내보내기·가져오기가 DB에 반영된다", async () => {
+  doc().querySelector('#tn-tabs [data-key="pipeline"]').click();
+  byId("pipe-new-deal").click();
+  await waitFor(async () => !byId("deal-drawer").hidden, "항목 상세 열림");
+  setInput(doc().querySelector('#deal-drawer-body [data-f="title"]'), "엑셀왕복 영업건");
+  const areaKey = win().eval("selectedDealRef.areaKey");
+  const dealKey = "tinico:stage:" + areaKey;
+  byId("deal-drawer-save").click();
+  const deal = await waitFor(async () => ((await stored(dealKey)) || []).find((d) => d.title === "엑셀왕복 영업건"), "엑셀 대상 저장");
+  await settleDrafts();
+  byId("deal-drawer-close").click();
+  /* 내보내기는 지금 걸린 검색·필터 결과를 그대로 담으므로 조건을 비워 둔다 */
+  setInput(byId("pipe-search"), "");
+  ["pipe-bucket-filter", "pipe-area-filter", "pipe-owner-filter", "pipe-stage-filter"].forEach((id) => setSelect(byId(id), ""));
+  await waitFor(async () => win().eval("pipeDeals().some(entry=>entry.item.title==='엑셀왕복 영업건')"), "내보낼 목록에 포함");
+
+  const blobs = [];
+  const originalCreate = win().URL.createObjectURL;
+  win().URL.createObjectURL = (blob) => { blobs.push(blob); return "blob:pipeline"; };
+  byId("pipe-export-btn").click();
+  await waitFor(async () => blobs.length > 0, "Excel 파일 생성");
+  win().URL.createObjectURL = originalCreate;
+  const bytes = new Uint8Array(await blobs[0].arrayBuffer());
+  assert.equal(String.fromCharCode(bytes[0], bytes[1]), "PK", "xlsx 파일이어야 한다");
+
+  /* 내보낸 표에서 값을 고쳐 다시 가져온다 */
+  const sheets = await win().eval("workbookSheetRows")(bytes.buffer);
+  const rows = sheets.get("영업항목");
+  assert.ok(rows && rows.length > 1, "영업항목 시트가 있어야 한다");
+  const headers = rows[0].map((value) => String(value));
+  const target = rows.find((row) => String(row[headers.indexOf("항목ID")]) === deal.id);
+  assert.ok(target, "내보낸 표에 방금 만든 항목이 있어야 한다");
+  target[headers.indexOf("내부 담당자")] = "엑셀담당";
+  target[headers.indexOf("다음에 할 일")] = "엑셀로 수정한 후속 업무";
+  const newRow = headers.map((_, index) => index === headers.indexOf("항목ID") ? "" : "");
+  newRow[headers.indexOf("그룹키")] = areaKey;
+  newRow[headers.indexOf("고객사/영업건")] = "엑셀신규 영업건";
+  newRow[headers.indexOf("단계")] = "상담";
+  const rebuilt = await win().eval("buildSheetWorkbook")([{ name: "영업항목", rows: [...rows, newRow] }]);
+  const file = new dom.window.File([new Uint8Array(await rebuilt.arrayBuffer())], "pipeline.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+  await win().eval("importPipelineWorkbook")(file);
+  await waitFor(async () => ((await stored(dealKey)) || []).find((d) => d.id === deal.id)?.internalOwner === "엑셀담당", "Excel 수정 반영");
+  await waitFor(async () => ((await stored(dealKey)) || []).some((d) => d.title === "엑셀신규 영업건"), "Excel 신규 추가");
+  const created = ((await stored(dealKey)) || []).find((d) => d.title === "엑셀신규 영업건");
+  assert.equal(created.stage, "상담");
+});
+
+test("사용자 계정: 로그인한 이름이 변경 이력에 남고 열람 권한은 저장이 막힌다", async () => {
+  doc().querySelector('#tn-tabs [data-key="settings"]').click();
+  byId("settings-admin-open").click();
+  setInput(byId("settings-admin-code"), adminCode);
+  byId("settings-admin-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor(async () => !byId("settings-admin-actions").hidden, "관리자 인증");
+
+  /* 사용자 추가 */
+  await waitFor(async () => !byId("settings-member-add").disabled, "사용자 추가 버튼 활성화");
+  byId("settings-member-add").click();
+  setInput(byId("member-modal-name"), "테스트사용자");
+  setSelect(byId("member-modal-role"), "editor");
+  setInput(byId("member-modal-password"), "member-pass-1");
+  byId("member-modal-save").click();
+  const member = await waitFor(async () => (await repository.listMembers(workspaceId)).find((entry) => entry.name === "테스트사용자"), "사용자 생성");
+  assert.equal(member.role, "editor");
+  assert.equal(member.hasPassword, true, "비밀번호는 해시로만 저장된다");
+
+  /* 로그인하지 않으면 서버가 저장을 거부한다 */
+  const denied = await fetch(baseUrl + "/api/storage/" + encodeURIComponent("tinico:app:settings"), {
+    method: "PUT",
+    headers: { "x-crm-key": accessKey, "content-type": "application/json" },
+    body: JSON.stringify({ requestId: "aaaaaaaaaaaaaaaa-no-member", generation: "x", changes: [{ key: "tinico:app:settings", mutations: [] }] })
+  });
+  assert.equal(denied.status, 403);
+  assert.equal((await denied.json()).error, "member_session_required");
+
+  /* 화면에서 로그인 */
+  win().eval("showMemberGate")("");
+  await waitFor(async () => doc().querySelectorAll("#member-login-name option").length > 0, "사용자 목록");
+  setSelect(byId("member-login-name"), member.id);
+  setInput(byId("member-login-password"), "member-pass-1");
+  byId("member-login-form").dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+  await waitFor(async () => byId("member-gate").hidden && win().eval("currentMember && currentMember.name") === "테스트사용자", "사용자 로그인");
+  assert.equal(byId("tn-user-chip-name").textContent, "테스트사용자");
+
+  /* 저장하면 변경 이력에 이름이 남는다 */
+  doc().querySelector('#tn-tabs [data-key="contacts"]').click();
+  byId("contact-manual-btn").click();
+  await waitFor(async () => !byId("contact-drawer").hidden, "연락처 상세");
+  setInput(doc().querySelector('#contact-drawer-body [data-field="name"]'), "권한확인연락처");
+  byId("contact-drawer-save").click();
+  await waitFor(async () => ((await stored("tinico:contacts")) || []).some((c) => c.name === "권한확인연락처"), "사용자 저장");
+  byId("contact-drawer-close").click();
+  const logged = await waitFor(async () => (await auditFor("tinico:contacts")).find((entry) => entry.entityLabel.startsWith("권한확인연락처")), "변경 이력 기록");
+  assert.equal(logged.actorName, "테스트사용자", "변경 이력에 작업자가 남아야 한다");
+  assert.equal(logged.actorId, member.id);
+
+  /* 열람 권한으로 바꾸면 저장이 막힌다 */
+  doc().querySelector('#tn-tabs [data-key="settings"]').click();
+  await waitFor(async () => doc().querySelector('#settings-member-list [data-edit-member]'), "사용자 목록 표시");
+  doc().querySelector('#settings-member-list [data-edit-member="' + member.id + '"]').click();
+  setSelect(byId("member-modal-role"), "viewer");
+  byId("member-modal-save").click();
+  await waitFor(async () => (await repository.listMembers(workspaceId)).find((entry) => entry.id === member.id)?.role === "viewer", "열람 권한 전환");
+
+  doc().querySelector('#tn-tabs [data-key="contacts"]').click();
+  byId("contact-manual-btn").click();
+  await waitFor(async () => !byId("contact-drawer").hidden, "연락처 상세(열람)");
+  setInput(doc().querySelector('#contact-drawer-body [data-field="name"]'), "열람권한연락처");
+  byId("contact-drawer-save").click();
+  await waitFor(async () => win().eval("canEditData()") === false, "열람 권한 반영");
+  assert.ok(!((await stored("tinico:contacts")) || []).some((c) => c.name === "열람권한연락처"), "열람 권한으로는 저장되지 않아야 한다");
+  byId("contact-drawer-close").click();
+
+  /* 사용자를 지우면 예전처럼 접속키만으로 저장된다 */
+  doc().querySelector('#tn-tabs [data-key="settings"]').click();
+  doc().querySelector('#settings-member-list [data-edit-member="' + member.id + '"]').click();
+  byId("member-modal-delete").click();
+  await waitFor(async () => (await repository.listMembers(workspaceId)).length === 0, "사용자 삭제");
+  await waitFor(async () => win().eval("canEditData()") === true, "권한 제한 해제");
+
+  doc().querySelector('#tn-tabs [data-key="contacts"]').click();
+  byId("contact-manual-btn").click();
+  await waitFor(async () => !byId("contact-drawer").hidden, "연락처 상세(복구)");
+  setInput(doc().querySelector('#contact-drawer-body [data-field="name"]'), "권한해제연락처");
+  byId("contact-drawer-save").click();
+  await waitFor(async () => ((await stored("tinico:contacts")) || []).some((c) => c.name === "권한해제연락처"), "사용자 삭제 후 저장");
+  byId("contact-drawer-close").click();
+});
+
+test("설정 > 변경 이력이 조건에 맞는 기록과 상세를 보여준다", async () => {
+  doc().querySelector('#tn-tabs [data-key="settings"]').click();
+  await waitFor(async () => !byId("settings-audit-refresh").disabled, "변경 이력 사용 가능");
+  setSelect(byId("audit-range"), "");
+  byId("settings-audit-refresh").click();
+  await waitFor(async () => doc().querySelectorAll("#audit-tbody [data-audit-detail]").length > 0, "변경 이력 목록");
+  assert.ok(byId("settings-audit-state").textContent.includes("건"), "건수가 표시되어야 한다");
+
+  /* 화면 필터가 실제로 좁힌다 */
+  const options = [...doc().querySelectorAll("#audit-screen option")].map((option) => option.value);
+  assert.ok(options.includes("연락처"), "화면 목록에 연락처가 있어야 한다: " + options.join(","));
+  setSelect(byId("audit-screen"), "연락처");
+  await waitFor(async () => {
+    const screens = [...doc().querySelectorAll("#audit-tbody tr td:nth-child(2)")].map((cell) => cell.textContent);
+    return screens.length > 0 && screens.every((screen) => screen === "연락처");
+  }, "화면 필터");
+
+  /* 검색어로 방금 만든 연락처를 찾고 상세를 연다 */
+  setInput(byId("audit-search"), "권한확인연락처");
+  await waitFor(async () => {
+    const labels = [...doc().querySelectorAll("#audit-tbody .tn-settings-row-title")].map((cell) => cell.textContent);
+    return labels.length > 0 && labels.some((label) => label.includes("권한확인연락처"));
+  }, "검색 필터");
+  doc().querySelector("#audit-tbody [data-audit-detail]").click();
+  assert.equal(byId("audit-detail-overlay").hidden, false, "상세가 열려야 한다");
+  assert.ok(byId("audit-detail-sub").textContent.includes("연락처"), "상세에 화면 이름이 보여야 한다");
+  assert.ok(byId("audit-detail-tbody").textContent.length > 0, "변경 항목이 있어야 한다");
+  byId("audit-detail-close").click();
+
+  /* 다음 테스트를 위해 조건을 되돌린다 */
+  setInput(byId("audit-search"), "");
+  setSelect(byId("audit-screen"), "");
 });
 
 test("관리자 백업·복원: 내려받은 Excel 파일로 실제 DB가 되돌아온다", async () => {
